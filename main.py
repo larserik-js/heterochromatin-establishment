@@ -2,12 +2,9 @@
 # Press Double Shift to search everywhere for classes, files, tool windows, actions, and settings.
 
 ## External packages
-import numpy as np
 from timeit import default_timer as timer
 
 ## Own script with constants, functions, etc.
-import torch
-
 import functions
 
 ##############################################################################
@@ -17,7 +14,7 @@ import functions
 animate=False
 
 # No. of nucleosomes
-N = 50
+N = 80
 # Equilibrium spring length
 l0 = 1
 # Half the spring constant
@@ -27,13 +24,15 @@ noise = 0.1*l0
 # Time-step length
 dt = 0.0001
 # No. of time-steps
-t_total = 2000
+t_total = 1000
 
 # Potential weights
 U_spring_weight = 10
-U_interaction_weight = 50
+U_interaction_weight = 10
 U_pressure_weight = 0.001
-potential_weights = [U_spring_weight, U_interaction_weight, U_pressure_weight]
+U_twist_weight = 50
+U_bend_weight = 100
+potential_weights = [U_spring_weight, U_interaction_weight, U_pressure_weight, U_twist_weight, U_bend_weight]
 
 # Gather all parameters
 parameters = [N, spring_strength, l0, noise, potential_weights, dt, t_total, animate]

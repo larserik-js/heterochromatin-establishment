@@ -32,7 +32,7 @@ class Animation:
             self.sim_obj.t += 1
 
             # Only generates a .gif image for every 10th update
-            if idx % 10 == 0:
+            if idx % 100 == 0:
                 yield idx
 
         # Generates 10 identical images at the end of the animation
@@ -56,10 +56,15 @@ class Animation:
             self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
+        # Plot polarity vectors
+        u, v, w = self.sim_obj.P[:,0], self.sim_obj.P[:,1], self.sim_obj.P[:,2]
+        self.ax_anim.quiver(X, Y, Z, u, v, w, length=1, normalize=True)
+
         # Set plot dimensions
         self.ax_anim.set(xlim=self.sim_obj.plot_dim, ylim=self.sim_obj.plot_dim, zlim=self.sim_obj.plot_dim)
 
-        # Set labels and legend
+        # Set title, labels and legend
+        self.ax_anim.set_title(f'No. of nucleosomes = {self.sim_obj.N}', size=16)
         self.ax_anim.set_xlabel('x', size=14)
         self.ax_anim.set_ylabel('y', size=14)
         self.ax_anim.set_zlabel('z', size=14)
