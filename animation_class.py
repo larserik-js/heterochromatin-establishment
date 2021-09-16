@@ -2,9 +2,8 @@ import matplotlib.pyplot as plt
 import torch
 
 class Animation:
-    def __init__(self, anim_params):
-        sim_obj, t_total, coords_init = anim_params
-
+    def __init__(self, sim_obj, t_total, coords_init):
+        # Parameters
         self.sim_obj = sim_obj
         self.t_total = t_total
         self.coords_init = coords_init
@@ -12,7 +11,6 @@ class Animation:
         # Make figure
         self.fig_anim = plt.figure()
         self.ax_anim = self.fig_anim.add_subplot(111, projection='3d')
-
 
     def frame_generator(self):
 
