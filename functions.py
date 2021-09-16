@@ -15,11 +15,8 @@ from animation_class import Animation
 
 # Classes and functions
 class Simulation:
-    def __init__(self, parameters):
+    def __init__(self, N, spring_strength, l0, noise, potential_weights, dt, t_total):
         ## Parameters
-        # Unpack
-        N, spring_strength, l0, noise, potential_weights, dt, t_total, _ = parameters
-
         # No. of nucleosomes
         self.N = N
         # Half the spring constant
@@ -41,17 +38,17 @@ class Simulation:
         self.X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         # No. of interacting nucleosomes
-        n_interacting = int(N/2)
+        self.n_interacting = int(N/2)
 
         # No. of possible interactions between interacting nucleosomes
         # The interaction between two particles is only counted once
-        self.n_interactions = binom(n_interacting, 2)
+        self.max_interactions = binom(self.n_interacting, 2)
 
         # States
         # Set no. of interacting nucleosomes to 0s
         # Set the rest randomly to 1s or 2s
         states = torch.zeros_like(self.X[:,0])
-        states[n_interacting:] = torch.randint(1,3,(N-n_interacting,))
+        states[self.n_interacting:] = torch.randint(1,3,(N-self.n_interacting,))
         # Pick out the nucleosomes of the different states
         self.state_A = (states==0)
         self.state_B = (states==1)
@@ -79,7 +76,6 @@ class Simulation:
         ## Distance vectors from all particles to all particles
         #rij_all = self.X[:, None, :] - self.X
         rij_all = self.X - self.X[:, None, :]
-
 
         # Length of distances
         self.norms_all = torch.linalg.norm(rij_all, dim=2)
@@ -140,15 +136,6 @@ class Simulation:
         self.plot_dim = (-1.5*r_system, 1.5*r_system)
         self.r_system = r_system
 
-    # def get_initial_polarities(self):
-    #     # For each particle, pick out its 2 neighbors
-    #     P_init = self.X[self.chain_idx]
-    #
-    #     # Create distance vectors between the neighbors
-    #     P_init = (P_init[;,1,:] - P_init[:,0,:])
-    #
-    #     # Rotate
-
     def grad_on(self):
         self.X.requires_grad_(True)
         self.P.requires_grad_(True)
@@ -198,35 +185,20 @@ class Simulation:
 
         rij_attracting = self.rij_all[self.interacting_idx][:,self.interacting_idx]
 
-        #print(rij_attracting)
-
-        #print(self.P[self.interacting_idx][:,None,:])
-        #print(rij_attracting)
-
         # Row i contains the dot product of P_i with r_ij
         polar_attraction = torch.sum(self.P[self.interacting_idx][:,None,:] * rij_attracting, dim=2)
-        #print(polar_attraction)
 
-        # Sum dot products for pair-wise interactions
-        polar_attraction = polar_attraction + polar_attraction.t()
+        # Multiply clamped dot products for pair-wise interactions
+        polar_attraction = torch.clamp(polar_attraction, min=0, max=1) * torch.clamp(polar_attraction, min=0, max=1).t()
 
-        #print(polar_attraction)
+        # Normalize, such that the range of 'polar_attraction' becomes: [0,1]
+        polar_attraction = torch.sum(polar_attraction /  (self.n_interacting**2 - self.n_interacting) )
 
-        # if self.t == self.t_total-1:
-        #     print(polar_attraction)
-
-        # Normalize, such that the range of 'polar_attraction' becomes: [-1,1]
-        polar_attraction = torch.sum(polar_attraction / (self.N - 1)**2 / 2)
-
-        #print(polar_attraction)
+        if self.t % 1000 == 0:
+            print(polar_attraction)
 
         # Only calculate on interacting nucleosomes
         mask_attracting = self.state_A * self.state_A[:,None]
-
-        #print(polar_attraction)
-        #
-        # if self.t == self.t_total-1:
-        #     print(polar_attraction)
 
         U_attraction = -polar_attraction * torch.exp(-2 * self.norms_all / (b * self.r0))
 
@@ -256,7 +228,7 @@ class Simulation:
         # If all align, the potential is at its lowest
         return -dot_product
 
-    def bend_potential(self):
+    def p_directional_potential(self):
         neighbors = self.X[self.chain_idx]
 
         # Pick out only interacting particles
@@ -274,9 +246,9 @@ class Simulation:
         dot_products = torch.sum(self.P[self.interacting_idx] * r_between_neighbors, dim=1)
 
         # Potential is minimized when polarity vectors and r_between_neighbors are perpendicular
-        U_bend = torch.sum(dot_products**2)
+        U_p_directional = torch.sum(dot_products**2)
 
-        return U_bend
+        return U_p_directional
 
     # Returns (overall) system potential
     def potential(self):
@@ -292,7 +264,9 @@ class Simulation:
         ## POLARITY VECTOR POTENTIALS
         U_twist = self.twist_potential()
 
-        U_bend = self.bend_potential()
+        ## This potential is minimized when the polarity vectors are perpendicular to the line between
+        # the neighbors of its corresponding nucleosome
+        U_p_directional = self.p_directional_potential()
 
         ## Potential weights
         w1, w2, w3, w4, w5 = self.potential_weights
@@ -302,7 +276,7 @@ class Simulation:
             print(f'Interaction potential: {w2 * U_interaction:.2}')
             print(f'Pressure potential: {w3 * U_pressure:.2}')
 
-        return w1 * U_spring + w2 * U_interaction + w3 * U_pressure + w4*U_twist + w5*U_bend
+        return w1 * U_spring + w2 * U_interaction + w3 * U_pressure + w4*U_twist + w5*U_p_directional
 
     def update(self):
         ## Calculate potential
@@ -359,7 +333,6 @@ class Simulation:
         self.interaction_stats[1, self.t - 1] = n_within
 
     def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
-
         # Plot the different states
         for i in range(len(self.states)):
             ax.scatter(x_plot[self.states[i]].cpu(), y_plot[self.states[i]].cpu(), z_plot[self.states[i]].cpu(),
@@ -399,20 +372,34 @@ class Simulation:
 
         filename = '/home/lars/Documents/masters_thesis/statistics' + f'_N{self.N}'
 
-        #fig.savefig(filename, dpi=200)
+        fig.savefig(filename, dpi=200)
+
+# Takes a list of torch tensors, pickles them
+def write_pkl(var_list, filename):
+    filename = '/home/lars/Documents/masters_thesis/' + filename + '.pkl'
+
+    # Detach tensors and turn them into numpy arrays
+    new_var_list = []
+    for var in var_list:
+        if torch.is_tensor(var):
+            new_var_list.append(var.detach().numpy())
+        else:
+            new_var_list.append(var)
+
+    # Write to pkl
+    with open(filename, 'wb') as f:
+        pickle.dump(new_var_list, f)
 
 # Runs the script
-def run(parameters):
-    global t_total, sim_obj
+def run(N, spring_strength, l0, noise, potential_weights, dt, t_total, animate, save):
+
+    global sim_obj
 
     # Fix seed value
     torch.manual_seed(0)
 
-    # Unpack parameters
-    _, _, _, _, _, _, t_total, animate = parameters
-
     # Create simulation object
-    sim_obj = Simulation(parameters)
+    sim_obj = Simulation(N, spring_strength, l0, noise, potential_weights, dt, t_total)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -426,18 +413,17 @@ def run(parameters):
 
     if animate:
         # Create animation object
-        anim_params = [sim_obj, t_total, coords_init]
-        anim_obj = Animation(anim_params)
+        anim_obj = Animation(sim_obj, t_total, coords_init)
 
         # The animation loop
         # The function 'animation_loop' gets called t_total times
         anim = FuncAnimation(anim_obj.fig_anim, anim_obj.animation_loop, frames=anim_obj.frame_generator,
                              interval=100, save_count=t_total+10)
-
-        filename = '/home/lars/Documents/masters_thesis/animation' + f'_N{sim_obj.N}'
-
         # Format
         writergif = animation.PillowWriter(fps=30)
+        # filename = '/home/lars/Documents/masters_thesis/animation' + f'_N{sim_obj.N}' + '.gif'
+        filename = '/home/lars/Documents/masters_thesis/test.gif'
+
         anim.save(filename, dpi=200, writer=writergif)
 
     else:
@@ -466,22 +452,21 @@ def run(parameters):
         x_final, y_final, z_final = sim_obj.X[:,0], sim_obj.X[:,1], sim_obj.X[:,2]
         u_final, v_final, w_final = sim_obj.P[:, 0], sim_obj.P[:, 1], sim_obj.P[:, 2]
 
-
-        # # Save final state
-        # with open("/home/lars/Documents/masters_thesis/initial_final.pkl", "wb") as f:
-        #     pickle.dump((x_final.detach().numpy(), y_final.detach().numpy(), z_final.detach().numpy(),
-        #                  u_final.detach().numpy(), v_final.detach().numpy(), w_final.detach().numpy()), f)
-
-
         with torch.no_grad():
             sim_obj.plot(x_final, y_final, z_final, ax, label='Final state')
 
         # Plot MD
         sim_obj.finalize_plot(ax)
 
-        # Save MD plot
-        filename = '/home/lars/Documents/masters_thesis/initial_final' + f'_N{sim_obj.N}'
-        #fig.savefig(filename, dpi=200)
+        ## Save final state
+        if save:
+            pickle_var_list = [x_final, y_final, z_final, u_final, v_final, w_final, sim_obj.states]
+            filename = 'final_state' + f'_N{sim_obj.N}'
+            write_pkl(pickle_var_list, filename)
+
+            # Save MD plot
+            filename = '/home/lars/Documents/masters_thesis/initial_final' + f'_N{sim_obj.N}'
+            fig.savefig(filename, dpi=200)
 
         # Plot statistics
         sim_obj.plot_statistics()
