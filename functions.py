@@ -12,6 +12,7 @@ from matplotlib.animation import FuncAnimation
 
 # External animation file
 from animation_class import Animation
+from masks import get_interaction_mask
 
 # Classes and functions
 class Simulation:
@@ -135,6 +136,8 @@ class Simulation:
         # Plot dimensions
         self.plot_dim = (-1.5*r_system, 1.5*r_system)
         self.r_system = r_system
+
+
 
     def grad_on(self):
         self.X.requires_grad_(True)
