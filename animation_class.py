@@ -54,9 +54,9 @@ class Animation:
             self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
-        # Plot polarity vectors
-        u, v, w = self.sim_obj.P[:,0], self.sim_obj.P[:,1], self.sim_obj.P[:,2]
-        self.ax_anim.quiver(X, Y, Z, u, v, w, length=1, normalize=True)
+        # # Plot polarity vectors
+        # u, v, w = self.sim_obj.P[:,0], self.sim_obj.P[:,1], self.sim_obj.P[:,2]
+        # self.ax_anim.quiver(X, Y, Z, u, v, w, length=1, normalize=True)
 
         # Set plot dimensions
         self.ax_anim.set(xlim=self.sim_obj.plot_dim, ylim=self.sim_obj.plot_dim, zlim=self.sim_obj.plot_dim)
