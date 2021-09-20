@@ -1,14 +1,36 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import pickle
 from mayavi import mlab
+from mayavi.mlab import *
 
-with open("/home/lars/Documents/masters_thesis/final_state_N100.pkl", "rb") as f:
+with open("/home/lars/Documents/masters_thesis/final_state_N150.pkl", "rb") as f:
     x, y, z, u, v, w, states = pickle.load(f)
 
-mlab.plot3d(x, y, z)
-mlab.quiver3d(x, y, z, u, v, w, mode="arrow", scale_factor=0.5)
-mlab.show()
+#mlab.plot3d(x, y, z)
 
+colors = np.zeros(len(x), dtype=int)
+print(colors)
+exit()
+
+for i in range(len(states)):
+    colors[states[i]] = i
+
+colors = colors[:,None]
+
+scale_factor = 0.5
+state_colors = ['b', 'r', 'y']
+state_names = ['State A', 'State B', 'State C']
+
+
+
+p3d = mlab.points3d(x,y,z, scale_factor=scale_factor)
+p3d.module_manager.scalar_lut_manager.lut.number_of_colors = len(x)
+p3d.module_manager.scalar_lut_manager.lut.table = colors
+
+#mlab.quiver3d(x, y, z, u, v, w, mode="arrow", scale_factor=0.5)
+mlab.draw()
+mlab.show()
 #
 # def plot_matplotlib(x_plot, y_plot, z_plot, u, v, w):
 #     ## Make figure
