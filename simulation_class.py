@@ -14,14 +14,16 @@ class Simulation:
         self.spring_strength = spring_strength
         # Equilibrium spring length
         self.l0 = l0
-        # Noise term
+        # Noise constant
         self.noise = noise
         # Potential weights
         self.potential_weights = potential_weights
 
         ## Initialize system
         thetas = np.linspace(0, 2*np.pi, N, endpoint=False)
-        r_system = self.N*self.l0 / (2*np.pi)
+        angle = thetas[1]-thetas[0]
+        # The chord length
+        r_system = self.l0 * np.sqrt( 1/(np.sin(angle)**2 + (1-np.cos(angle))**2 + (angle/np.pi)**2) )
         xs, ys = r_system*np.cos(thetas), r_system*np.sin(thetas)
         zs = np.linspace(-r_system,r_system,N)
 
@@ -71,7 +73,7 @@ class Simulation:
         rij_all = self.X - self.X[:, None, :]
 
         # Length of distances
-        self.norms_all = torch.linalg.norm(rij_all, dim=2)
+        self.norms_all = torch.sqrt(1e-7 + torch.sum(rij_all**2, dim=2))  # torch.linalg.norm(rij_all, dim=2)
 
         # Normalized distance vectors
         self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
@@ -118,6 +120,9 @@ class Simulation:
         # for interacting and non-interacting states, respectively
         self.interaction_stats = torch.zeros((2,t_total))
 
+        # Will store the number of interactions that occur on a given neighbor-neighbor index difference
+        self.interaction_idx_difference = torch.zeros(self.n_interacting, dtype=torch.float32)
+
         ## Plot parameters
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
@@ -129,6 +134,15 @@ class Simulation:
         # Plot dimensions
         self.plot_dim = (-1.5*r_system, 1.5*r_system)
         self.r_system = r_system
+
+    # Norms between interacting particles only
+    def get_interaction_norms(self):
+        # Interactions are only counted once
+        norms_all_upper = torch.triu(self.norms_all, diagonal=1)
+
+        # Sliced matrices including interacting and non-interacting particles, respectively
+        return norms_all_upper[self.interacting_idx][:, self.interacting_idx], \
+               norms_all_upper[self.non_interacting_idx][:, self.non_interacting_idx]
 
     # Picks out nucleosomes that are allowed to interact with each other
     def get_interaction_mask(self):
@@ -197,6 +211,7 @@ class Simulation:
                 #print('Loop ended at ' + str(counter))
                 break
 
+        # The returned mask has shape (N,N)
         return interaction_mask
 
 
@@ -209,7 +224,7 @@ class Simulation:
         # Distance vectors from a particle to its two neighbors in the chain
         rij = self.X[self.chain_idx] - self.X[:, None, :]
         # Length of the distance vectors
-        norms = torch.linalg.norm(rij, dim=2)
+        norms = torch.sqrt(1e-5 + torch.sum(rij**2, dim=2))  # torch.linalg.norm(rij, dim=2)
         # Normalize distance vectors
         self.rij_hat = rij / (1e-10 + norms[:, :, None])
         # print(self.mask * (norms - self.l0)**2)
@@ -337,8 +352,26 @@ class Simulation:
         #return w1 * U_spring + w2 * U_interaction + w3 * U_pressure + w4*U_twist + w5*U_p_directional
         return w1 * U_spring + w2 * U_interaction + w3 * U_pressure
 
+    def count_interactions(self):
+        norms_interacting, norms_non_interacting = self.get_interaction_norms()
+        n_within = torch.sum((norms_interacting > 0) & (norms_interacting < self.l_interacting))
+        self.interaction_stats[0, self.t - 1] = n_within
+
+        ## Non-interacting
+        # Select only non-interacting particles
+        n_within = torch.sum((norms_non_interacting > 0) & (norms_non_interacting < self.l_interacting))
+        self.interaction_stats[1, self.t - 1] = n_within
+
+        ## Count interaction distances
+        interaction_indices = torch.where((self.interaction_mask == True) & (self.norms_all < self.l_interacting))
+        interaction_distances = torch.abs((interaction_indices[1] - interaction_indices[0]))
+        # Only add a half as each distance is counted twice, but should only contribute once to statistics
+        self.interaction_idx_difference[interaction_distances] += 1/2
 
     def update(self):
+        # Require gradient
+        self.grad_on()
+
         ## Calculate potential
         U = self.potential()
         U.backward()
@@ -354,9 +387,12 @@ class Simulation:
             #self.P[self.interacting_idx] -= self.P.grad[self.interacting_idx] * self.dt
 
             # Add noise
-            self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
+            #self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
             #self.X += self.noise * torch.randn_like(self.X) * (1 - self.t/self.t_total)
             #self.X += self.noise * torch.randn_like(self.X)
+            Du = 1
+            eta = 1
+            self.X += self.noise * torch.empty_like(self.X).normal_(mean=0, std=np.sqrt(2*Du/eta*self.dt))
 
             #self.P[self.interacting_idx] += self.noise * (torch.randn_like(self.X) * np.exp(-self.t / self.t_total))[self.interacting_idx]
 
@@ -367,12 +403,11 @@ class Simulation:
             self.X.grad.zero_()
             #self.P.grad.zero_()
 
-
         ## Distance vectors from all particles to all particles
         rij_all = self.X - self.X[:, None, :]
 
         # Length of distances
-        self.norms_all = torch.linalg.norm(rij_all, dim=2)
+        self.norms_all = torch.sqrt(1e-7 + torch.sum(rij_all**2, dim=2))  #  torch.linalg.norm(rij_all, dim=2)
 
         # Normalized distance vectors
         self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
@@ -380,20 +415,8 @@ class Simulation:
         # Interaction mask
         self.interaction_mask = torch.from_numpy(self.get_interaction_mask())
 
-    def count_interactions(self):
-        norms_all_upper = torch.triu(self.norms_all, diagonal=1)
-
-        ## Interacting
-        # Select only interacting particles
-        norms_interacting = norms_all_upper[self.interacting_idx][:, self.interacting_idx]
-        n_within = torch.sum((norms_interacting > 0) & (norms_interacting < self.l_interacting))
-        self.interaction_stats[0, self.t - 1] = n_within
-
-        ## Non-interacting
-        # Select only non-interacting particles
-        norms_non_interacting = norms_all_upper[self.non_interacting_idx][:, self.non_interacting_idx]
-        n_within = torch.sum((norms_non_interacting > 0) & (norms_non_interacting < self.l_interacting))
-        self.interaction_stats[1, self.t - 1] = n_within
+        # Count interactions for statistics
+        self.count_interactions()
 
     def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
         # Plot the different states
@@ -402,7 +425,7 @@ class Simulation:
                        s=self.nucleosome_s, c=self.state_colors[i])
 
         # Plot chain line
-        all_condition = torch.ones_like(self.states[0], dtype=bool)
+        all_condition = torch.ones_like(self.states[0], dtype=torch.bool)
 
         ax.plot(x_plot[all_condition].cpu(), y_plot[all_condition].cpu(), z_plot[all_condition].cpu(),
                 marker='o', ls=ls, markersize=self.chain_s, c='k', lw=0.7, label=label)
@@ -422,17 +445,20 @@ class Simulation:
 
     def plot_statistics(self):
         s = 0.5
-        fig,ax = plt.subplots(figsize=(8,6))
+        fig, ax = plt.subplots(2,1,figsize=(8,6))
         ts = torch.arange(self.t_total)
-        ax.scatter(ts, self.interaction_stats[0], s=s, label='Interacting states')
-        ax.scatter(ts, self.interaction_stats[1], s=s, label='Non-interacting states')
+        ax[0].scatter(ts, self.interaction_stats[0], s=s, label='Interacting states')
+        ax[0].scatter(ts, self.interaction_stats[1], s=s, label='Non-interacting states')
 
-        ax.set_xlabel(r'$t$', size=14)
-        ax.set_ylabel('No. of interactions', size=14)
-        ax.set_title(f'No. of nucleosomes = {self.N}', size=16)
-        plt.legend(loc='best')
+        ax[1].plot(np.arange(self.n_interacting), self.interaction_idx_difference)
+
+        ax[0].set_xlabel(r'$t$', size=14)
+        ax[0].set_ylabel('No. of interactions', size=14)
+        ax[0].set_title(f'No. of nucleosomes = {self.N}', size=16)
+
+        ax[1].set_xlabel('Index difference', size=14)
+        ax[1].set_ylabel('No. of interactions', size=14)
+
+        #plt.legend(loc='best')
+        plt.tight_layout()
         plt.show()
-
-        filename = '/home/lars/Documents/masters_thesis/statistics' + f'_N{self.N}'
-
-        fig.savefig(filename, dpi=200)

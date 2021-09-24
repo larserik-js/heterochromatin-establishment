@@ -9,10 +9,14 @@ import run
 ##############################################################################
 
 ## SET PARAMETERS
-# Creates AND saves an animation
-animate = False
-# Saves pickle files and initial/final plots
-save = True
+
+
+# Plots initial and final state, as well as statistics
+# Nothing is saved
+test_mode = False
+
+# Additionally generates and saves an animation
+animate = True
 
 # No. of nucleosomes
 N = 150
@@ -21,15 +25,15 @@ l0 = 1
 # Half the spring constant
 spring_strength = 100
 # Noise
-noise = 0.3*l0
+noise = 2.5*l0
 # Time-step length
-dt = 0.0001
+dt = 0.001
 # No. of time-steps
-t_total = 100000
+t_total = 200000
 
 # Potential weights
-U_spring_weight = 10
-U_interaction_weight = 8000
+U_spring_weight = 0.1
+U_interaction_weight = 500
 U_pressure_weight = 0.0001
 U_twist_weight = 1000
 U_p_direction_weight = 100
@@ -46,7 +50,9 @@ if __name__ == '__main__':
     initial_time = timer()
 
     # Run the script
-    run.run(N, spring_strength, l0, noise, potential_weights, dt, t_total, animate, save)
+    import torch
+    torch.autograd.set_detect_anomaly(True)
+    run.run(N, spring_strength, l0, noise, potential_weights, dt, t_total, test_mode, animate)
 
     # Print time elapsed
     print(f'Simulation finished at {timer()-initial_time:.2f} s')

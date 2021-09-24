@@ -22,9 +22,9 @@ class Animation:
                 print(f'Time-step: {idx+1} / {self.t_total}')
 
             # Update
-            self.sim_obj.grad_on()
+            #self.sim_obj.grad_on()
             self.sim_obj.update()
-            self.sim_obj.count_interactions()
+            #self.sim_obj.count_interactions()
 
             # Increment time-step
             self.sim_obj.t += 1
