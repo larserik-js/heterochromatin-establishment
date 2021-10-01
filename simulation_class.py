@@ -1,3 +1,5 @@
+import copy
+
 import numpy as np
 import torch
 from numba import njit
@@ -6,7 +8,10 @@ import matplotlib.pyplot as plt
 from scipy.special import lambertw, binom
 
 class Simulation:
-    def __init__(self, N, spring_strength, l0, noise, potential_weights, dt, t_total):
+    def __init__(self, N, spring_strength, l0, noise, potential_weights, dt, t_total, classic):
+        ## Polymer type
+        self.classic = classic
+
         ## Parameters
         # No. of nucleosomes
         self.N = N
@@ -31,7 +36,7 @@ class Simulation:
         self.X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         # No. of interacting nucleosomes
-        self.n_interacting = int(N/2)
+        self.n_interacting = int(N)
         # No. of allowed interactions
         self.n_allowed_interactions = 2
 
@@ -68,6 +73,11 @@ class Simulation:
         # Particles within the following distance are counted for statistics
         self.l_interacting = 2*self.r0
 
+        # Center of mass
+        self.center_of_mass = torch.sum(self.X, dim=0) / self.N
+        # Radius of gyration
+        self.radius_of_gyration = 0
+
         ## Distance vectors from all particles to all particles
         #rij_all = self.X[:, None, :] - self.X
         rij_all = self.X - self.X[:, None, :]
@@ -79,7 +89,12 @@ class Simulation:
         self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
 
         # Picks out nucleosomes that are allowed to interact with each other
-        self.interaction_mask = torch.from_numpy(self.get_interaction_mask())
+        if self.classic:
+            self.interaction_mask = torch.ones(size=(self.N, self.N), dtype=torch.bool)
+            # Self-self interactions are forbidden
+            self.interaction_mask.fill_diagonal_(False)
+        else:
+            self.interaction_mask = torch.from_numpy(self.get_interaction_mask())
 
         ## Polarity vectors
         # Set initial polarities
@@ -104,7 +119,6 @@ class Simulation:
         self.mask[-1,1] = 0
 
         # # For each particle lists all other particles from closest to furthest away
-        # self.neighbors = torch.from_numpy(get_neighbors(self.X, k = self.X.shape[0]-1))
         move_to_gpu = False
         if move_to_gpu:
             self.X = self.X.cuda()
@@ -115,13 +129,21 @@ class Simulation:
         # Time-step
         self.dt = dt
         self.t_total = t_total
+        self.t_half = int(t_total/2)
 
-        # Will store information on the number of neighbors within a given distance
-        # for interacting and non-interacting states, respectively
-        self.interaction_stats = torch.zeros((2,t_total))
-
+        ## Statistics
         # Will store the number of interactions that occur on a given neighbor-neighbor index difference
         self.interaction_idx_difference = torch.zeros(self.n_interacting, dtype=torch.float32)
+
+        # Keeps track of the current lifetime of a given pairwise interaction
+        self.running_lifetimes = torch.zeros(size=(self.n_interacting, self.n_interacting), dtype=torch.float)
+
+        # Every time a life is completed, the lifetime is added to the relevant index
+        self.lifetimes = torch.zeros_like(self.running_lifetimes, dtype=torch.float)
+
+        # Number of completed lifetimes for a given interaction index difference
+        # self.lifetimes divided by this number gives the average lifetime
+        self.completed_lifetimes = torch.zeros_like(self.running_lifetimes, dtype=torch.float)
 
         ## Plot parameters
         # Nucleosome scatter marker size
@@ -152,11 +174,11 @@ class Simulation:
 
         # Indices for checking for possible interactions
         j_idx, i_idx = np.meshgrid(np.arange(self.N), np.arange(self.N))
-        return self.mask_calculator(full_array, state_A, i_idx, j_idx)
+        return self.mask_calculator(full_array, state_A, i_idx, j_idx, self.n_allowed_interactions)
 
     @staticmethod
     @njit
-    def mask_calculator(full_array, state_A, i_idx, j_idx):
+    def mask_calculator(full_array, state_A, i_idx, j_idx, n_allowed_interactions):
         # Total number of nucleosomes
         N = len(full_array)
         # Shows which nucleosomes interact with which
@@ -168,7 +190,7 @@ class Simulation:
         j_idx = j_idx.flatten()[sort_idx]
 
         # Number of allowed interactions
-        n_allowed_interactions = 2
+        #n_allowed_interactions = 2
 
         # Counts no. of interactions per nucleosome
         n_interactions = np.zeros(N, dtype=np.uint8)
@@ -352,21 +374,56 @@ class Simulation:
         #return w1 * U_spring + w2 * U_interaction + w3 * U_pressure + w4*U_twist + w5*U_p_directional
         return w1 * U_spring + w2 * U_interaction + w3 * U_pressure
 
-    def count_interactions(self):
-        norms_interacting, norms_non_interacting = self.get_interaction_norms()
-        n_within = torch.sum((norms_interacting > 0) & (norms_interacting < self.l_interacting))
-        self.interaction_stats[0, self.t - 1] = n_within
+    # Calculate radius of gyration
+    def calculate_rg(self):
+        distances_to_com = torch.norm(self.X - self.center_of_mass)
+        return torch.sqrt( torch.mean(distances_to_com**2) )
 
-        ## Non-interacting
-        # Select only non-interacting particles
-        n_within = torch.sum((norms_non_interacting > 0) & (norms_non_interacting < self.l_interacting))
-        self.interaction_stats[1, self.t - 1] = n_within
+    def gather_statistics(self):
+        ## Equilibrium statistics are taken halfway through the simulation
+        if self.t > self.t_half:
 
-        ## Count interaction distances
-        interaction_indices = torch.where((self.interaction_mask == True) & (self.norms_all < self.l_interacting))
-        interaction_distances = torch.abs((interaction_indices[1] - interaction_indices[0]))
-        # Only add a half as each distance is counted twice, but should only contribute once to statistics
-        self.interaction_idx_difference[interaction_distances] += 1/2
+            ## Add new value of RG to itself
+            # At the end divided by t_total for time average
+            self.radius_of_gyration += self.calculate_rg()
+
+            ## Count interaction distances
+            # Interaction only applies to distances lower than l_interacting
+            interaction_condition = (self.interaction_mask == True) & (self.norms_all < self.l_interacting)
+
+            interaction_indices = torch.where(interaction_condition)
+            interaction_distances = torch.abs((interaction_indices[1] - interaction_indices[0]))
+            #print(f't = {self.t}')
+            #print(interaction_distances)
+            #print(torch.bincount(interaction_distances, minlength=self.N))
+            # Only add a half as each distance is counted twice, but should only contribute once to statistics
+            self.interaction_idx_difference += 0.5 * torch.bincount(interaction_distances, minlength=self.N)
+            #print(self.interaction_idx_difference)
+
+            ## Count lifetimes
+            # If two nucleosomes are (still) interacting, add 1 to the running lifetimes
+            self.running_lifetimes += interaction_condition.int()
+
+            # If two nucleosomes are no longer interacting, reset the running lifetime, and count the reset
+
+            reset_condition = (self.previous_interaction_mask & torch.logical_not(interaction_condition))
+
+            self.lifetimes[reset_condition] += self.running_lifetimes[reset_condition]
+            self.completed_lifetimes[reset_condition] += 1
+            self.running_lifetimes[reset_condition] = 0
+
+            ## Finalize statistics
+            if self.t == self.t_total - 1:
+                self.radius_of_gyration = self.radius_of_gyration / self.t_total
+
+                self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
+
+                for i in range(len(self.lifetimes)):
+                    for k in range(len(self.lifetimes)-i-1):
+                        j = k+i+1
+                        idx = j-i
+                        self.average_lifetimes[idx] += self.lifetimes[i,j] / (self.completed_lifetimes[i,j] + 1e-7)
+                #print(self.interaction_idx_difference)
 
     def update(self):
         # Require gradient
@@ -403,8 +460,15 @@ class Simulation:
             self.X.grad.zero_()
             #self.P.grad.zero_()
 
+        # New center of mass
+        self.center_of_mass = torch.sum(self.X, dim=0) / self.N
+
         ## Distance vectors from all particles to all particles
         rij_all = self.X - self.X[:, None, :]
+
+        # Copy previous interaction mask for statistics
+        # This mask also includes the distance requirement for interactions
+        self.previous_interaction_mask = copy.deepcopy(self.interaction_mask) & (self.norms_all < self.l_interacting)
 
         # Length of distances
         self.norms_all = torch.sqrt(1e-7 + torch.sum(rij_all**2, dim=2))  #  torch.linalg.norm(rij_all, dim=2)
@@ -412,11 +476,14 @@ class Simulation:
         # Normalized distance vectors
         self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
 
-        # Interaction mask
-        self.interaction_mask = torch.from_numpy(self.get_interaction_mask())
+        # Create new interaction mask
+        # This mask does NOT include the distance requirement for interactions
+        if not self.classic:
+            self.interaction_mask = torch.from_numpy(self.get_interaction_mask())
 
         # Count interactions for statistics
-        self.count_interactions()
+        with torch.no_grad():
+            self.gather_statistics()
 
     def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
         # Plot the different states
@@ -429,6 +496,9 @@ class Simulation:
 
         ax.plot(x_plot[all_condition].cpu(), y_plot[all_condition].cpu(), z_plot[all_condition].cpu(),
                 marker='o', ls=ls, markersize=self.chain_s, c='k', lw=0.7, label=label)
+
+        # Plot center of mass
+        ax.scatter(self.center_of_mass[0], self.center_of_mass[1], self.center_of_mass[2], s=0.5, c='g')
 
         # Plot polarity vectors
         #u, v, w = self.P[:,0], self.P[:,1], self.P[:,2]
@@ -446,9 +516,9 @@ class Simulation:
     def plot_statistics(self):
         s = 0.5
         fig, ax = plt.subplots(2,1,figsize=(8,6))
-        ts = torch.arange(self.t_total)
-        ax[0].scatter(ts, self.interaction_stats[0], s=s, label='Interacting states')
-        ax[0].scatter(ts, self.interaction_stats[1], s=s, label='Non-interacting states')
+        #ts = torch.arange(self.t_half)
+        #ax[0].scatter(ts, self.interaction_stats[0], s=s, label='Interacting states')
+        #ax[0].scatter(ts, self.interaction_stats[1], s=s, label='Non-interacting states')
 
         ax[1].plot(np.arange(self.n_interacting), self.interaction_idx_difference)
 
@@ -459,6 +529,6 @@ class Simulation:
         ax[1].set_xlabel('Index difference', size=14)
         ax[1].set_ylabel('No. of interactions', size=14)
 
-        #plt.legend(loc='best')
+        #ax[0].legend(loc='best')
         plt.tight_layout()
         plt.show()

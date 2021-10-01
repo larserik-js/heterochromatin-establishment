@@ -1,18 +1,19 @@
-from plot_functions import plot_final_state, plot_statistics
+from plot_functions import plot_final_state, plot_statistics, plot_rg_vs_noise, plot_heatmap
 
-suffix = '_N=150_noise=2,5'
+plot_noise = 5.0
+plot_t_total = 1000000
+plot_N = 100
 
-
-# Plot final state
-
-#filename = '/home/lars/Documents/masters_thesis/final_state/final_state' + suffix + '.pkl'
-#plot_final_state(filename)
-
-#
-# ## Plot statistics
-filename = '/home/lars/Documents/masters_thesis/statistics/statistics' + suffix + '.pkl'
-plot_statistics(filename)
-# #
+## Plot final state
+plot_final_state(noise=plot_noise, t_total=plot_t_total,save=False)
 
 
+## Plot statistics
+plot_statistics(noise=plot_noise,t_total=plot_t_total, save=False)
 
+
+## Plot RG
+plot_rg_vs_noise(t_total=plot_t_total,N=plot_N,save=False)
+
+## Plot heatmap
+plot_heatmap(plot_t_total, plot_N, save=False)
