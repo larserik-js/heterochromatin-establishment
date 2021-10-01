@@ -13,7 +13,6 @@ class Animation:
         self.ax_anim = self.fig_anim.add_subplot(111, projection='3d')
 
     def frame_generator(self):
-
         # Updates the simulation
         for idx in range(self.t_total):
 
@@ -22,14 +21,12 @@ class Animation:
                 print(f'Time-step: {idx+1} / {self.t_total}')
 
             # Update
-            #self.sim_obj.grad_on()
             self.sim_obj.update()
-            #self.sim_obj.count_interactions()
 
             # Increment time-step
             self.sim_obj.t += 1
 
-            # Only generates a .gif image for every 10th update
+            # Only generates a .gif image for every 10000th update
             if idx % 100 == 0:
                 yield idx
 
@@ -41,7 +38,8 @@ class Animation:
         # Print t
         text_str = r'$t = $' + f' {self.sim_obj.t}'
         r = self.sim_obj.r_system
-        self.ax_anim.text(2*r, -1*r, 4*r, text_str)
+        com = self.sim_obj.center_of_mass
+        self.ax_anim.text(2*r + com[0], -1*r + com[1], 4*r + com[2], text_str)
 
         # Plot chain
         self.ax_anim.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
@@ -58,8 +56,17 @@ class Animation:
         # u, v, w = self.sim_obj.P[:,0], self.sim_obj.P[:,1], self.sim_obj.P[:,2]
         # self.ax_anim.quiver(X, Y, Z, u, v, w, length=1, normalize=True)
 
+        # Plot center of mass
+        self.ax_anim.scatter(self.sim_obj.center_of_mass[0], self.sim_obj.center_of_mass[1], self.sim_obj.center_of_mass[2],
+                             s=0.5, c='g')
+
         # Set plot dimensions
-        self.ax_anim.set(xlim=self.sim_obj.plot_dim, ylim=self.sim_obj.plot_dim, zlim=self.sim_obj.plot_dim)
+        self.ax_anim.set(xlim=(self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[0],
+                               self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[1]),
+                         ylim=(self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[0],
+                               self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[1]),
+                         zlim=(self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[0],
+                               self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
 
         # Set title, labels and legend
         self.ax_anim.set_title(f'No. of nucleosomes = {self.sim_obj.N}', size=16)
