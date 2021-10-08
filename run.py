@@ -35,14 +35,10 @@ def write_pkl(var_list, filename):
 def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
-    if sim_obj.classic:
-        fs_filename =  f'final_state/classic_final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
-        stats_filename = f'statistics/classic_statistics_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
-        rg_filename = f'statistics/RG/classic_RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
-    else:
-        fs_filename =  f'final_state/non-classic_final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
-        stats_filename =  f'statistics/non-classic_statistics_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
-        rg_filename = f'statistics/RG/non-classic_RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
+    fs_filename =  f'final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
+    stats_filename =  f'statistics/statistics_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
+    rg_filename = f'statistics/RG/RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
+    correlation_filename = f'statistics/correlation/correlation_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}'
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
@@ -53,16 +49,21 @@ def save_data(sim_obj):
     write_pkl(pickle_var_list, fs_filename)
 
     # Statistics
-    pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.n_interacting,
-                       sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
+    pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
     write_pkl(pickle_var_list, stats_filename)
 
     # Radius of gyration
     pickle_var_list = [sim_obj.radius_of_gyration]
     write_pkl(pickle_var_list, rg_filename)
 
+    # Correlation
+    pickle_var_list = [sim_obj.correlation_sums]
+    write_pkl(pickle_var_list, correlation_filename)
+
 # Runs the script
-def run(N, spring_strength, l0, noise, potential_weights, dt, t_total, classic, test_mode, animate, verbose):
+def run(N, spring_strength, l0, noise, U_spring_weight, U_interaction_weight, U_pressure_weight,
+        dt, t_total, test_mode, animate, verbose):
+
     torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
 
@@ -70,7 +71,8 @@ def run(N, spring_strength, l0, noise, potential_weights, dt, t_total, classic, 
     torch.manual_seed(0)
 
     # Create simulation object
-    sim_obj = Simulation(N, spring_strength, l0, noise, potential_weights, dt, t_total, classic)
+    sim_obj = Simulation(N, spring_strength, l0, noise, U_spring_weight, U_interaction_weight, U_pressure_weight,
+                         dt, t_total)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -100,7 +102,7 @@ def run(N, spring_strength, l0, noise, potential_weights, dt, t_total, classic, 
         else:
             ## Save animation
             filename = '/home/lars/Documents/masters_thesis/animations/animation' \
-                       + f'_N={sim_obj.N}' + f'_noise={sim_obj.noise:.2f}' + '.gif'
+                       + f'_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' + '.gif'
             anim.save(filename, dpi=200, writer=writergif)
 
             ## Save data
@@ -142,10 +144,13 @@ def run(N, spring_strength, l0, noise, potential_weights, dt, t_total, classic, 
             #
             # # Plot statistics
             # sim_obj.plot_statistics()
-            import plotter
+            #import plotter
+            print('No current plots in test mode.')
 
         # Just save statistics, no plotting
         else:
+
+            print(sim_obj.t)
             ## Save data
             save_data(sim_obj)
 

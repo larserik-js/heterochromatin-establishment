@@ -26,8 +26,8 @@ class Animation:
             # Increment time-step
             self.sim_obj.t += 1
 
-            # Only generates a .gif image for every 10000th update
-            if idx % 100 == 0:
+            # Only generates a .gif image for every 1000th update
+            if idx % 1000 == 0:
                 yield idx
 
         # Generates 10 identical images at the end of the animation
@@ -36,7 +36,7 @@ class Animation:
 
     def plot(self, X, Y, Z):
         # Print t
-        text_str = r'$t = $' + f' {self.sim_obj.t}'
+        text_str = r'$t = $' + f' {self.sim_obj.t} / {self.sim_obj.t_total}'
         r = self.sim_obj.r_system
         com = self.sim_obj.center_of_mass
         self.ax_anim.text(2*r + com[0], -1*r + com[1], 4*r + com[2], text_str)
@@ -52,10 +52,6 @@ class Animation:
             self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
-        # # Plot polarity vectors
-        # u, v, w = self.sim_obj.P[:,0], self.sim_obj.P[:,1], self.sim_obj.P[:,2]
-        # self.ax_anim.quiver(X, Y, Z, u, v, w, length=1, normalize=True)
-
         # Plot center of mass
         self.ax_anim.scatter(self.sim_obj.center_of_mass[0], self.sim_obj.center_of_mass[1], self.sim_obj.center_of_mass[2],
                              s=0.5, c='g')
@@ -69,7 +65,7 @@ class Animation:
                                self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
 
         # Set title, labels and legend
-        self.ax_anim.set_title(f'No. of nucleosomes = {self.sim_obj.N}', size=16)
+        self.ax_anim.set_title(r'$N$' + f' = {self.sim_obj.N}, noise = {self.sim_obj.noise}' + r'$l_0$', size=16)
         self.ax_anim.set_xlabel('x', size=14)
         self.ax_anim.set_ylabel('y', size=14)
         self.ax_anim.set_zlabel('z', size=14)
