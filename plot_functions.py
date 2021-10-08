@@ -10,9 +10,9 @@ import seaborn as sns
 # from mayavi.mlab import *
 
 
-def plot_final_state(noise, t_total, save):
+def plot_final_state(N, noise, t_total, save):
     open_filename = f'/home/lars/Documents/masters_thesis/final_state/non-classic'\
-                    + f'_final_state_N=100_t_total={t_total}_noise={noise:.2f}.pkl'
+                    + f'_final_state_N={N}_t_total={t_total}_noise={noise:.2f}.pkl'
 
     with open(open_filename, 'rb') as f:
         x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
@@ -44,7 +44,7 @@ def plot_final_state(noise, t_total, save):
     plt.show()
 
 
-def plot_statistics(noise, t_total, save):
+def plot_statistics(N, noise, t_total, save):
     s = 0.5
     fig, ax = plt.subplots(2,1, figsize=(8,6))
 
@@ -55,13 +55,13 @@ def plot_statistics(noise, t_total, save):
     for i in range(len(polymer_types)):
         # Finds all .pkl files for N = N
         files = glob('/home/lars/Documents/masters_thesis/statistics/' + polymer_types[i]
-                     + f'_statistics_N=100_t_total={t_total}_noise={noise:.2f}.pkl')
+                     + f'_statistics_N={N}_t_total={t_total}_noise={noise:.2f}.pkl')
 
         if len(files) > 0:
             with open(files[0], 'rb') as f:
-                N, noise, n_interacting, interaction_idx_difference, average_lifetimes = pickle.load(f)
+                N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
                 ax[0].bar(np.arange(N), average_lifetimes, alpha=alphas[i], label=labels[i])
-                ax[1].bar(np.arange(n_interacting), interaction_idx_difference, alpha=alphas[i], label=labels[i])
+                ax[1].bar(np.arange(N), interaction_idx_difference, alpha=alphas[i], label=labels[i])
 
     ax[0].set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$', size=18)
 
@@ -80,7 +80,7 @@ def plot_statistics(noise, t_total, save):
     plt.tight_layout()
     plt.show()
 
-def plot_rg_vs_noise(t_total,N,save):
+def plot_rg_vs_noise(N, t_total,save):
     polymer_types = ['classic', 'non-classic']
     # Plot
     fig, ax = plt.subplots(figsize=(8,6))
@@ -114,7 +114,7 @@ def plot_rg_vs_noise(t_total,N,save):
     ax.legend(loc='best')
     plt.show()
 
-def plot_heatmap(t_total, N, save):
+def plot_heatmap(N, t_total, save):
     polymer_types = ['classic', 'non-classic']
 
     fig, ax = plt.subplots(2,2, sharex=True, sharey=True, figsize=(10,6))
@@ -149,8 +149,8 @@ def plot_heatmap(t_total, N, save):
 
         if n_files > 0:
             # Create heatmaps
-            sns.heatmap(np.log(lifetimes_array + 1e-10), ax=ax[0, j], cbar_kws={'label': colorbar_labels[0]})
-            sns.heatmap(np.log(int_idx_diff_array + 1e-10), ax=ax[1, j], cbar_kws={'label': colorbar_labels[1]})
+            sns.heatmap(np.log(lifetimes_array + 1e-2), ax=ax[0, j], cbar_kws={'label': colorbar_labels[0]})
+            sns.heatmap(np.log(int_idx_diff_array + 1e-2), ax=ax[1, j], cbar_kws={'label': colorbar_labels[1]})
 
             # Set axis ticks and labels
             _, xtick_labels = plt.xticks()
@@ -180,5 +180,39 @@ def plot_heatmap(t_total, N, save):
 
     plt.tight_layout()
     plt.show()
+
+def plot_correlation(noise, t_total):
+    s = 0.5
+    fig, ax = plt.subplots(figsize=(8,6))
+
+    polymer_types = ['classic', 'non-classic']
+    labels = ['Classic polymer', 'Non-classic polymer']
+    alphas = [0.5,0.5]
+
+    for i in range(len(polymer_types)):
+        # Finds all .pkl files for N = N
+        files = glob('/home/lars/Documents/masters_thesis/statistics/correlation/' + polymer_types[i]
+                     + f'_correlation_N=100_t_total={t_total}_noise={noise:.2f}.pkl')
+
+        if len(files) > 0:
+            with open(files[0], 'rb') as f:
+                correlation = pickle.load(f)[0]
+                shifts = np.arange(1, len(correlation) + 1, 1)
+
+                print(correlation)
+                print(shifts)
+
+                ax.bar(shifts, correlation, alpha=alphas[i], label=labels[i])
+
+    ax.set_title(r'$N$' + ' = 100, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$', size=18)
+
+    ax.set_ylabel('Average no. of interactions', size=14)
+    ax.set_yscale('log')
+    ax.set_xlabel('Shift', size=14)
+
+    ax.legend(loc='best')
+    plt.tight_layout()
+    plt.show()
+
 
 
