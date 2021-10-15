@@ -11,8 +11,8 @@ import seaborn as sns
 
 
 def plot_final_state(N, noise, t_total, save):
-    open_filename = f'/home/lars/Documents/masters_thesis/final_state/non-classic'\
-                    + f'_final_state_N={N}_t_total={t_total}_noise={noise:.2f}.pkl'
+    open_filename = f'/home/lars/Documents/masters_thesis/final_state/'\
+                    + f'final_state_N={N}_t_total={t_total}_noise={noise:.2f}.pkl'
 
     with open(open_filename, 'rb') as f:
         x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
@@ -38,7 +38,7 @@ def plot_final_state(N, noise, t_total, save):
         fig.savefig('/home/lars/Documents/masters_thesis/images/final_state')
 
     ax.legend(loc='upper left')
-    ax.set_title(r'$N$' + f' = {len(x_plot)}, ' + r'$t_{total}$' + f' = {t_total}', size=18)
+    ax.set_title(r'$N$' + f' = {len(x_plot)}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}', size=18)
     ax.set(xlim=plot_dim, ylim=plot_dim, zlim=plot_dim)
     plt.tight_layout()
     plt.show()
