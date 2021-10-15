@@ -61,7 +61,7 @@ def save_data(sim_obj):
     write_pkl(pickle_var_list, correlation_filename)
 
 # Runs the script
-def run(N, spring_strength, l0, noise, U_spring_weight, U_interaction_weight, U_pressure_weight,
+def run(N, spring_strength, l0, noise, U_spring_weight, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight,
         dt, t_total, test_mode, animate, verbose):
 
     torch.set_num_threads(1)
@@ -71,8 +71,8 @@ def run(N, spring_strength, l0, noise, U_spring_weight, U_interaction_weight, U_
     torch.manual_seed(0)
 
     # Create simulation object
-    sim_obj = Simulation(N, spring_strength, l0, noise, U_spring_weight, U_interaction_weight, U_pressure_weight,
-                         dt, t_total)
+    sim_obj = Simulation(N, spring_strength, l0, noise, U_spring_weight, U_two_interaction_weight,
+                         U_classic_interaction_weight, U_pressure_weight, dt, t_total)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])

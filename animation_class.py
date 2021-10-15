@@ -26,8 +26,8 @@ class Animation:
             # Increment time-step
             self.sim_obj.t += 1
 
-            # Only generates a .gif image for every 1000th update
-            if idx % 1000 == 0:
+            # Only generates a .gif image for every 100th update
+            if idx % 100 == 0:
                 yield idx
 
         # Generates 10 identical images at the end of the animation
