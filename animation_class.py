@@ -24,7 +24,7 @@ class Animation:
             self.sim_obj.update()
 
             # Increment time-step
-            self.sim_obj.t += 1
+            self.sim_obj.t = idx + 1
 
             # Only generates a .gif image for every 100th update
             if idx % 100 == 0:
@@ -45,10 +45,10 @@ class Animation:
         self.ax_anim.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
 
         # Plot each state type separately
-        for i in range(len(self.sim_obj.states)):
-            x_plot = X[self.sim_obj.states[i]]
-            y_plot = Y[self.sim_obj.states[i]]
-            z_plot = Z[self.sim_obj.states[i]]
+        for i in range(len(self.sim_obj.states_booleans)):
+            x_plot = X[self.sim_obj.states_booleans[i]]
+            y_plot = Y[self.sim_obj.states_booleans[i]]
+            z_plot = Z[self.sim_obj.states_booleans[i]]
             self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 

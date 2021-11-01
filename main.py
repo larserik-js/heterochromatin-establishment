@@ -1,6 +1,7 @@
 
 ## External packages
 import torch
+import numpy as np
 torch.set_num_threads(1)
 from timeit import default_timer as timer
 #from tqdm import tqdm
@@ -37,7 +38,6 @@ dt = 0.001
 # No. of time-steps
 t_total = 100000
 
-
 # Potential weights
 U_spring_weight = 0.1
 U_two_interaction_weight = 500
@@ -46,12 +46,28 @@ U_pressure_weight = 100
 U_twist_weight = 1000
 U_p_direction_weight = 100
 
+## State parameters
+# Allow states to change
+allow_state_change = True
+
+# Recruited conversion probability
+# Towards S
+alpha_1 = 900 * dt
+# Towards A
+alpha_2 = 900 * dt
+alpha_list = np.linspace(750, 990, 25)
+# Noisy conversion probability (given that a noisy conversion attempt is chosen)
+beta = 20 * dt
+
 ##############################################################################
 ##############################################################################
 
-def curied_run(noise):
-    return run.run(N, spring_strength, l0, noise, U_spring_weight, U_two_interaction_weight, U_classic_interaction_weight,
-                   U_pressure_weight, dt, t_total, test_mode=False, animate=animate, verbose=True)
+def curied_run(alpha):
+    alpha_1 = alpha
+    alpha_2 = alpha
+    return run.run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
+                   U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
+                   test_mode=False, animate=animate, allow_state_change=allow_state_change, verbose=True)
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
@@ -72,7 +88,7 @@ if __name__ == '__main__':
     total_time = 0
 
     if multi:
-        res = list(pool.map(curied_run, noise_list))
+        res = list(pool.map(curied_run, alpha_list))
 
         # Print time elapsed
         final_time = timer()-initial_time
@@ -84,8 +100,9 @@ if __name__ == '__main__':
         initial_time = timer()
 
         # Run the simulation
-        run.run(N, spring_strength, l0, noise, U_spring_weight, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight,
-                dt, t_total, test_mode, animate, verbose=True)
+        run.run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
+                U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, test_mode,
+                animate, allow_state_change, verbose=True)
 
         # Print time elapsed
         final_time = timer()-initial_time
