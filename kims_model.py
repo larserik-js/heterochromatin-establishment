@@ -7,8 +7,8 @@ r = np.random
 
 n_states = 3
 n_particles = 60
-t_total = 4000
-alpha = 0.59
+t_total = 40000
+alpha = 0.58
 
 beta = 1 / 3
 F = alpha/(1-alpha)
@@ -46,7 +46,7 @@ def numba_f(states, n_particles, t_total, alpha, beta, statistics):
 
             # Recruited conversion
             rand_alpha = r.rand()
-            if  rand_alpha < alpha:
+            if rand_alpha < alpha:
                 #print('Recruited')
                 #print(rand_alpha)
                 # Other particle
@@ -96,8 +96,8 @@ def run(n_states, n_particles, t_total, alpha, beta, scatter_s):
         fig,ax = plt.subplots(figsize=(8,6))
 
         ax.plot(ts, statistics[0], lw=scatter_s, label=state_names[0])
-        ax.plot(ts, statistics[1], lw=scatter_s, label=state_names[1])
-        ax.plot(ts, statistics[2], lw=scatter_s, label=state_names[2])
+        # ax.plot(ts, statistics[1], lw=scatter_s, label=state_names[1])
+        # ax.plot(ts, statistics[2], lw=scatter_s, label=state_names[2])
 
         ax.set_title(f'F = {F}')
         ax.legend(loc='best')

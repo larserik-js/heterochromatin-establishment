@@ -9,6 +9,9 @@ import seaborn as sns
 # from mayavi import mlab
 # from mayavi.mlab import *
 
+state_colors = ['b', 'r', 'y']
+state_names = ['Silent', 'Unmodified', 'Active']
+
 
 def plot_final_state(N, noise, t_total, save):
     open_filename = f'/home/lars/Documents/masters_thesis/final_state/'\
@@ -44,7 +47,7 @@ def plot_final_state(N, noise, t_total, save):
     plt.show()
 
 
-def plot_statistics(N, noise, t_total, save):
+def plot_interactions(N, noise, t_total, save):
     s = 0.5
     fig, ax = plt.subplots(2,1, figsize=(8,6))
 
@@ -54,8 +57,8 @@ def plot_statistics(N, noise, t_total, save):
 
     for i in range(len(polymer_types)):
         # Finds all .pkl files for N = N
-        files = glob('/home/lars/Documents/masters_thesis/statistics/' + polymer_types[i]
-                     + f'_statistics_N={N}_t_total={t_total}_noise={noise:.2f}.pkl')
+        files = glob('/home/lars/Documents/masters_thesis/statistics/interactions/' + polymer_types[i]
+                     + f'_interactions_N={N}_t_total={t_total}_noise={noise:.2f}.pkl')
 
         if len(files) > 0:
             with open(files[0], 'rb') as f:
@@ -214,5 +217,36 @@ def plot_correlation(noise, t_total):
     plt.tight_layout()
     plt.show()
 
+def plot_states(N, t_total, noise, alpha_1, alpha_2):
+    # Finds all .pkl files for N = N
+    files = glob(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
+                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}.pkl')
 
+    print(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
+                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}.pkl')
+
+    n_files = len(files)
+
+    if n_files == 0:
+        print('No files to plot.')
+        return
+
+    fig,ax = plt.subplots(figsize=(8,6))
+
+    for i in range(n_files):
+
+        with open(files[i], 'rb') as f:
+            state_statistics = pickle.load(f)[0]
+
+        ts = torch.arange(len(state_statistics[0]))
+
+        lw = 0.2
+
+        for j in range(len(state_names)):
+            ax.plot(ts, state_statistics[j], lw=lw, c=state_colors[j], label=state_names[j])
+
+    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=18)
+    ax.legend(loc='best')
+    plt.show()
 

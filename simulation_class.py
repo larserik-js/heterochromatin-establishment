@@ -7,9 +7,12 @@ from scipy.special import lambertw
 
 from statistics import _gather_statistics
 
+r = np.random
+
 class Simulation:
-    def __init__(self, N, spring_strength, l0, noise, U_spring_weight, U_two_interaction_weight,
-                 U_classic_interaction_weight, U_pressure_weight, dt, t_total):
+    def __init__(self, N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
+                 U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
+                 allow_state_change):
 
         ## Parameters
         # No. of nucleosomes
@@ -26,6 +29,13 @@ class Simulation:
         self.U_classic_interaction_weight = U_classic_interaction_weight
         self.U_pressure_weight = U_pressure_weight
 
+        ## State change parameters
+        self.alpha_1 = alpha_1
+        self.alpha_2 = alpha_2
+        self.beta = beta
+
+        # Allow states to change
+        self.allow_state_change = allow_state_change
 
         ## Initialize system
         thetas = np.linspace(0, 2*np.pi, N, endpoint=False)
@@ -58,23 +68,43 @@ class Simulation:
         # states[70:80] = 2
         # states[80:90] = 0
         # states[90:] = 2
-        states[:15] = 2
-        states[15:30] = 0
-        states[30:45] = 2
-        states[45:60] = 0
-        states[60:75] = 2
-        states[75:] = 0
-        #states = torch.ones_like(self.X[:,0])
+
+        # states[:15] = 1
+        # states[15:30] = 0
+        # states[30:45] = 2
+        # states[45:60] = 0
+        # states[60:75] = 1
+        # states[75:] = 0
+
+        # states[:int(self.N/2)] = 0
+        # states[int(self.N/2):] = 2
+
+        states = 2*torch.ones_like(self.X[:,0], dtype=int)
 
         # Pick out the nucleosomes of the different states
-        self.state_two_interaction = (states==0)
-        self.state_classic = (states==1)
-        self.state_unreactive = (states==2)
-        self.states = [self.state_two_interaction, self.state_classic, self.state_unreactive]
+        self.state_S = (states==0)
+        self.state_U = (states==1)
+        self.state_A = (states==2)
 
-        self.state_indices = [torch.where(self.state_two_interaction)[0],
-                              torch.where(self.state_classic)[0],
-                              torch.where(self.state_unreactive)[0]]
+        # All states
+        self.states = states
+
+        self.states_booleans = torch.cat([self.state_S[None,:], self.state_U[None,:], self.state_A[None,:]], dim=0)
+
+        # Which type of interaction should be associated with the different states
+        self.state_two_interaction = copy.deepcopy(self.state_S)
+        self.state_unreactive = self.state_U | self.state_A
+        self.state_classic = (self.states==999)
+
+        # ## TEST ##
+        # self.state_two_interaction = (self.states==999)
+        # self.state_unreactive = self.state_S | self.state_A
+        # self.state_classic = (self.states==999)
+
+
+        # self.state_indices = [torch.where(self.state_two_interaction)[0],
+        #                       torch.where(self.state_classic)[0],
+        #                       torch.where(self.state_unreactive)[0]]
 
         ## Distance vectors from all particles to all particles
         rij_all = self.X - self.X[:, None, :]
@@ -152,6 +182,9 @@ class Simulation:
         self.completed_lifetimes = torch.zeros_like(self.running_lifetimes, dtype=torch.float)
         self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
 
+        # Counts the number of particles in the different states
+        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / 10)))
+
         ## Plot parameters
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
@@ -159,10 +192,17 @@ class Simulation:
         self.chain_s = 1
         # Colors of scatter plot markers
         self.state_colors = ['b', 'r', 'y']
-        self.state_names = ['Two-interaction', 'Classic', 'Unreactive']
+        self.state_names = ['Silent', 'Unmodified', 'Active']
         # Plot dimensions
         self.plot_dim = (-1.5*r_system, 1.5*r_system)
         self.r_system = r_system
+
+    # Updates interaction types based on states
+    def update_interaction_types(self):
+        # Which type of interaction should be associated with the different states
+        self.state_two_interaction = copy.deepcopy(self.state_S)
+        self.state_unreactive = self.state_U | self.state_A
+        self.state_classic = (self.states==999)
 
     # Picks out nucleosomes that are allowed to interact with each other
     def get_interaction_mask(self):
@@ -291,7 +331,7 @@ class Simulation:
 
         ## Attraction potential
         # Only calculate on interacting nucleosomes within the interaction distance
-        cutoff_interaction_mask = self.interaction_mask & (self.norms_all < self.l_interacting)
+        cutoff_interaction_mask = self.interaction_mask & (self.norms_all < 2*self.r0)
         U_attraction = -torch.exp(-2 * self.norms_all / (b * self.r0))
 
         # Add the attraction potential to the relevant particles
@@ -329,8 +369,82 @@ class Simulation:
 
         return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
 
+    # Uses imported function
     def gather_statistics(self):
         return _gather_statistics(self)
+
+    @staticmethod
+    @njit
+    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta):
+
+        # Particle on which to attempt a change
+        n1_index = r.randint(N)
+
+        # Choose reaction probability based on the state of n1
+        if states[n1_index] == 0:
+            alpha = alpha_2 + 0
+        elif states[n1_index] == 2:
+            alpha = alpha_1 + 0
+        elif states[n1_index] == 1:
+            alpha = (alpha_1 + alpha_2) / 2
+        else:
+            raise AssertionError('State not equal to 0, 1, or 2.')
+
+        # Recruited conversion
+        rand_alpha = r.rand()
+
+        if rand_alpha < alpha:
+
+            # Other particles within distance
+            particles_within_distance = \
+            np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
+
+            # If there are other particles within l_interacting
+            if len(particles_within_distance) > 0:
+
+                # Choose one of those particles randomly
+                n2_index = r.choice(particles_within_distance)
+
+                # If the n2 state is U, do not perform any changes
+                if states[n1_index] < states[n2_index] and states[n2_index] != 1:
+                    states[n1_index] += 1
+                elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
+                    states[n1_index] -= 1
+
+        # Noisy conversion
+        # Choose new random particle
+        n1_index = r.randint(N)
+
+        rand_beta = r.rand()
+        if rand_beta < beta:
+
+            if states[n1_index] == 0:
+                states[n1_index] += 1
+            elif states[n1_index] == 2:
+                states[n1_index] -= 1
+
+            else:
+                # If the particle is in the U state, choose a change to A or S randomly
+                rand = r.rand()
+                if states[n1_index] == 1 and rand < 0.5:
+                    states[n1_index] += 1
+                elif states[n1_index] == 1 and rand >= 0.5:
+                    states[n1_index] -= 1
+
+        return states
+
+    def change_states(self):
+        self.states = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
+                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta)
+
+        # Change from Numpy array to Torch tensor
+        self.states = torch.from_numpy(self.states)
+
+        # Update individual (boolean) tensors
+        self.state_S, self.state_U, self.state_A = (self.states==0), (self.states==1), (self.states==2)
+        self.states_booleans = torch.cat([self.state_S[None,:], self.state_U[None,:], self.state_A[None,:]], dim=0)
+
+        return None
 
     def update(self):
         # Require gradient
@@ -386,18 +500,27 @@ class Simulation:
 
         # Count interactions for statistics
         # Equilibrium statistics are taken halfway through the simulation
-        if self.t > self.t_half:
+        if self.t >= self.t_half:
             with torch.no_grad():
                 self.gather_statistics()
 
+
+        ## CHANGE STATES
+        if self.allow_state_change:
+            self.change_states()
+
+            # Updates interaction types based on states
+            self.update_interaction_types()
+
+
     def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
         # Plot the different states
-        for i in range(len(self.states)):
-            ax.scatter(x_plot[self.states[i]].cpu(), y_plot[self.states[i]].cpu(), z_plot[self.states[i]].cpu(),
-                       s=self.nucleosome_s, c=self.state_colors[i])
+        for i in range(len(self.states_booleans)):
+            ax.scatter(x_plot[self.states_booleans[i]].cpu(), y_plot[self.states_booleans[i]].cpu(),
+                       z_plot[self.states_booleans[i]].cpu(), s=self.nucleosome_s, c=self.state_colors[i])
 
         # Plot chain line
-        all_condition = torch.ones_like(self.states[0], dtype=torch.bool)
+        all_condition = torch.ones_like(self.states_booleans[0], dtype=torch.bool)
 
         ax.plot(x_plot[all_condition].cpu(), y_plot[all_condition].cpu(), z_plot[all_condition].cpu(),
                 marker='o', ls=ls, markersize=self.chain_s, c='k', lw=0.7, label=label)
