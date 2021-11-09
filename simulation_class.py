@@ -10,21 +10,21 @@ from statistics import _gather_statistics
 r = np.random
 
 class Simulation:
-    def __init__(self, N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
-                 U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 allow_state_change):
+    def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight,
+                 U_pressure_weight, alpha_1, alpha_2, beta, allow_state_change):
 
         ## Parameters
         # No. of nucleosomes
         self.N = N
-        # Half the spring constant
-        self.spring_strength = spring_strength
+        # N must be even
+        if self.N % 2 != 0:
+            raise AssertionError('N must be an even number!')
+
         # Equilibrium spring length
         self.l0 = l0
         # Noise constant
         self.noise = noise
         # Potential weights
-        self.U_spring_weight = U_spring_weight
         self.U_two_interaction_weight = U_two_interaction_weight
         self.U_classic_interaction_weight = U_classic_interaction_weight
         self.U_pressure_weight = U_pressure_weight
@@ -38,15 +38,57 @@ class Simulation:
         self.allow_state_change = allow_state_change
 
         ## Initialize system
-        thetas = np.linspace(0, 2*np.pi, N, endpoint=False)
-        angle = thetas[1]-thetas[0]
-        # The chord length
-        r_system = self.l0 * np.sqrt( 1/(np.sin(angle)**2 + (1-np.cos(angle))**2 + (angle/np.pi)**2) )
-        xs, ys = r_system*np.cos(thetas), r_system*np.sin(thetas)
-        zs = np.linspace(-r_system,r_system,N)
+        random_init = False
+        if random_init:
+            xs = [0.0]
+            ys = [0.0]
+            zs = [0.0]
+            for i in range(self.N - 1):
+                d = np.random.randn(3)
+                d /= np.sqrt(np.sum(d**2))
+                d *= self.l0
+                xs.append(xs[-1] + d[0])
+                ys.append(ys[-1] + d[1])
+                zs.append(zs[-1] + d[2])
+            xs = np.array(xs)
+            ys = np.array(ys)
+            zs = np.array(zs)
+
+        else:
+            xs = np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0
+            ys, zs = np.zeros(self.N), np.zeros(self.N)
+
+        # Half the chain length
+        r_system = self.l0 * self.N / 2
 
         # Nucleosome positions
         self.X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
+
+        # Index types to determine which nucleosomes to update
+        self.index_types = ['even', 'odd', 'endpoints']
+
+        # Vectors for picking out different indices
+        m_even = torch.zeros(self.N)
+        m_even[::2] = 1
+
+        m_odd = torch.zeros(self.N)
+        m_odd[1::2] = 1
+
+        # Set endpoint indices to 0
+        m_even[0], m_odd[-1] = 0, 0
+
+        self.m_even, self.m_odd = m_even[:,None], m_odd[:,None]
+        self.indexation_dict = {'even': m_even.bool(), 'odd': m_odd.bool(), 'endpoints': [0,-1]}
+
+        # Points in the middle between the two neighboring particles
+        self.X_tilde = self.get_X_tilde()
+
+        # Rotation vectors
+        self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()
+
+        # Angles for nucleosomes
+        self.theta_zeros = self.get_theta_zeros()
+        self.thetas = self.get_theta_zeros()
 
         # No. of allowed interactions in non-classic model
         self.n_allowed_interactions = 2
@@ -57,29 +99,12 @@ class Simulation:
         self.mask_upper[self.triu_indices[0], self.triu_indices[1]] = 1
 
         ## States
-        states = torch.zeros_like(self.X[:,0])
-        # states[:10] = 0
-        # states[10:20] = 2
-        # states[20:30] = 0
-        # states[30:40] = 2
-        # states[40:50] = 0
-        # states[50:60] = 2
-        # states[60:70] = 0
-        # states[70:80] = 2
-        # states[80:90] = 0
-        # states[90:] = 2
+        states = torch.zeros_like(self.X[:,0], dtype=torch.int)
 
-        # states[:15] = 1
-        # states[15:30] = 0
-        # states[30:45] = 2
-        # states[45:60] = 0
-        # states[60:75] = 1
-        # states[75:] = 0
+        states[:int(self.N/2)] = 0
+        states[int(self.N/2):] = 2
 
-        # states[:int(self.N/2)] = 0
-        # states[int(self.N/2):] = 2
-
-        states = 2*torch.ones_like(self.X[:,0], dtype=int)
+        #states = 2*torch.ones_like(self.X[:,0], dtype=torch.int)
 
         # Pick out the nucleosomes of the different states
         self.state_S = (states==0)
@@ -101,19 +126,8 @@ class Simulation:
         # self.state_unreactive = self.state_S | self.state_A
         # self.state_classic = (self.states==999)
 
-
-        # self.state_indices = [torch.where(self.state_two_interaction)[0],
-        #                       torch.where(self.state_classic)[0],
-        #                       torch.where(self.state_unreactive)[0]]
-
         ## Distance vectors from all particles to all particles
-        rij_all = self.X - self.X[:, None, :]
-
-        # Length of distances
-        self.norms_all = torch.linalg.norm(rij_all, dim=2)
-
-        # Normalized distance vectors
-        self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
+        self.rij_all, self.norms_all = self.get_norms()
 
         # Picks out nucleosomes that are allowed to interact with each other
         self.interaction_mask_two, self.interaction_mask_classic = self.get_interaction_mask()
@@ -124,24 +138,6 @@ class Simulation:
 
         # Diagonal indices
         self.diag_indices = self.norms_all != 0
-
-        # Used for indexing neighbors
-        chain_idx = np.stack([np.roll(np.arange(N), 1),
-                              np.roll(np.arange(N), -1)]
-                             ).T
-        self.chain_idx = torch.tensor(chain_idx, dtype=torch.long)
-
-        # Picks out the neighbors of each nucleosome.
-        # The nucleosomes at the polymer ends only have one neighbor.
-        self.mask = torch.isfinite(self.chain_idx)
-        self.mask[0,0] = 0
-        self.mask[-1,1] = 0
-
-        # # For each particle lists all other particles from closest to furthest away
-        move_to_gpu = False
-        if move_to_gpu:
-            self.X = self.X.cuda()
-            self.mask = self.mask.cuda()
 
         # Total no. of time steps
         self.t_total = t_total
@@ -194,7 +190,7 @@ class Simulation:
         self.state_colors = ['b', 'r', 'y']
         self.state_names = ['Silent', 'Unmodified', 'Active']
         # Plot dimensions
-        self.plot_dim = (-1.5*r_system, 1.5*r_system)
+        self.plot_dim = (-0.5*r_system, 0.5*r_system)
         self.r_system = r_system
 
     # Updates interaction types based on states
@@ -301,21 +297,26 @@ class Simulation:
 
         return interaction_mask_two, interaction_mask_classic
 
+    # Require gradient
     def grad_on(self):
-        self.X.requires_grad_(True)
+        if self.index_type == 'even' or self.index_type == 'odd':
+            self.thetas.requires_grad_(True)
 
-    def spring_potential(self):
-        ## SPRING-BASED POTENTIAL
-        # Distance vectors from a particle to its two neighbors in the chain
-        rij = self.X[self.chain_idx] - self.X[:, None, :]
-        # Length of the distance vectors
-        #norms = torch.sqrt(1e-5 + torch.sum(rij**2, dim=2))
-        norms = torch.linalg.norm(rij, dim=2)
-        # Normalize distance vectors
-        self.rij_hat = rij / (1e-10 + norms[:, :, None])
-        # The spring-based potential term
-        U_spring = self.spring_strength * torch.sum(self.mask * (norms - self.l0) ** 2)
-        return U_spring
+        elif self.index_type == 'endpoints':
+            self.X.requires_grad_(True)
+        else:
+            raise AssertionError('Invalid index type given in function "update".')
+
+    # Turn off gradient
+    def grad_off(self):
+        if self.index_type == 'even' or self.index_type == 'odd':
+            # Reset gradients
+            self.thetas.grad.zero_()
+
+        elif self.index_type == 'endpoints':
+            self.X.grad.zero_()
+        else:
+            raise AssertionError('Invalid index type given in function "update".')
 
     # DISTANCE-BASED interaction potential
     def interaction_potential(self):
@@ -326,8 +327,8 @@ class Simulation:
         ## Repulsion for all particles
         U_interaction = torch.exp(-2 * self.norms_all / self.r0)
 
-        # Leaves out self-self interactions
-        U_interaction = U_interaction * self.diag_indices
+        # Cutoff for repulsion
+        U_interaction = U_interaction * (self.norms_all < 0.9*self.r0)
 
         ## Attraction potential
         # Only calculate on interacting nucleosomes within the interaction distance
@@ -347,7 +348,6 @@ class Simulation:
 
         return torch.sum(U_interaction)
 
-
     # Nuclear envelope pressure potential
     def pressure_potential(self):
         # Enacted by the nuclear envelope
@@ -358,16 +358,14 @@ class Simulation:
 
     # Returns (overall) system potential
     def potential(self):
-        ## Spring-based potential
-        U_spring = self.spring_potential()
-
         ## INTERACTION-BASED POTENTIAL
         U_interaction = self.interaction_potential()
 
         ## PRESSURE POTENTIAL
         U_pressure = self.pressure_potential()
 
-        return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
+        #return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
+        return U_interaction + self.U_pressure_weight * U_pressure
 
     # Uses imported function
     def gather_statistics(self):
@@ -433,6 +431,7 @@ class Simulation:
 
         return states
 
+    # Changes the nucleosome states based on probability
     def change_states(self):
         self.states = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
                                           self.l_interacting, self.alpha_1, self.alpha_2, self.beta)
@@ -446,49 +445,158 @@ class Simulation:
 
         return None
 
+    # Returns a tensor of zeros
+    def get_theta_zeros(self):
+        return torch.zeros(self.N)[:, None]
+
+    # For each nucleosome except endpoint nucleosomes
+    # The distance between its two neighbors
+    def get_d_between_neighbors(self):
+        d_between_neighbors = torch.zeros_like(self.X)
+        d_between_neighbors[1:-1] = self.X[2:] - self.X[:-2]
+        return d_between_neighbors
+
+    # For each nucleosome except endpoint nucleosomes
+    # The point exactly between its two neighbors
+    def get_X_tilde(self):
+        d_between_neighbors = self.get_d_between_neighbors()
+        X_tilde = torch.zeros_like(self.X)
+        X_tilde[1:-1] += self.X[:-2] + d_between_neighbors[1:-1] / 2
+        return X_tilde
+
+    # Returns position-dependent vectors
+    def get_rot_vectors(self):
+        d_between_neighbors = self.get_d_between_neighbors()
+
+        # Rotation vector for each particle
+        rot_vector = self.X - self.X_tilde
+        # Radius of rotation
+        rot_radius = torch.norm(rot_vector, dim=1)
+        # Perpendicular vector (normalized to be distance rot_radius)
+        rot_vector_ppdc = torch.cross(rot_vector, d_between_neighbors)
+        rot_vector_ppdc /= torch.norm(d_between_neighbors + 1e-10, dim=1)[:, None]
+
+        return rot_vector, rot_radius, rot_vector_ppdc
+
+    # Returns the angle-dependent position tensor
+    def get_X_theta(self):
+        tilde_plus_angles = self.X_tilde + torch.cos(self.thetas) * self.rot_vector \
+                            + torch.sin(self.thetas) * self.rot_vector_ppdc
+
+        if self.index_type == 'odd':
+            X_theta = self.m_even * self.X + self.m_odd * tilde_plus_angles
+
+        elif self.index_type == 'even':
+            X_theta = self.m_odd * self.X + self.m_even * tilde_plus_angles
+
+        else:
+            raise AssertionError('Invalid index type found in function "get_X_theta".')
+
+        X_theta[0] += self.X[0]
+        X_theta[-1] += self.X[-1]
+
+        return X_theta
+
+    # For all nucleosomes
+    # The normalized distance vectors to all other nucleosomes
+    # As well as the length of these distances
+    def get_norms(self):
+        # Distance vectors from all particles to all particles
+        rij_all = self.X - self.X[:, None, :]
+
+        # Length of distances
+        norms_all = torch.linalg.norm(rij_all, dim=2)
+
+        # Normalized distance vectors
+        rij_all = rij_all / (norms_all[:,:,None] + 1e-10)
+
+        return rij_all, norms_all
+
+    # The update step
     def update(self):
-        # Require gradient
-        self.grad_on()
+        # For update of nucleosomes of even and odd indices, plus the nucleosomes at each end of the chain
+        for index_type in self.index_types:
+            # Set index type for the update
+            self.index_type = index_type
 
-        ## Calculate potential
-        U = self.potential()
-        U.backward()
+            # Boolean tensor for indexing
+            indexation = self.indexation_dict[index_type]
 
-        ## Update variables
-        with torch.no_grad():
-            if torch.isnan(torch.sum(self.X.grad)):
-                raise AssertionError('NAN in X gradient!')
+            # Requires gradient for:
+            # Thetas if indices even or odd, or:
+            # Xs if indices are the endpoints
+            self.grad_on()
 
-            # Positions
-            self.X -= self.X.grad * self.dt
+            # Get position matrix
+            if index_type == 'even' or index_type == 'odd':
+                self.X = self.get_X_theta()
 
-            # Add noise
-            #self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
-            #self.X += self.noise * torch.randn_like(self.X) * (1 - self.t/self.t_total)
-            #self.X += self.noise * torch.randn_like(self.X)
-            Du = 1
-            eta = 1
-            self.X += self.noise * torch.empty_like(self.X).normal_(mean=0, std=np.sqrt(2*Du/eta*self.dt))
+            self.rij_all, self.norms_all = self.get_norms()
+
+            ## Calculate potential
+            U = self.potential()
+            U.backward()
+
+            ## Update variables
+            if index_type == 'even' or index_type == 'odd':
+
+                with torch.no_grad():
+                    if torch.isnan(torch.sum(self.thetas.grad)):
+                        raise AssertionError('NAN in gradient!')
+
+                    # Update angles for non-endpoints
+                    self.thetas[indexation] -= self.thetas.grad[indexation] * self.dt
+
+                    # Add noise
+                    #self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
+                    #self.X += self.noise * torch.randn_like(self.X) * (1 - self.t/self.t_total)
+                    #self.X += self.noise * torch.randn_like(self.X)
+                    Du = 1
+                    eta = 1
+
+                    self.thetas[indexation] += self.noise * torch.empty_like(self.thetas[indexation]).\
+                        normal_(mean=0, std=np.sqrt(2 * Du / eta * self.dt)) / (self.rot_radius[indexation][:,None] + 1e-10)
+
+                    # Update positions and vectors
+                    self.X = self.get_X_theta()
+
+            elif index_type == 'endpoints':
+                with torch.no_grad():
+                    if torch.isnan(torch.sum(self.X.grad)):
+                        raise AssertionError('NAN in gradient!')
+
+                    # Update positions for endpoints
+                    self.X[indexation] -= self.X.grad[indexation] * self.dt
+
+                    # Add noise
+                    Du = 1
+                    eta = 1
+
+                    self.X[indexation] += self.noise * torch.empty_like(self.X[indexation]).normal_(mean=0, std=np.sqrt(2 * Du / eta * self.dt))
+
+                    # Adjust distances from endpoints to their neighbors back to l0
+                    endpoint_d_vecs = self.X[indexation] - self.X[[1,-2]]
+                    self.X[indexation] = self.X[[1,-2]] + endpoint_d_vecs * (self.l0 / torch.linalg.norm(endpoint_d_vecs, dim=1)[:,None])
+
+            self.X_tilde = self.get_X_tilde()
+            self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()
 
             # Reset gradients
-            self.X.grad.zero_()
-            #self.P.grad.zero_()
+            self.grad_off()
+
+            # Reset angles to zero
+            self.thetas = self.get_theta_zeros()
 
         # New center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
 
-        ## Distance vectors from all particles to all particles
-        rij_all = self.X - self.X[:, None, :]
 
         # Copy previous interaction mask for statistics
         # This mask also includes the distance requirement for interactions
         self.previous_interaction_mask = copy.deepcopy(self.interaction_mask) & (self.norms_all < self.l_interacting)
 
-        # Length of distances
-        self.norms_all = torch.linalg.norm(rij_all, dim=2)
-
-        # Normalized distance vectors
-        self.rij_all = rij_all / (self.norms_all[:,:,None] + 1e-10)
+        # Update distance vectors
+        self.rij_all, self.norms_all = self.get_norms()
 
         # Create new interaction mask
         # This mask does NOT include the distance requirement for interactions
@@ -500,10 +608,9 @@ class Simulation:
 
         # Count interactions for statistics
         # Equilibrium statistics are taken halfway through the simulation
-        if self.t >= self.t_half:
-            with torch.no_grad():
-                self.gather_statistics()
-
+        # if self.t >= self.t_half:
+        #     with torch.no_grad():
+        #         self.gather_statistics()
 
         ## CHANGE STATES
         if self.allow_state_change:

@@ -39,7 +39,7 @@ class Animation:
         text_str = r'$t = $' + f' {self.sim_obj.t} / {self.sim_obj.t_total}'
         r = self.sim_obj.r_system
         com = self.sim_obj.center_of_mass
-        self.ax_anim.text(2*r + com[0], -1*r + com[1], 4*r + com[2], text_str)
+        self.ax_anim.text(r + com[0], -r + com[1], 1.8*r + com[2], text_str)
 
         # Plot chain
         self.ax_anim.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
@@ -66,6 +66,9 @@ class Animation:
 
         # Set title, labels and legend
         self.ax_anim.set_title(r'$N$' + f' = {self.sim_obj.N}, noise = {self.sim_obj.noise}' + r'$l_0$', size=16)
+        self.ax_anim.set_title(r'$N$' + f' = {self.sim_obj.N}, ' + r'$t_{total}$' + f' = {self.sim_obj.t_half:.0f},'
+                               + f'noise = {self.sim_obj.noise}' + r'$l_0$' + ', ' + r'$\alpha_1$'
+                               + f' = {self.sim_obj.alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {self.sim_obj.alpha_2:.2f}', size=16)
         self.ax_anim.set_xlabel('x', size=14)
         self.ax_anim.set_ylabel('y', size=14)
         self.ax_anim.set_zlabel('z', size=14)

@@ -4,9 +4,9 @@ plot_noise = 1.2
 plot_t_total = 1000000
 plot_N = 90
 
-plot_alpha = 800
-plot_alpha_1 = plot_alpha
-plot_alpha_2 = plot_alpha
+plot_alpha = 0.5
+plot_alpha_1 = 0.78
+plot_alpha_2 = 0.99
 
 ## Plot final state
 #plot_final_state(N=plot_N, noise=plot_noise, t_total=plot_t_total,save=False)

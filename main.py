@@ -25,26 +25,21 @@ test_mode = True
 animate = True
 
 # No. of nucleosomes
-N = 90
+N = 60
 # Equilibrium spring length
 l0 = 1
-# Half the spring constant
-spring_strength = 900
 # Noise
 noise_list = l0 * torch.linspace(2.5, 5.5, 31)
-noise = 1.2*l0
+noise = 0.2*l0
 # Time-step length
-dt = 0.001
+dt = 0.1
 # No. of time-steps
-t_total = 100000
+t_total = 10000
 
 # Potential weights
-U_spring_weight = 0.1
-U_two_interaction_weight = 500
+U_two_interaction_weight = 2
 U_classic_interaction_weight = 100
-U_pressure_weight = 100
-U_twist_weight = 1000
-U_p_direction_weight = 100
+U_pressure_weight = 1
 
 ## State parameters
 # Allow states to change
@@ -52,26 +47,31 @@ allow_state_change = True
 
 # Recruited conversion probability
 # Towards S
-alpha_1 = 900 * dt
+alpha_1 = 9 * dt
 # Towards A
-alpha_2 = 900 * dt
-alpha_list = np.linspace(750, 990, 25)
+alpha_2 = 9 * dt
+alpha_1_list = np.linspace(750, 990, 25) * dt
 # Noisy conversion probability (given that a noisy conversion attempt is chosen)
-beta = 20 * dt
+beta = 0.2 * dt
 
 ##############################################################################
 ##############################################################################
 
-def curied_run(alpha):
-    alpha_1 = alpha
-    alpha_2 = alpha
-    return run.run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
-                   U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                   test_mode=False, animate=animate, allow_state_change=allow_state_change, verbose=True)
+def curied_run(alpha_1):
+    #alpha_1 = alpha
+    #alpha_2 =
+    return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight,
+                   alpha_1, alpha_2, beta, test_mode=False, animate=animate, allow_state_change=allow_state_change, verbose=True)
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
 
+    # Get detailed error messages
+    import torch
+    torch.autograd.set_detect_anomaly(False)
+
+    # Run the script
+    total_time = 0
     if multi:
         # Start the timer
         print(f'Simulation (using multiprocessing) started.')
@@ -81,14 +81,7 @@ if __name__ == '__main__':
         pool = Pool(cpu_count())
         #pool = Pool(12)
 
-    # Run the script
-    import torch
-    torch.autograd.set_detect_anomaly(False)
-
-    total_time = 0
-
-    if multi:
-        res = list(pool.map(curied_run, alpha_list))
+        res = list(pool.map(curied_run, alpha_1_list))
 
         # Print time elapsed
         final_time = timer()-initial_time
@@ -100,9 +93,8 @@ if __name__ == '__main__':
         initial_time = timer()
 
         # Run the simulation
-        run.run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
-                U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, test_mode,
-                animate, allow_state_change, verbose=True)
+        run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight,
+                alpha_1, alpha_2, beta, test_mode, animate, allow_state_change, verbose=True)
 
         # Print time elapsed
         final_time = timer()-initial_time
