@@ -71,8 +71,8 @@ def save_data(sim_obj):
     write_pkl(pickle_var_list, states_filename)
 
 # Runs the script
-def run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight, U_classic_interaction_weight,
-        U_pressure_weight, alpha_1, alpha_2, beta, test_mode, animate, allow_state_change, verbose):
+def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight, alpha_1,
+        alpha_2, beta, test_mode, animate, allow_state_change, verbose):
 
     torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
@@ -81,9 +81,8 @@ def run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_inter
     torch.manual_seed(0)
 
     # Create simulation object
-    sim_obj = Simulation(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_interaction_weight,
-                         U_classic_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         allow_state_change)
+    sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight,
+                         U_pressure_weight, alpha_1, alpha_2, beta, allow_state_change)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -161,7 +160,6 @@ def run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_inter
             plt.plot(ts, sim_obj.state_statistics[0], lw=0.1, label='State S')
             plt.plot(ts, sim_obj.state_statistics[1], lw=0.1, label='State U')
             plt.plot(ts, sim_obj.state_statistics[2], lw=0.1, label='State A')
-            #plt.plot(ts, sim_obj.state_statistics.sum(dim=0), label='Total')
             plt.legend()
             plt.show()
 
@@ -172,6 +170,8 @@ def run(N, spring_strength, l0, noise, dt, t_total, U_spring_weight, U_two_inter
             ## Save data
             save_data(sim_obj)
 
+    print(sim_obj.X)
+    print(sim_obj.norms_all)
     print(f'Finished simulation with noise = {noise}')
 
 ##############################################################################

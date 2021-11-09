@@ -238,7 +238,7 @@ def plot_states(N, t_total, noise, alpha_1, alpha_2):
         with open(files[i], 'rb') as f:
             state_statistics = pickle.load(f)[0]
 
-        ts = torch.arange(len(state_statistics[0]))
+        ts = torch.arange(len(state_statistics[0])) * 10
 
         lw = 0.2
 
