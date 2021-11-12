@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 from numba import njit
+import matplotlib.pyplot as plt
 
 # Calculate radius of gyration
 def update_rg(sim_obj):
@@ -96,9 +97,20 @@ def update_states(sim_obj):
 
     return None
 
+def update_distances_to_com(sim_obj):
+    t = sim_obj.t - sim_obj.t_half
+
+    if t%10 == 0:
+        t_tenth = int(t / 10)
+        sim_obj.summed_distance_vecs_to_com += (sim_obj.X - sim_obj.center_of_mass)
+        norms = torch.linalg.norm(sim_obj.summed_distance_vecs_to_com, dim=1)
+        sim_obj.distances_to_com[t_tenth] = float(torch.sum(norms))
+
+    return None
+
 def _gather_statistics(sim_obj):
     # Update radius of gyration
-    update_rg(sim_obj)
+    #update_rg(sim_obj)
 
     # # Interaction only applies to distances lower than l_interacting
     # # Relevant interactions are only counted once
@@ -116,6 +128,8 @@ def _gather_statistics(sim_obj):
     # update_average_lifetimes(sim_obj)
 
     # Count number of particles in each state
-    update_states(sim_obj)
+    #update_states(sim_obj)
+
+    update_distances_to_com(sim_obj)
 
     return None
