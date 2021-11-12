@@ -10,8 +10,8 @@ from statistics import _gather_statistics
 r = np.random
 
 class Simulation:
-    def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight,
-                 U_pressure_weight, alpha_1, alpha_2, beta, allow_state_change):
+    def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
+                 allow_state_change):
 
         ## Parameters
         # No. of nucleosomes
@@ -26,7 +26,6 @@ class Simulation:
         self.noise = noise
         # Potential weights
         self.U_two_interaction_weight = U_two_interaction_weight
-        self.U_classic_interaction_weight = U_classic_interaction_weight
         self.U_pressure_weight = U_pressure_weight
 
         ## State change parameters
@@ -101,8 +100,8 @@ class Simulation:
         ## States
         states = torch.zeros_like(self.X[:,0], dtype=torch.int)
 
-        states[:int(self.N/2)] = 0
-        states[int(self.N/2):] = 2
+        # states[:int(self.N/2)] = 0
+        # states[int(self.N/2):] = 2
 
         #states = 2*torch.ones_like(self.X[:,0], dtype=torch.int)
 
@@ -119,25 +118,28 @@ class Simulation:
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
         self.state_unreactive = self.state_U | self.state_A
-        self.state_classic = (self.states==999)
 
         # ## TEST ##
         # self.state_two_interaction = (self.states==999)
         # self.state_unreactive = self.state_S | self.state_A
-        # self.state_classic = (self.states==999)
 
         ## Distance vectors from all particles to all particles
         self.rij_all, self.norms_all = self.get_norms()
 
+        # (N,N) tensor with zeros along the diagonal and both off-diagonals
+        self.wide_diag_zeros = torch.ones(size=(self.N, self.N), dtype=torch.double)
+        for i in range(self.N):
+            self.wide_diag_zeros[i, i] = 0
+            if i > 0:
+                self.wide_diag_zeros[i,i-1] = 0
+            if i < self.N - 1:
+                self.wide_diag_zeros[i,i+1] = 0
+
+        # Same tensor with dtypes boolean
+        self.wide_diag_zeros_bool = self.wide_diag_zeros.bool()
+
         # Picks out nucleosomes that are allowed to interact with each other
-        self.interaction_mask_two, self.interaction_mask_classic = self.get_interaction_mask()
-        self.interaction_mask_two = torch.from_numpy(self.interaction_mask_two)
-        self.interaction_mask_classic = torch.from_numpy(self.interaction_mask_classic)
-
-        self.interaction_mask = self.interaction_mask_two + self.interaction_mask_classic
-
-        # Diagonal indices
-        self.diag_indices = self.norms_all != 0
+        self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
 
         # Total no. of time steps
         self.t_total = t_total
@@ -147,15 +149,21 @@ class Simulation:
         self.t = 0
         self.dt = dt
 
-        ## For statistics
-        # As a starting point: the interaction distance between nucleosomes is just set to
-        # the same distance as the equilibrium spring length
+        # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
-        self.r0 = self.l0 * 1
+        self.r0 = self.l0 / 2
 
         # Particles within the following distance are counted for statistics
-        self.l_interacting = 2*self.r0
+        self.l_interacting = 2 * self.r0
 
+        # Regulate the potential function
+        # b is the value which ensures that r0 is a local extremum for U_interaction
+        self.b = np.real(-2 / lambertw(-2 * np.exp(-2)))
+
+        # Cutoff distances for the potentials for the three different states
+        self.potential_cutoff = 1*self.l0
+
+        ## For statistics
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         # Radius of gyration
@@ -181,6 +189,10 @@ class Simulation:
         # Counts the number of particles in the different states
         self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / 10)))
 
+        # Measures distances from each nucleosome to the center of mass
+        self.summed_distance_vecs_to_com = torch.zeros_like(self.X)
+        self.distances_to_com = torch.empty(int(self.t_half / 10))
+
         ## Plot parameters
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
@@ -198,32 +210,34 @@ class Simulation:
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
         self.state_unreactive = self.state_U | self.state_A
-        self.state_classic = (self.states==999)
 
     # Picks out nucleosomes that are allowed to interact with each other
     def get_interaction_mask(self):
         # Transform torch tensors to numpy array
         norms_all = self.norms_all.detach().numpy()
         state_two_interaction = self.state_two_interaction.detach().numpy()
-        state_classic = self.state_classic.detach().numpy()
-        state_unreactive = self.state_unreactive.detach().numpy()
 
         # Indices for checking for possible interactions
         j_idx, i_idx = np.meshgrid(np.arange(self.N), np.arange(self.N))
-        var1, var2 = self._mask_calculator(norms_all, state_two_interaction, state_classic, state_unreactive,
-                                    i_idx, j_idx, self.n_allowed_interactions)
-        return var1, var2
+        interaction_mask_two = self._mask_calculator(norms_all, state_two_interaction, i_idx, j_idx,
+                                                     self.n_allowed_interactions)
+
+        # Change from Numpy array to Torch tensor
+        interaction_mask_two = torch.from_numpy(interaction_mask_two)
+
+        # Construct the mask for unreactive states
+        interaction_mask_unreactive = torch.logical_not(interaction_mask_two) & self.wide_diag_zeros_bool
+
+        return interaction_mask_two, interaction_mask_unreactive
 
     @staticmethod
     @njit
-    def _mask_calculator(norms_all, state_two_interaction, state_classic, state_unreactive,
-                        i_idx, j_idx, n_allowed_interactions):
+    def _mask_calculator(norms_all, state_two_interaction, i_idx, j_idx, n_allowed_interactions):
         # Total number of nucleosomes
         N = len(norms_all)
+
         # Shows which nucleosomes interact with which
-        #interaction_mask = np.zeros(norms_all.shape, dtype=np.bool_)
         interaction_mask_two = np.zeros(norms_all.shape, dtype=np.bool_)
-        interaction_mask_classic = np.zeros(norms_all.shape, dtype=np.bool_)
 
         # Sort distances
         sort_idx = np.argsort(norms_all.flatten())
@@ -245,37 +259,28 @@ class Simulation:
 
             # Checks if both nucleosomes are of the same (interacting) state
             two_interaction = state_two_interaction[i] and state_two_interaction[j]
-            classic = state_classic[i] and state_classic[j]
 
-            # Only nucleosomes of the same state can interact
-            if not (two_interaction or classic):
+            # Only S states can interact
+            if not two_interaction:
                 continue
 
-            # If the nucleosomes in question are the same nucleosome
-            # or if there already exists an interaction between them
-            if i == j or (interaction_mask_two[i, j] and interaction_mask_two[j, i]) or\
-                    (interaction_mask_classic[i, j] and interaction_mask_classic[j, i]):
+            # If the nucleosomes are the same or nearest neighbors
+            if i == j or i == j+1 or i == j-1:
                 continue
 
-            # If the nucleosomes are of the two-interaction state
-            # and the nucleosomes in question are nearest neighbors
-            if two_interaction and (i == j+1 or i == j-1):
+            # If there already exists an interaction between the two nucleosomes
+            if interaction_mask_two[i,j] and interaction_mask_two[j,i]:
                 continue
 
             # Two-interaction state nucleosomes can only interact with max. 2 other nucleosomes
-            if two_interaction and (n_interactions[i] >= n_allowed_interactions or n_interactions[j] >= n_allowed_interactions):
+            if n_interactions[i] >= n_allowed_interactions or n_interactions[j] >= n_allowed_interactions:
                 continue
 
             # Create interaction
             counter += 1
-            if two_interaction:
-                # interaction_mask[i, j] = 1
-                # interaction_mask[j, i] = 1
-                interaction_mask_two[i,j] = 1
-                interaction_mask_two[j,i] = 1
-            elif classic:
-                interaction_mask_classic[i,j] = 1
-                interaction_mask_classic[j,i] = 1
+
+            interaction_mask_two[i, j] = 1
+            interaction_mask_two[j, i] = 1
 
             n_interactions[i] += 1
             n_interactions[j] += 1
@@ -292,10 +297,7 @@ class Simulation:
                 #print('Loop ended at ' + str(counter))
                 break
 
-        # The returned mask has shape (N,N)
-        #return interaction_mask
-
-        return interaction_mask_two, interaction_mask_classic
+        return interaction_mask_two
 
     # Require gradient
     def grad_on(self):
@@ -320,33 +322,15 @@ class Simulation:
 
     # DISTANCE-BASED interaction potential
     def interaction_potential(self):
-        # Regulate the potential function
-        # b is the value which ensures that r0 is a local extremum for U_interaction
-        b = np.real(-2 / lambertw(-2 * np.exp(-2)) )
-
-        ## Repulsion for all particles
-        U_interaction = torch.exp(-2 * self.norms_all / self.r0)
-
-        # Cutoff for repulsion
-        U_interaction = U_interaction * (self.norms_all < 0.9*self.r0)
-
-        ## Attraction potential
         # Only calculate on interacting nucleosomes within the interaction distance
-        cutoff_interaction_mask = self.interaction_mask & (self.norms_all < 2*self.r0)
-        U_attraction = -torch.exp(-2 * self.norms_all / (b * self.r0))
 
-        # Add the attraction potential to the relevant particles
-        U_interaction[cutoff_interaction_mask] = U_interaction[cutoff_interaction_mask] + U_attraction[cutoff_interaction_mask]
+        mask_two_cutoff = (self.interaction_mask_two & (self.norms_all < self.potential_cutoff)).double()
+        mask_all_cutoff = (self.wide_diag_zeros_bool & (self.norms_all < self.potential_cutoff)).double()
 
-        # Multiply interactions by relevant potential weights
-        U_interaction[self.interaction_mask_two] = U_interaction[self.interaction_mask_two] * self.U_two_interaction_weight
+        U_interaction = torch.exp(-2 * self.norms_all / self.r0) * mask_all_cutoff
+        U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.b * self.r0)) * mask_two_cutoff
 
-        U_interaction[self.interaction_mask_classic] = U_interaction[self.interaction_mask_classic] * self.U_classic_interaction_weight
-
-        U_interaction[torch.logical_not(self.interaction_mask)] =\
-            U_interaction[torch.logical_not(self.interaction_mask)] * self.U_two_interaction_weight
-
-        return torch.sum(U_interaction)
+        return self.U_two_interaction_weight * torch.sum(U_interaction)
 
     # Nuclear envelope pressure potential
     def pressure_potential(self):
@@ -365,7 +349,9 @@ class Simulation:
         U_pressure = self.pressure_potential()
 
         #return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
-        return U_interaction + self.U_pressure_weight * U_pressure
+        #return U_interaction + self.U_pressure_weight * U_pressure
+        return U_interaction
+
 
     # Uses imported function
     def gather_statistics(self):
@@ -590,27 +576,27 @@ class Simulation:
         # New center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
 
+        if self.t == self.t_total - 1:
+            fig_stats, ax_stats = plt.subplots()
+            ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
+            plt.show()
 
         # Copy previous interaction mask for statistics
         # This mask also includes the distance requirement for interactions
-        self.previous_interaction_mask = copy.deepcopy(self.interaction_mask) & (self.norms_all < self.l_interacting)
+        self.previous_interaction_mask = copy.deepcopy(self.interaction_mask_two) & (self.norms_all < self.l_interacting)
 
         # Update distance vectors
         self.rij_all, self.norms_all = self.get_norms()
 
         # Create new interaction mask
         # This mask does NOT include the distance requirement for interactions
-        self.interaction_mask_two, self.interaction_mask_classic = self.get_interaction_mask()
-        self.interaction_mask_two = torch.from_numpy(self.interaction_mask_two)
-        self.interaction_mask_classic = torch.from_numpy(self.interaction_mask_classic)
-
-        self.interaction_mask = self.interaction_mask_two + self.interaction_mask_classic
+        self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
 
         # Count interactions for statistics
         # Equilibrium statistics are taken halfway through the simulation
-        # if self.t >= self.t_half:
-        #     with torch.no_grad():
-        #         self.gather_statistics()
+        if self.t >= self.t_half:
+            with torch.no_grad():
+                self.gather_statistics()
 
         ## CHANGE STATES
         if self.allow_state_change:

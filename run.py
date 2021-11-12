@@ -71,8 +71,8 @@ def save_data(sim_obj):
     write_pkl(pickle_var_list, states_filename)
 
 # Runs the script
-def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight, U_pressure_weight, alpha_1,
-        alpha_2, beta, test_mode, animate, allow_state_change, verbose):
+def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, test_mode,
+        animate, allow_state_change, verbose):
 
     torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
@@ -81,8 +81,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interacti
     torch.manual_seed(0)
 
     # Create simulation object
-    sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interaction_weight,
-                         U_pressure_weight, alpha_1, alpha_2, beta, allow_state_change)
+    sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
+                         allow_state_change)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -135,31 +135,31 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interacti
 
         # Just plot without saving:
         if test_mode:
-            # ## Make figure
-            # fig = plt.figure()
-            # ax = fig.add_subplot(111, projection='3d')
-            #
+            ## Make figure
+            fig = plt.figure()
+            ax = fig.add_subplot(111, projection='3d')
+
             # # Plot initial state
             # with torch.no_grad():
             #     sim_obj.plot(x_init, y_init, z_init, ax, label='Initial state', ls='--')
-            #
-            # # Plot final state
-            # x_final, y_final, z_final = sim_obj.X[:,0], sim_obj.X[:,1], sim_obj.X[:,2]
-            # #u_final, v_final, w_final = sim_obj.P[:, 0], sim_obj.P[:, 1], sim_obj.P[:, 2]
-            #
-            # with torch.no_grad():
-            #     sim_obj.plot(x_final, y_final, z_final, ax, label='Final state')
-            #
-            # # Plot MD
-            # sim_obj.finalize_plot(ax)
+
+            # Plot final state
+            x_final, y_final, z_final = sim_obj.X[:,0], sim_obj.X[:,1], sim_obj.X[:,2]
+            #u_final, v_final, w_final = sim_obj.P[:, 0], sim_obj.P[:, 1], sim_obj.P[:, 2]
+
+            with torch.no_grad():
+                sim_obj.plot(x_final, y_final, z_final, ax, label='Final state')
+
+            # Plot MD
+            sim_obj.finalize_plot(ax)
             #
             # # Plot statistics
             # sim_obj.plot_statistics()
             #import plotter
-            ts = torch.arange(len(sim_obj.state_statistics[0]))
-            plt.plot(ts, sim_obj.state_statistics[0], lw=0.1, label='State S')
-            plt.plot(ts, sim_obj.state_statistics[1], lw=0.1, label='State U')
-            plt.plot(ts, sim_obj.state_statistics[2], lw=0.1, label='State A')
+            # ts = torch.arange(len(sim_obj.state_statistics[0]))
+            # plt.plot(ts, sim_obj.state_statistics[0], lw=0.1, label='State S')
+            # plt.plot(ts, sim_obj.state_statistics[1], lw=0.1, label='State U')
+            # plt.plot(ts, sim_obj.state_statistics[2], lw=0.1, label='State A')
             plt.legend()
             plt.show()
 
@@ -170,8 +170,6 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_classic_interacti
             ## Save data
             save_data(sim_obj)
 
-    print(sim_obj.X)
-    print(sim_obj.norms_all)
     print(f'Finished simulation with noise = {noise}')
 
 ##############################################################################
