@@ -100,8 +100,8 @@ class Simulation:
         ## States
         states = torch.zeros_like(self.X[:,0], dtype=torch.int)
 
-        # states[:int(self.N/2)] = 0
-        # states[int(self.N/2):] = 2
+        states[:int(self.N/2)] = 0
+        states[int(self.N/2):] = 2
 
         #states = 2*torch.ones_like(self.X[:,0], dtype=torch.int)
 
@@ -187,11 +187,11 @@ class Simulation:
         self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
 
         # Counts the number of particles in the different states
-        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / 10)))
+        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / 25000)))
 
         # Measures distances from each nucleosome to the center of mass
         self.summed_distance_vecs_to_com = torch.zeros_like(self.X)
-        self.distances_to_com = torch.empty(int(self.t_half / 10))
+        self.distances_to_com = torch.empty(int(self.t_half / 25000))
 
         ## Plot parameters
         # Nucleosome scatter marker size
@@ -576,10 +576,10 @@ class Simulation:
         # New center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
 
-        if self.t == self.t_total - 1:
-            fig_stats, ax_stats = plt.subplots()
-            ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
-            plt.show()
+        # if self.t == self.t_total - 1:
+        #     fig_stats, ax_stats = plt.subplots()
+        #     ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
+        #     plt.show()
 
         # Copy previous interaction mask for statistics
         # This mask also includes the distance requirement for interactions
