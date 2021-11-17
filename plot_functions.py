@@ -13,23 +13,26 @@ state_colors = ['b', 'r', 'y']
 state_names = ['Silent', 'Unmodified', 'Active']
 
 
-def plot_final_state(N, noise, t_total, save):
-    open_filename = f'/home/lars/Documents/masters_thesis/final_state/'\
-                    + f'final_state_N={N}_t_total={t_total}_noise={noise:.2f}.pkl'
+def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta):
+    open_filename = f'/home/lars/Documents/masters_thesis/statistics/final_state/final_state_N={N}_t_total={t_total}'\
+            f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl'
 
     with open(open_filename, 'rb') as f:
         x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
+
+    # Center of mass
+    com = np.array([x_plot.sum(), y_plot.sum(), z_plot.sum()]) / len(x_plot)
 
     # Create figure
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
 
     # Plot the different states
-    for i in range(len(states)):
-        ax.scatter(x_plot[states[i]], y_plot[states[i]], z_plot[states[i]], s=5, c=state_colors[i])
+    for i in range(len(state_colors)):
+        ax.scatter(x_plot[states == i], y_plot[states == i], z_plot[states == i], s=5, c=state_colors[i])
 
     # Plot chain line
-    all_condition = torch.ones_like(states[0], dtype=torch.bool)
+    all_condition = torch.ones_like(torch.from_numpy(states), dtype=torch.bool)
 
     ax.plot(x_plot[all_condition], y_plot[all_condition], z_plot[all_condition],
             marker='o', ls='solid', markersize=1, c='k', lw=0.7, label='Final state')
@@ -37,12 +40,13 @@ def plot_final_state(N, noise, t_total, save):
     for i in range(len(state_colors)):
         ax.scatter([],[],c=state_colors[i],label=state_names[i])
 
-    if save:
-        fig.savefig('/home/lars/Documents/masters_thesis/images/final_state')
-
     ax.legend(loc='upper left')
-    ax.set_title(r'$N$' + f' = {len(x_plot)}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}', size=18)
-    ax.set(xlim=plot_dim, ylim=plot_dim, zlim=plot_dim)
+    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=16)
+    # Set plot dimensions
+    ax.set(xlim=(com[0] + plot_dim[0], com[0] + plot_dim[1]),
+           ylim=(com[1] + plot_dim[0], com[1] + plot_dim[1]),
+           zlim=(com[2] + plot_dim[0], com[2] + plot_dim[1]))
     plt.tight_layout()
     plt.show()
 
@@ -217,13 +221,13 @@ def plot_correlation(noise, t_total):
     plt.tight_layout()
     plt.show()
 
-def plot_states(N, t_total, noise, alpha_1, alpha_2):
+def plot_states(N, t_total, noise, alpha_1, alpha_2, beta):
     # Finds all .pkl files for N = N
     files = glob(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}.pkl')
+                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl')
 
     print(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}.pkl')
+                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl')
 
     n_files = len(files)
 
@@ -242,11 +246,13 @@ def plot_states(N, t_total, noise, alpha_1, alpha_2):
 
         lw = 0.2
 
+        print(state_statistics)
+
         for j in range(len(state_names)):
             ax.plot(ts, state_statistics[j], lw=lw, c=state_colors[j], label=state_names[j])
 
     ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$' + ', '
-                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=18)
+                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=16)
     ax.legend(loc='best')
     plt.show()
 

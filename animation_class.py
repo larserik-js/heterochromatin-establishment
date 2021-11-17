@@ -52,9 +52,9 @@ class Animation:
             self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
-        # Plot center of mass
-        self.ax_anim.scatter(self.sim_obj.center_of_mass[0], self.sim_obj.center_of_mass[1], self.sim_obj.center_of_mass[2],
-                             s=0.5, c='g')
+        # # Plot center of mass
+        # self.ax_anim.scatter(self.sim_obj.center_of_mass[0], self.sim_obj.center_of_mass[1], self.sim_obj.center_of_mass[2],
+        #                      s=0.5, c='g')
 
         # Set plot dimensions
         self.ax_anim.set(xlim=(self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[0],

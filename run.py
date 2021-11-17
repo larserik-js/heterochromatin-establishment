@@ -35,16 +35,16 @@ def write_pkl(var_list, filename):
 def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
-    fs_filename =  f'final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}'
+    fs_filename =  f'statistics/final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
     interactions_filename =  f'statistics/interactions/interactions_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}'
+                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
     rg_filename = f'statistics/RG/RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}'
+                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
     correlation_filename = f'statistics/correlation/correlation_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}'
+                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
     states_filename = f'statistics/states/states_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}'
+                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
@@ -160,8 +160,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
             # plt.plot(ts, sim_obj.state_statistics[0], lw=0.1, label='State S')
             # plt.plot(ts, sim_obj.state_statistics[1], lw=0.1, label='State U')
             # plt.plot(ts, sim_obj.state_statistics[2], lw=0.1, label='State A')
-            plt.legend()
-            plt.show()
+            #plt.legend()
+            #plt.show()
 
         # Just save statistics, no plotting
         else:

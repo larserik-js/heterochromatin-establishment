@@ -89,22 +89,24 @@ def update_average_lifetimes(sim_obj):
 
 def update_states(sim_obj):
     t = sim_obj.t - sim_obj.t_half
-    if t%10 == 0:
-        t_tenth = int(t / 10)
-        sim_obj.state_statistics[0, t_tenth] = (sim_obj.states == 0).sum()
-        sim_obj.state_statistics[1, t_tenth] = (sim_obj.states == 1).sum()
-        sim_obj.state_statistics[2, t_tenth] = (sim_obj.states == 2).sum()
+    interval = int(sim_obj.t_half / sim_obj.state_statistics.shape[1])
+    if t%interval == 0:
+        t_interval = int(t / interval)
+        sim_obj.state_statistics[0, t_interval] = (sim_obj.states == 0).sum()
+        sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
+        sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
 
     return None
 
 def update_distances_to_com(sim_obj):
     t = sim_obj.t - sim_obj.t_half
+    interval = int(sim_obj.t_half / distances_to_com.shape[1])
 
-    if t%10 == 0:
-        t_tenth = int(t / 10)
+    if t%interval == 0:
+        t_interval = int(t / interval)
         sim_obj.summed_distance_vecs_to_com += (sim_obj.X - sim_obj.center_of_mass)
         norms = torch.linalg.norm(sim_obj.summed_distance_vecs_to_com, dim=1)
-        sim_obj.distances_to_com[t_tenth] = float(torch.sum(norms))
+        sim_obj.distances_to_com[t_interval] = float(torch.sum(norms))
 
     return None
 
@@ -128,8 +130,8 @@ def _gather_statistics(sim_obj):
     # update_average_lifetimes(sim_obj)
 
     # Count number of particles in each state
-    #update_states(sim_obj)
+    update_states(sim_obj)
 
-    update_distances_to_com(sim_obj)
+    #update_distances_to_com(sim_obj)
 
     return None

@@ -2,7 +2,6 @@
 ## External packages
 import torch
 import numpy as np
-torch.set_num_threads(1)
 from timeit import default_timer as timer
 #from tqdm import tqdm
 from torch.multiprocessing import Pool, cpu_count
@@ -15,14 +14,16 @@ import run
 
 ## SET PARAMETERS
 # Multiprocessing
-multi = False
+multi = True
+if multi:
+    torch.set_num_threads(1)
 
 # Plots initial and final state, as well as statistics
 # Nothing (except possibly an animation) is saved
-test_mode = True
+test_mode = False
 
 # Additionally generates and saves an animation
-animate = True
+animate = False
 
 # No. of nucleosomes
 N = 60
@@ -34,31 +35,30 @@ noise = 0.5*l0
 # Time-step length
 dt = 0.02
 # No. of time-steps
-t_total = 100000
+t_total = 25000000
 
 # Potential weights
-U_two_interaction_weight = 30
+U_two_interaction_weight = 50
 U_pressure_weight = 1
 
 ## State parameters
 # Allow states to change
-allow_state_change = False
+allow_state_change = True
 
 # Recruited conversion probability
 # Towards S
-alpha_1 = 9 * dt
+alpha_1 = 32 * dt
 # Towards A
-alpha_2 = 9 * dt
-alpha_1_list = np.linspace(750, 990, 25) * dt
+alpha_2 = 49 * dt
+alpha_1_list = np.linspace(32, 33, 2) * dt
 # Noisy conversion probability (given that a noisy conversion attempt is chosen)
-beta = 0.2 * dt
+beta = 1 * dt
 
 ##############################################################################
 ##############################################################################
 
-def curied_run(U_two_interaction_weight):
+def curied_run(alpha_1):
     #alpha_1 = alpha
-    #alpha_2 =
     return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
                    test_mode=False, animate=animate, allow_state_change=allow_state_change, verbose=True)
 
