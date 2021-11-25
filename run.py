@@ -35,16 +35,18 @@ def write_pkl(var_list, filename):
 def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
-    fs_filename =  f'statistics/final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
-    interactions_filename =  f'statistics/interactions/interactions_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
-    rg_filename = f'statistics/RG/RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
-    correlation_filename = f'statistics/correlation/correlation_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
-    states_filename = f'statistics/states/states_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}_beta={sim_obj.beta:.2f}'
+    fs_filename =  f'statistics/final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    interactions_filename =  f'statistics/interactions/interactions_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    rg_filename = f'statistics/RG/RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    Rs_filename = f'statistics/Rs/Rs_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    correlation_filename = f'statistics/correlation/correlation_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    states_filename = f'statistics/states/states_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
+                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
@@ -62,6 +64,10 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.radius_of_gyration]
     write_pkl(pickle_var_list, rg_filename)
 
+    # End-to-end distance
+    pickle_var_list = [sim_obj.Rs]
+    write_pkl(pickle_var_list, Rs_filename)
+
     # Correlation
     pickle_var_list = [sim_obj.correlation_sums]
     write_pkl(pickle_var_list, correlation_filename)
@@ -71,18 +77,20 @@ def save_data(sim_obj):
     write_pkl(pickle_var_list, states_filename)
 
 # Runs the script
-def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, test_mode,
-        animate, allow_state_change, verbose):
+from memory_profiler import profile
+@profile
+def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, seed, test_mode,
+        animate, allow_state_change, cenH, verbose):
 
-    torch.set_num_threads(1)
+    # torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
 
     # Fix seed value
-    torch.manual_seed(0)
+    torch.manual_seed(seed)
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         allow_state_change)
+                         seed, allow_state_change, cenH)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -111,9 +119,9 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         # Save a named gif, plus pickled final states and statistics
         else:
             ## Save animation
-            filename = '/home/lars/Documents/masters_thesis/animations/animation' \
-                       + f'_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.2f}' +\
-                         f'_alpha_1={sim_obj.alpha_1:.2f}_alpha_2={sim_obj.alpha_2:.2f}' + '.gif'
+            filename = f'/home/lars/Documents/masters_thesis/animations/animation_N={sim_obj.N}'\
+            + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.4f}'\
+                    + f'_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}.gif'
             anim.save(filename, dpi=200, writer=writergif)
 
             ## Save data

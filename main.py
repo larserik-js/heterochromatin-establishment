@@ -14,7 +14,7 @@ import run
 
 ## SET PARAMETERS
 # Multiprocessing
-multi = True
+multi = False
 if multi:
     torch.set_num_threads(1)
 
@@ -25,8 +25,12 @@ test_mode = False
 # Additionally generates and saves an animation
 animate = False
 
+# Random seed
+seed = 4
+seed_list = np.arange(30)
+
 # No. of nucleosomes
-N = 60
+N = 40
 # Equilibrium spring length
 l0 = 1
 # Noise
@@ -35,7 +39,7 @@ noise = 0.5*l0
 # Time-step length
 dt = 0.02
 # No. of time-steps
-t_total = 25000000
+t_total = 1000 # 200000
 
 # Potential weights
 U_two_interaction_weight = 50
@@ -45,22 +49,30 @@ U_pressure_weight = 1
 # Allow states to change
 allow_state_change = True
 
+# Include cenH region
+cenH = False
+
+# Constants
+constant = 1
+constant_list = [0.1, 10]
+
 # Recruited conversion probability
 # Towards S
-alpha_1 = 32 * dt
+alpha_1 = 3.0 * dt * constant
 # Towards A
-alpha_2 = 49 * dt
-alpha_1_list = np.linspace(32, 33, 2) * dt
+alpha_2 = 4.9 * dt * constant
+alpha_1_list = np.linspace(2.5, 3.5, 11) * dt
 # Noisy conversion probability (given that a noisy conversion attempt is chosen)
-beta = 1 * dt
+beta = 0.2 * dt * constant
 
 ##############################################################################
 ##############################################################################
 
-def curied_run(alpha_1):
+def curied_run(seed):
     #alpha_1 = alpha
-    return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                   test_mode=False, animate=animate, allow_state_change=allow_state_change, verbose=True)
+    return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, constant*alpha_1,
+                   constant*alpha_2, constant*beta, seed,
+                   test_mode=False, animate=animate, allow_state_change=allow_state_change, cenH=cenH, verbose=True)
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
@@ -80,7 +92,7 @@ if __name__ == '__main__':
         pool = Pool(cpu_count())
         #pool = Pool(12)
 
-        res = list(pool.map(curied_run, alpha_1_list))
+        res = list(pool.map(curied_run, seed_list, chunksize=1))
 
         # Print time elapsed
         final_time = timer()-initial_time
@@ -92,9 +104,12 @@ if __name__ == '__main__':
         initial_time = timer()
 
         # Run the simulation
-        run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                test_mode, animate, allow_state_change, verbose=True)
+        run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, seed,
+                test_mode, animate, allow_state_change, cenH, verbose=True)
 
         # Print time elapsed
         final_time = timer()-initial_time
         print(f'Simulation finished at {final_time:.2f} s')
+
+
+

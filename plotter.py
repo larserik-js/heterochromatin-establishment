@@ -1,17 +1,25 @@
-from plot_functions import plot_final_state, plot_interactions, plot_rg_vs_noise, plot_heatmap, plot_correlation, plot_states
+from plot_functions import plot_final_state, plot_interactions, plot_rg_vs_noise, plot_heatmap, plot_correlation,\
+    plot_states, plot_Rs
 
 plot_noise = 0.5
-plot_t_total = 1000000
-plot_N = 60
+plot_t_total = 200000
+plot_N = 40
+
+constant = 1
 
 dt = 0.02
-plot_alpha = 0.5
-plot_alpha_1 = 34 * dt
-plot_alpha_2 = 49 * dt
-plot_beta = 1 * dt
+plot_alpha_1 = 3.0 * dt * constant
+plot_alpha_2 = 4.9 * dt * constant
+plot_beta = 0.2 * dt * constant
+plot_seed = 4
+
+# # Plot end-to-end distance R
+# plot_Rs(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_alpha_1, alpha_2=plot_alpha_2,
+#                  beta=plot_beta, seed=plot_seed)
 
 ## Plot final state
-plot_final_state(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_alpha_1, alpha_2=plot_alpha_2, beta=plot_beta)
+plot_final_state(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_alpha_1, alpha_2=plot_alpha_2,
+                 beta=plot_beta, seed=plot_seed)
 
 
 # Plot statistics
@@ -26,4 +34,5 @@ plot_final_state(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_
 #
 # plot_correlation(plot_noise, plot_t_total)
 
-plot_states(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_alpha_1, alpha_2=plot_alpha_2, beta=plot_beta)
+plot_states(N=plot_N, t_total=plot_t_total, noise=plot_noise, alpha_1=plot_alpha_1, alpha_2=plot_alpha_2,
+            beta=plot_beta, seed=plot_seed)

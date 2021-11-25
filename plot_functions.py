@@ -13,9 +13,9 @@ state_colors = ['b', 'r', 'y']
 state_names = ['Silent', 'Unmodified', 'Active']
 
 
-def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta):
+def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta, seed):
     open_filename = f'/home/lars/Documents/masters_thesis/statistics/final_state/final_state_N={N}_t_total={t_total}'\
-            f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl'
+            f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl'
 
     with open(open_filename, 'rb') as f:
         x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
@@ -41,8 +41,9 @@ def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta):
         ax.scatter([],[],c=state_colors[i],label=state_names[i])
 
     ax.legend(loc='upper left')
-    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$' + ', '
-                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=16)
+    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
+                 + r'$\beta$' + f' = {beta:.4f}, seed = {seed}', size=14)
     # Set plot dimensions
     ax.set(xlim=(com[0] + plot_dim[0], com[0] + plot_dim[1]),
            ylim=(com[1] + plot_dim[0], com[1] + plot_dim[1]),
@@ -221,13 +222,10 @@ def plot_correlation(noise, t_total):
     plt.tight_layout()
     plt.show()
 
-def plot_states(N, t_total, noise, alpha_1, alpha_2, beta):
+def plot_states(N, t_total, noise, alpha_1, alpha_2, beta, seed):
     # Finds all .pkl files for N = N
     files = glob(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl')
-
-    print(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.2f}_alpha_1={alpha_1:.2f}_alpha_2={alpha_2:.2f}_beta={beta:.2f}.pkl')
+                  + f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl')
 
     n_files = len(files)
 
@@ -242,17 +240,57 @@ def plot_states(N, t_total, noise, alpha_1, alpha_2, beta):
         with open(files[i], 'rb') as f:
             state_statistics = pickle.load(f)[0]
 
-        ts = torch.arange(len(state_statistics[0])) * 10
+        ts = torch.arange(len(state_statistics[0])) * (t_total / len(state_statistics[0]))
 
         lw = 0.2
-
-        print(state_statistics)
 
         for j in range(len(state_names)):
             ax.plot(ts, state_statistics[j], lw=lw, c=state_colors[j], label=state_names[j])
 
-    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$' + ', '
-                 + r'$\alpha_1$' + f' = {alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {alpha_2:.2f}', size=16)
+    ax.set_xlabel('Time-step')
+    ax.set_ylabel('No. of nucleosomes')
+
+    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
+                 + r'$\beta$' + f' = {beta:.4f}, seed = {seed}', size=14)
     ax.legend(loc='best')
     plt.show()
 
+def plot_Rs(N, t_total, noise, alpha_1, alpha_2, beta, seed):
+    # Finds all .pkl files for N = N
+    files = glob(f'/home/lars/Documents/masters_thesis/statistics/Rs/Rs_N={N}_t_total={t_total}'\
+                  + f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl')
+
+    n_files = len(files)
+
+    if n_files == 0:
+        print('No files to plot.')
+        return
+
+    fig,ax = plt.subplots(2, figsize=(8,6))
+    s = 0.5
+    for i in range(n_files):
+
+        with open(files[i], 'rb') as f:
+            Rs = pickle.load(f)[0]
+            n_R = len(Rs)
+            interval = int(t_total/n_R)
+            ts = interval*np.arange(n_R)
+
+        ax[0].scatter(ts, Rs, s=s, label='End-to-end distance')
+        # When to start taking stats
+        stats_idx = int(n_R/2)
+
+        ax[1].hist(Rs[stats_idx:], bins=20, label='End-to-end distances')
+
+
+        ax[0].set_xlabel(r'$t$')
+        ax[1].set_xlabel(r'$R$')
+
+    ax[0].set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total:.0f}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
+                 + r'$\beta$' + f' = {beta:.4f}', size=14)
+    ax[0].legend(loc='best')
+    ax[1].legend(loc='best')
+    fig.tight_layout()
+    plt.show()
