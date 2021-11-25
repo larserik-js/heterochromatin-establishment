@@ -65,10 +65,9 @@ class Animation:
                                self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
 
         # Set title, labels and legend
-        self.ax_anim.set_title(r'$N$' + f' = {self.sim_obj.N}, noise = {self.sim_obj.noise}' + r'$l_0$', size=16)
         self.ax_anim.set_title(r'$N$' + f' = {self.sim_obj.N}, ' + r'$t_{total}$' + f' = {self.sim_obj.t_half:.0f},'
                                + f'noise = {self.sim_obj.noise}' + r'$l_0$' + ', ' + r'$\alpha_1$'
-                               + f' = {self.sim_obj.alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {self.sim_obj.alpha_2:.2f}', size=16)
+                               + f' = {self.sim_obj.alpha_1:.2f}, ' + r'$\alpha_2$' + f' = {self.sim_obj.alpha_2:.2f}', size=14)
         self.ax_anim.set_xlabel('x', size=14)
         self.ax_anim.set_ylabel('y', size=14)
         self.ax_anim.set_zlabel('z', size=14)

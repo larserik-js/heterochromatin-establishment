@@ -15,7 +15,15 @@ def update_rg(sim_obj):
         sim_obj.radius_of_gyration = sim_obj.radius_of_gyration / sim_obj.t_half
     return None
 
-@njit
+def update_Rs(sim_obj):
+    t = sim_obj.t
+    interval = int(sim_obj.t_total / len(sim_obj.Rs))
+    if t%interval == 0:
+        t_interval = int(t / interval)
+        sim_obj.Rs[t_interval] = torch.linalg.norm(sim_obj.X[-1] - sim_obj.X[0], dim=0)
+
+    return None
+
 def get_correlations(interaction_indices_i, interaction_indices_j, shifts):
     correlation_sums = np.zeros_like(shifts)
 
@@ -87,9 +95,20 @@ def update_average_lifetimes(sim_obj):
             sim_obj.average_lifetimes[idx] += sim_obj.lifetimes[i, j] / (sim_obj.completed_lifetimes[i, j] + 1e-7)
     return None
 
+# def update_states(sim_obj):
+#     t = sim_obj.t - sim_obj.t_half
+#     interval = int(sim_obj.t_half / sim_obj.state_statistics.shape[1])
+#     if t%interval == 0:
+#         t_interval = int(t / interval)
+#         sim_obj.state_statistics[0, t_interval] = (sim_obj.states == 0).sum()
+#         sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
+#         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
+#
+#     return None
+
 def update_states(sim_obj):
-    t = sim_obj.t - sim_obj.t_half
-    interval = int(sim_obj.t_half / sim_obj.state_statistics.shape[1])
+    t = sim_obj.t
+    interval = int(sim_obj.t_total / sim_obj.state_statistics.shape[1])
     if t%interval == 0:
         t_interval = int(t / interval)
         sim_obj.state_statistics[0, t_interval] = (sim_obj.states == 0).sum()
@@ -97,6 +116,7 @@ def update_states(sim_obj):
         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
 
     return None
+
 
 def update_distances_to_com(sim_obj):
     t = sim_obj.t - sim_obj.t_half
@@ -111,27 +131,36 @@ def update_distances_to_com(sim_obj):
     return None
 
 def _gather_statistics(sim_obj):
-    # Update radius of gyration
-    #update_rg(sim_obj)
 
-    # # Interaction only applies to distances lower than l_interacting
-    # # Relevant interactions are only counted once
-    # sim_obj.interaction_condition = (sim_obj.interaction_mask == True) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
-    # sim_obj.interaction_indices_i = torch.where(sim_obj.interaction_condition)[0]
-    # sim_obj.interaction_indices_j = torch.where(sim_obj.interaction_condition)[1]
-    #
-    # # Count interaction distances
-    # update_interaction_idx_differences(sim_obj)
-    #
-    # # Count correlations by shift
-    # update_correlation_sums(sim_obj)
-    #
-    # # Count lifetimes
-    # update_average_lifetimes(sim_obj)
+    # Update R
+    update_Rs(sim_obj)
 
     # Count number of particles in each state
     update_states(sim_obj)
 
-    #update_distances_to_com(sim_obj)
+    # These statistics are taken from halfway through the simulation
+    #if sim_obj.t >= sim_obj.t_half:
+
+        # Update radius of gyration
+        #update_rg(sim_obj)
+
+        # # Interaction only applies to distances lower than l_interacting
+        # # Relevant interactions are only counted once
+        # sim_obj.interaction_condition = (sim_obj.interaction_mask == True) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
+        # sim_obj.interaction_indices_i = torch.where(sim_obj.interaction_condition)[0]
+        # sim_obj.interaction_indices_j = torch.where(sim_obj.interaction_condition)[1]
+        #
+        # # Count interaction distances
+        # update_interaction_idx_differences(sim_obj)
+        #
+        # # Count correlations by shift
+        # update_correlation_sums(sim_obj)
+        #
+        # # Count lifetimes
+        # update_average_lifetimes(sim_obj)
+
+
+        #update_distances_to_com(sim_obj)
+
 
     return None

@@ -4,14 +4,13 @@ import torch
 from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
-
 from statistics import _gather_statistics
 
 r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 allow_state_change):
+                 seed, allow_state_change, cenH):
 
         ## Parameters
         # No. of nucleosomes
@@ -33,8 +32,14 @@ class Simulation:
         self.alpha_2 = alpha_2
         self.beta = beta
 
+        # Seed value
+        self.seed = seed
+
         # Allow states to change
         self.allow_state_change = allow_state_change
+
+        # Include cenH region
+        self.cenH = cenH
 
         ## Initialize system
         random_init = False
@@ -98,12 +103,19 @@ class Simulation:
         self.mask_upper[self.triu_indices[0], self.triu_indices[1]] = 1
 
         ## States
-        states = torch.zeros_like(self.X[:,0], dtype=torch.int)
+        #states = torch.zeros_like(self.X[:,0], dtype=torch.int)
 
-        states[:int(self.N/2)] = 0
-        states[int(self.N/2):] = 2
+        # states[:int(self.N/2)] = 0
+        # states[int(self.N/2):] = 2
 
-        #states = 2*torch.ones_like(self.X[:,0], dtype=torch.int)
+        # Include cenH region
+        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + int(self.N/20) + 1)
+
+        if self.cenH:
+            states = 2 * torch.ones_like(self.X[:, 0], dtype=torch.int)
+            states[self.cenH_indices] = 0
+        else:
+            states = torch.ones_like(self.X[:, 0], dtype=torch.int)
 
         # Pick out the nucleosomes of the different states
         self.state_S = (states==0)
@@ -164,10 +176,14 @@ class Simulation:
         self.potential_cutoff = 1*self.l0
 
         ## For statistics
+        t_interval = 100
+
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         # Radius of gyration
         self.radius_of_gyration = 0
+        # End-to-end distance
+        self.Rs = torch.empty(size=(int(self.t_total / t_interval),))
         # For calculating interaction correlations
         self.shifts = np.arange(1,int(self.N/5),1)
         self.correlation_sums = np.zeros(len(self.shifts), dtype=float)
@@ -187,11 +203,11 @@ class Simulation:
         self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
 
         # Counts the number of particles in the different states
-        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / 25000)))
+        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / t_interval)))
 
         # Measures distances from each nucleosome to the center of mass
         self.summed_distance_vecs_to_com = torch.zeros_like(self.X)
-        self.distances_to_com = torch.empty(int(self.t_half / 25000))
+        self.distances_to_com = torch.empty(int(self.t_half / t_interval))
 
         ## Plot parameters
         # Nucleosome scatter marker size
@@ -310,7 +326,7 @@ class Simulation:
             raise AssertionError('Invalid index type given in function "update".')
 
     # Turn off gradient
-    def grad_off(self):
+    def grad_zero(self):
         if self.index_type == 'even' or self.index_type == 'odd':
             # Reset gradients
             self.thetas.grad.zero_()
@@ -346,7 +362,7 @@ class Simulation:
         U_interaction = self.interaction_potential()
 
         ## PRESSURE POTENTIAL
-        U_pressure = self.pressure_potential()
+        #U_pressure = self.pressure_potential()
 
         #return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
         #return U_interaction + self.U_pressure_weight * U_pressure
@@ -359,71 +375,84 @@ class Simulation:
 
     @staticmethod
     @njit
-    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta):
+    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH, cenH_indices):
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
 
-        # Choose reaction probability based on the state of n1
-        if states[n1_index] == 0:
-            alpha = alpha_2 + 0
-        elif states[n1_index] == 2:
-            alpha = alpha_1 + 0
-        elif states[n1_index] == 1:
-            alpha = (alpha_1 + alpha_2) / 2
+        # Does not change the cenH region
+        if cenH and (n1_index in cenH_indices):
+            pass
+
         else:
-            raise AssertionError('State not equal to 0, 1, or 2.')
+            # Choose reaction probability based on the state of n1
+            if states[n1_index] == 0:
+                alpha = alpha_2 + 0
+            elif states[n1_index] == 2:
+                alpha = alpha_1 + 0
+            elif states[n1_index] == 1:
+                alpha = (alpha_1 + alpha_2) / 2
+            else:
+                raise AssertionError('State not equal to 0, 1, or 2.')
 
-        # Recruited conversion
-        rand_alpha = r.rand()
+            # Recruited conversion
+            rand_alpha = r.rand()
 
-        if rand_alpha < alpha:
+            if rand_alpha < alpha:
 
-            # Other particles within distance
-            particles_within_distance = \
-            np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
+                # Other particles within distance
+                particles_within_distance = \
+                np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
 
-            # If there are other particles within l_interacting
-            if len(particles_within_distance) > 0:
+                # If there are other particles within l_interacting
+                if len(particles_within_distance) > 0:
 
-                # Choose one of those particles randomly
-                n2_index = r.choice(particles_within_distance)
+                    # Choose one of those particles randomly
+                    n2_index = r.choice(particles_within_distance)
 
-                # If the n2 state is U, do not perform any changes
-                if states[n1_index] < states[n2_index] and states[n2_index] != 1:
-                    states[n1_index] += 1
-                elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
-                    states[n1_index] -= 1
+                    # If the n2 state is U, do not perform any changes
+                    if states[n1_index] < states[n2_index] and states[n2_index] != 1:
+                        states[n1_index] += 1
+                    elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
+                        states[n1_index] -= 1
 
         # Noisy conversion
         # Choose new random particle
         n1_index = r.randint(N)
 
-        rand_beta = r.rand()
-        if rand_beta < beta:
+        # Does not change the cenH region
+        if cenH and (n1_index in cenH_indices):
+            pass
 
-            if states[n1_index] == 0:
-                states[n1_index] += 1
-            elif states[n1_index] == 2:
-                states[n1_index] -= 1
+        else:
+            rand_beta = r.rand()
+            if rand_beta < beta:
 
-            else:
-                # If the particle is in the U state, choose a change to A or S randomly
-                rand = r.rand()
-                if states[n1_index] == 1 and rand < 0.5:
+                if states[n1_index] == 0:
                     states[n1_index] += 1
-                elif states[n1_index] == 1 and rand >= 0.5:
+                elif states[n1_index] == 2:
                     states[n1_index] -= 1
+
+                else:
+                    # If the particle is in the U state, choose a change to A or S randomly
+                    rand = r.rand()
+                    if states[n1_index] == 1 and rand < 0.5:
+                        states[n1_index] += 1
+                    elif states[n1_index] == 1 and rand >= 0.5:
+                        states[n1_index] -= 1
 
         return states
 
     # Changes the nucleosome states based on probability
     def change_states(self):
-        self.states = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
-                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta)
+        # Numpy array
+        states_numpy = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
+                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH,
+                                          self.cenH_indices.numpy())
 
         # Change from Numpy array to Torch tensor
-        self.states = torch.from_numpy(self.states)
+        states_torch = torch.from_numpy(states_numpy)
+        self.states = copy.deepcopy(states_torch)
 
         # Update individual (boolean) tensors
         self.state_S, self.state_U, self.state_A = (self.states==0), (self.states==1), (self.states==2)
@@ -499,6 +528,7 @@ class Simulation:
         return rij_all, norms_all
 
     # The update step
+
     def update(self):
         # For update of nucleosomes of even and odd indices, plus the nucleosomes at each end of the chain
         for index_type in self.index_types:
@@ -524,9 +554,8 @@ class Simulation:
             U.backward()
 
             ## Update variables
-            if index_type == 'even' or index_type == 'odd':
-
-                with torch.no_grad():
+            with torch.no_grad():
+                if index_type == 'even' or index_type == 'odd':
                     if torch.isnan(torch.sum(self.thetas.grad)):
                         raise AssertionError('NAN in gradient!')
 
@@ -546,8 +575,7 @@ class Simulation:
                     # Update positions and vectors
                     self.X = self.get_X_theta()
 
-            elif index_type == 'endpoints':
-                with torch.no_grad():
+                elif index_type == 'endpoints':
                     if torch.isnan(torch.sum(self.X.grad)):
                         raise AssertionError('NAN in gradient!')
 
@@ -564,46 +592,46 @@ class Simulation:
                     endpoint_d_vecs = self.X[indexation] - self.X[[1,-2]]
                     self.X[indexation] = self.X[[1,-2]] + endpoint_d_vecs * (self.l0 / torch.linalg.norm(endpoint_d_vecs, dim=1)[:,None])
 
-            self.X_tilde = self.get_X_tilde()
-            self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()
+                self.X_tilde = self.get_X_tilde()
+                self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()
 
-            # Reset gradients
-            self.grad_off()
+                # Reset gradients to 0
+                self.grad_zero()
 
-            # Reset angles to zero
-            self.thetas = self.get_theta_zeros()
+                # Reset angles to zero
+                self.thetas = self.get_theta_zeros()
+                self.X = self.X.detach()
 
-        # New center of mass
-        self.center_of_mass = torch.sum(self.X, dim=0) / self.N
+        # Statistics
+        with torch.no_grad():
+            # New center of mass
+            self.center_of_mass = torch.sum(self.X, dim=0) / self.N
 
-        # if self.t == self.t_total - 1:
-        #     fig_stats, ax_stats = plt.subplots()
-        #     ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
-        #     plt.show()
+            # if self.t == self.t_total - 1:
+            #     fig_stats, ax_stats = plt.subplots()
+            #     ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
+            #     plt.show()
 
-        # Copy previous interaction mask for statistics
-        # This mask also includes the distance requirement for interactions
-        self.previous_interaction_mask = copy.deepcopy(self.interaction_mask_two) & (self.norms_all < self.l_interacting)
+            # Copy previous interaction mask for statistics
+            # This mask also includes the distance requirement for interactions
+            self.previous_interaction_mask = self.interaction_mask_two & (self.norms_all < self.l_interacting)
 
-        # Update distance vectors
-        self.rij_all, self.norms_all = self.get_norms()
+            # Update distance vectors
+            self.rij_all, self.norms_all = self.get_norms()
 
-        # Create new interaction mask
-        # This mask does NOT include the distance requirement for interactions
-        self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
+            # Create new interaction mask
+            # This mask does NOT include the distance requirement for interactions
+            self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
 
-        # Count interactions for statistics
-        # Equilibrium statistics are taken halfway through the simulation
-        if self.t >= self.t_half:
-            with torch.no_grad():
-                self.gather_statistics()
+            # Gather statistics
+            self.gather_statistics()
 
-        ## CHANGE STATES
-        if self.allow_state_change:
-            self.change_states()
+            ## CHANGE STATES
+            if self.allow_state_change:
+                self.change_states()
 
-            # Updates interaction types based on states
-            self.update_interaction_types()
+                # Updates interaction types based on states
+                self.update_interaction_types()
 
 
     def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
