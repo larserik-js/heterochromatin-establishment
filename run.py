@@ -1,7 +1,7 @@
 import pickle
+import numpy as np
 import matplotlib.pyplot as plt
 import torch
-torch.set_num_threads(1)
 import copy
 import os
 
@@ -12,9 +12,11 @@ from matplotlib.animation import FuncAnimation
 # Simulation class
 from simulation_class import Simulation
 
+# Pathname
+from parameters import pathname
+
 # External animation file
 from animation_class import Animation
-
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, filename):
@@ -35,23 +37,17 @@ def write_pkl(var_list, filename):
 def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
-    fs_filename =  f'statistics/final_state/final_state_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
-    interactions_filename =  f'statistics/interactions/interactions_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
-    rg_filename = f'statistics/RG/RG_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
-    Rs_filename = f'statistics/Rs/Rs_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
-    correlation_filename = f'statistics/correlation/correlation_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
-    states_filename = f'statistics/states/states_N={sim_obj.N}_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' +\
-                   f'_alpha_1={sim_obj.alpha_1:.4f}_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}'
+    parameter_string = sim_obj.params_filename
+    fs_filename =  f'statistics/final_state/final_state_' + parameter_string
+    interactions_filename =  f'statistics/interactions/interactions_' + parameter_string
+    rg_filename = f'statistics/RG/RG_' + parameter_string
+    Rs_filename = f'statistics/Rs/Rs_' + parameter_string
+    correlation_filename = f'statistics/correlation/correlation_' + parameter_string
+    states_filename = f'statistics/states/states_' + parameter_string
+    correlation_times_filename = f'statistics/correlation_times/correlation_times_' + parameter_string
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
-    # u_final, v_final, w_final = sim_obj.P[:, 0], sim_obj.P[:, 1], sim_obj.P[:, 2]
-    # pickle_var_list = [x_final, y_final, z_final, u_final, v_final, w_final, sim_obj.states]
     pickle_var_list = [x_final, y_final, z_final, sim_obj.states,
                        sim_obj.state_colors, sim_obj.state_names, sim_obj.plot_dim]
     write_pkl(pickle_var_list, fs_filename)
@@ -76,21 +72,26 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.state_statistics]
     write_pkl(pickle_var_list, states_filename)
 
+    # Correlation times
+    pickle_var_list = [sim_obj.correlation_times]
+    write_pkl(pickle_var_list, correlation_times_filename)
+
 # Runs the script
-from memory_profiler import profile
-@profile
-def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, seed, test_mode,
-        animate, allow_state_change, cenH, verbose):
+# from memory_profiler import profile
+# @profile
+def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
+        seed, test_mode, animate, allow_state_change, cenH, write_cenH_data, verbose):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
 
     # Fix seed value
+    np.random.seed(seed)
     torch.manual_seed(seed)
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         seed, allow_state_change, cenH)
+                         stats_t_interval, seed, allow_state_change, cenH, write_cenH_data)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -113,15 +114,13 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
         # Just save a test gif
         if test_mode:
-            filename = '/home/lars/Documents/masters_thesis/animations/test.gif'
+            filename = pathname + 'animations/test.gif'
             anim.save(filename, dpi=200, writer=writergif)
 
         # Save a named gif, plus pickled final states and statistics
         else:
             ## Save animation
-            filename = f'/home/lars/Documents/masters_thesis/animations/animation_N={sim_obj.N}'\
-            + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.4f}'\
-                    + f'_alpha_2={sim_obj.alpha_2:.4f}_beta={sim_obj.beta:.4f}_seed={sim_obj.seed}.gif'
+            filename = pathname + 'animations/' + sim_obj.params_filename + '.gif'
             anim.save(filename, dpi=200, writer=writergif)
 
             ## Save data

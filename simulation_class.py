@@ -10,7 +10,7 @@ r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 seed, allow_state_change, cenH):
+                 stats_t_interval, seed, allow_state_change, cenH, write_cenH_data):
 
         ## Parameters
         # No. of nucleosomes
@@ -40,6 +40,7 @@ class Simulation:
 
         # Include cenH region
         self.cenH = cenH
+        self.write_cenH_data = write_cenH_data
 
         ## Initialize system
         random_init = False
@@ -176,14 +177,12 @@ class Simulation:
         self.potential_cutoff = 1*self.l0
 
         ## For statistics
-        t_interval = 100
-
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         # Radius of gyration
         self.radius_of_gyration = 0
         # End-to-end distance
-        self.Rs = torch.empty(size=(int(self.t_total / t_interval),))
+        self.Rs = torch.empty(size=(int(self.t_total / stats_t_interval),))
         # For calculating interaction correlations
         self.shifts = np.arange(1,int(self.N/5),1)
         self.correlation_sums = np.zeros(len(self.shifts), dtype=float)
@@ -203,13 +202,18 @@ class Simulation:
         self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
 
         # Counts the number of particles in the different states
-        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_half / t_interval)))
+        self.stable_silent = False
+        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / stats_t_interval)))
 
-        # Measures distances from each nucleosome to the center of mass
-        self.summed_distance_vecs_to_com = torch.zeros_like(self.X)
-        self.distances_to_com = torch.empty(int(self.t_half / t_interval))
+        # Distances from each nucleosome to the center of mass
+        # Initial distance vectors
+        self.init_dist_vecs_to_com = self.center_of_mass - self.X
+        self.correlation_times = torch.zeros(size=(self.N,))
 
         ## Plot parameters
+        self.plot_title = r'$N$' + f' = {self.N}, ' + r'$t_{total}$' + f' = {self.t_total}, noise = {self.noise:.2f}'\
+                          + r'$l_0$' + ', ' + r'$\alpha_1$' + f' = {self.alpha_1:.5f}, ' + r'$\alpha_2$'\
+                          + f' = {self.alpha_2:.5f}, ' + r'$\beta$' + f' = {self.beta:.5f}'
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
@@ -220,6 +224,10 @@ class Simulation:
         # Plot dimensions
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
         self.r_system = r_system
+
+        # File
+        self.params_filename = f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}'\
+                            + f'_beta={beta:.5f}_seed={seed}'
 
     # Updates interaction types based on states
     def update_interaction_types(self):
@@ -606,11 +614,6 @@ class Simulation:
         with torch.no_grad():
             # New center of mass
             self.center_of_mass = torch.sum(self.X, dim=0) / self.N
-
-            # if self.t == self.t_total - 1:
-            #     fig_stats, ax_stats = plt.subplots()
-            #     ax_stats.plot(np.arange(len(self.distances_to_com)), self.distances_to_com.numpy())
-            #     plt.show()
 
             # Copy previous interaction mask for statistics
             # This mask also includes the distance requirement for interactions
