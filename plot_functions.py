@@ -9,13 +9,22 @@ import seaborn as sns
 # from mayavi import mlab
 # from mayavi.mlab import *
 
+from parameters import pathname
+
+
 state_colors = ['b', 'r', 'y']
 state_names = ['Silent', 'Unmodified', 'Active']
 
+def create_full_filename(specific_filename, format, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+    param_filename = f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}' \
+    + f'_beta={beta:.5f}_seed={seed}'
+    return pathname + specific_filename + param_filename + format
 
 def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta, seed):
-    open_filename = f'/home/lars/Documents/masters_thesis/statistics/final_state/final_state_N={N}_t_total={t_total}'\
-            f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl'
+    # open_filename = f'/home/lars/Documents/masters_thesis/statistics/final_state/final_state_N={N}_t_total={t_total}'\
+    #         f'_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}_seed={seed}.pkl'
+
+    open_filename = create_full_filename('statistics/final_state/final_state_', '.pkl', N, t_total, noise, alpha_1, alpha_2, beta, seed)
 
     with open(open_filename, 'rb') as f:
         x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
@@ -52,26 +61,24 @@ def plot_final_state(N, t_total, noise, alpha_1, alpha_2, beta, seed):
     plt.show()
 
 
-def plot_interactions(N, noise, t_total, save):
-    s = 0.5
+def plot_interactions(N, t_total, noise, alpha_1, alpha_2, beta, seed):
     fig, ax = plt.subplots(2,1, figsize=(8,6))
 
-    polymer_types = ['classic', 'non-classic']
-    labels = ['Classic polymer', 'Non-classic polymer']
-    alphas = [0.5,0.5]
+    alpha = 0.5
+    open_filename = create_full_filename('statistics/interactions/interactions_', '.pkl', N, t_total, noise, alpha_1, alpha_2, beta, seed)
 
-    for i in range(len(polymer_types)):
-        # Finds all .pkl files for N = N
-        files = glob('/home/lars/Documents/masters_thesis/statistics/interactions/' + polymer_types[i]
-                     + f'_interactions_N={N}_t_total={t_total}_noise={noise:.2f}.pkl')
+    # Finds all .pkl files for N = N
+    files = glob(open_filename)
 
-        if len(files) > 0:
-            with open(files[0], 'rb') as f:
-                N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
-                ax[0].bar(np.arange(N), average_lifetimes, alpha=alphas[i], label=labels[i])
-                ax[1].bar(np.arange(N), interaction_idx_difference, alpha=alphas[i], label=labels[i])
+    if len(files) > 0:
+        with open(files[0], 'rb') as f:
+            N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
+            ax[0].bar(np.arange(N), average_lifetimes, alpha=alpha, label='Average lifetimes')
+            ax[1].bar(np.arange(N), interaction_idx_difference, alpha=alpha, label='Interaction length')
 
-    ax[0].set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}, noise = {noise}' + r'$l_0$', size=18)
+    ax[0].set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}' + r'$l_0$' + ', '
+                 + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
+                 + r'$\beta$' + f' = {beta:.5f}, seed = {seed}', size=14)
 
     ax[0].set_xticklabels([])
     ax[0].set_ylabel('Average lifetimes', size=14)
@@ -81,10 +88,8 @@ def plot_interactions(N, noise, t_total, save):
     ax[1].set_xlabel('Index difference', size=14)
     ax[1].set_ylabel('Frequency', size=14)
 
-    if save:
-        fig.savefig('/home/lars/Documents/masters_thesis/images/statistics')
-
     ax[0].legend(loc='best')
+    ax[1].legend(loc='best')
     plt.tight_layout()
     plt.show()
 
@@ -223,9 +228,10 @@ def plot_correlation(noise, t_total):
     plt.show()
 
 def plot_states(N, t_total, noise, alpha_1, alpha_2, beta, seed):
-    # Finds all .pkl files for N = N
-    files = glob(f'/home/lars/Documents/masters_thesis/statistics/states/states_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl')
+    open_filename = create_full_filename('statistics/states/states_', '.pkl', N, t_total, noise, alpha_1, alpha_2, beta, seed)
+    files = glob(open_filename)
+
+    print(open_filename)
 
     n_files = len(files)
 
@@ -252,14 +258,14 @@ def plot_states(N, t_total, noise, alpha_1, alpha_2, beta, seed):
 
     ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise}' + r'$l_0$' + ', '
                  + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
-                 + r'$\beta$' + f' = {beta:.4f}, seed = {seed}', size=14)
+                 + r'$\beta$' + f' = {beta:.5f}, seed = {seed}', size=14)
     ax.legend(loc='best')
     plt.show()
 
 def plot_Rs(N, t_total, noise, alpha_1, alpha_2, beta, seed):
-    # Finds all .pkl files for N = N
-    files = glob(f'/home/lars/Documents/masters_thesis/statistics/Rs/Rs_N={N}_t_total={t_total}'\
-                  + f'_noise={noise:.4f}_alpha_1={alpha_1:.4f}_alpha_2={alpha_2:.4f}_beta={beta:.4f}_seed={seed}.pkl')
+    open_filename = create_full_filename('statistics/Rs/Rs_', '.pkl', N, t_total, noise, alpha_1, alpha_2, beta, seed)
+
+    files = glob(open_filename)
 
     n_files = len(files)
 
@@ -294,3 +300,32 @@ def plot_Rs(N, t_total, noise, alpha_1, alpha_2, beta, seed):
     ax[1].legend(loc='best')
     fig.tight_layout()
     plt.show()
+
+
+def plot_correlation_times(N, t_total, noise, alpha_1, alpha_2, beta, seed):
+    open_filename = create_full_filename('statistics/correlation_times/correlation_times_', '.pkl', N, t_total, noise, alpha_1, alpha_2, beta, seed)
+    files = glob(open_filename)
+
+    n_files = len(files)
+
+    if n_files == 0:
+        print('No files to plot.')
+        return
+
+    fig, ax = plt.subplots(figsize=(8, 6))
+    for i in range(n_files):
+        with open(files[i], 'rb') as f:
+            correlation_times = pickle.load(f)[0]
+            ax.bar(np.arange(N), correlation_times)
+
+    ax.set_xlabel('Nucleosome index', size=12)
+    ax.set_ylabel('Correlation time / ' + r'$t_{total}$', size=12)
+
+    ax.set_title(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total:.0f}, noise = {noise}' + r'$l_0$' + ', '
+                    + r'$\alpha_1$' + f' = {alpha_1:.4f}, ' + r'$\alpha_2$' + f' = {alpha_2:.4f}, '
+                    + r'$\beta$' + f' = {beta:.4f}', size=14)
+    ax.legend(loc='best')
+    fig.tight_layout()
+    plt.show()
+
+

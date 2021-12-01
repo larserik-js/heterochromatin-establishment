@@ -59,13 +59,6 @@ def get_correlations(interaction_indices_i, interaction_indices_j, shifts):
 
     return correlation_sums
 
-
-def update_interaction_idx_differences(sim_obj):
-    interaction_distances = torch.abs((sim_obj.interaction_indices_j - sim_obj.interaction_indices_i))
-    sim_obj.interaction_idx_difference += torch.bincount(interaction_distances, minlength=sim_obj.N)
-    return None
-
-
 def update_correlation_sums(sim_obj):
     normalized_correlations = get_correlations(sim_obj.interaction_indices_i.numpy(),
                                                     sim_obj.interaction_indices_j.numpy(),
@@ -74,13 +67,23 @@ def update_correlation_sums(sim_obj):
     sim_obj.correlation_sums += normalized_correlations
     return None
 
+def update_interaction_stats(sim_obj):
+    # Interaction only applies to distances lower than l_interacting
+    # Relevant interactions are only counted once
+    interaction_condition = (sim_obj.interaction_mask_two) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
+    interaction_indices_i = torch.where(interaction_condition)[0]
+    interaction_indices_j = torch.where(interaction_condition)[1]
 
-def update_average_lifetimes(sim_obj):
+    # Interaction index differences
+    interaction_distances = torch.abs((interaction_indices_j - interaction_indices_i))
+    sim_obj.interaction_idx_difference += torch.bincount(interaction_distances, minlength=sim_obj.N)
+
+    # Average lifetimes
     # If two nucleosomes are (still) interacting, add 1 to the running lifetimes
-    sim_obj.running_lifetimes[sim_obj.interaction_indices_i, sim_obj.interaction_indices_j] += 1
+    sim_obj.running_lifetimes[interaction_indices_i, interaction_indices_j] += 1
 
     # If two nucleosomes are no longer interacting, reset the running lifetime, and count the reset
-    reset_condition = (sim_obj.previous_interaction_mask & torch.logical_not(sim_obj.interaction_condition) & sim_obj.mask_upper)
+    reset_condition = (sim_obj.previous_interaction_mask & torch.logical_not(interaction_condition) & sim_obj.mask_upper)
     reset_indices_i, reset_indices_j = torch.where(reset_condition)[0], torch.where(reset_condition)[1]
 
     sim_obj.lifetimes[reset_indices_i, reset_indices_j] += sim_obj.running_lifetimes[reset_indices_i, reset_indices_j]
@@ -88,6 +91,7 @@ def update_average_lifetimes(sim_obj):
     sim_obj.completed_lifetimes[reset_indices_i, reset_indices_j] += 1
 
     # Finalize statistics
+    # Normalizes the lifetimes to average values
     if sim_obj.t == sim_obj.t_total - 1:
         for k in range(len(sim_obj.triu_indices[0])):
             i, j = sim_obj.triu_indices[0][k], sim_obj.triu_indices[1][k]
@@ -95,72 +99,60 @@ def update_average_lifetimes(sim_obj):
             sim_obj.average_lifetimes[idx] += sim_obj.lifetimes[i, j] / (sim_obj.completed_lifetimes[i, j] + 1e-7)
     return None
 
-# def update_states(sim_obj):
-#     t = sim_obj.t - sim_obj.t_half
-#     interval = int(sim_obj.t_half / sim_obj.state_statistics.shape[1])
-#     if t%interval == 0:
-#         t_interval = int(t / interval)
-#         sim_obj.state_statistics[0, t_interval] = (sim_obj.states == 0).sum()
-#         sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
-#         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
-#
-#     return None
-
 def update_states(sim_obj):
     t = sim_obj.t
     interval = int(sim_obj.t_total / sim_obj.state_statistics.shape[1])
+
     if t%interval == 0:
         t_interval = int(t / interval)
         sim_obj.state_statistics[0, t_interval] = (sim_obj.states == 0).sum()
         sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
 
+
     return None
 
 
-def update_distances_to_com(sim_obj):
-    t = sim_obj.t - sim_obj.t_half
-    interval = int(sim_obj.t_half / distances_to_com.shape[1])
+def update_correlation_times(sim_obj):
+    # Current distance vectors from the nucleosomes to the center of mass
+    distance_vecs_to_com = sim_obj.center_of_mass - sim_obj.X
 
-    if t%interval == 0:
-        t_interval = int(t / interval)
-        sim_obj.summed_distance_vecs_to_com += (sim_obj.X - sim_obj.center_of_mass)
-        norms = torch.linalg.norm(sim_obj.summed_distance_vecs_to_com, dim=1)
-        sim_obj.distances_to_com[t_interval] = float(torch.sum(norms))
+    # The dot product of the initial and current distance vectors from each nucleosome to the center of mass
+    dot_products = torch.sum(sim_obj.init_dist_vecs_to_com * distance_vecs_to_com, dim=1)
+
+    # Adds the current time the first time the dot product goes below 0
+    sim_obj.correlation_times[(sim_obj.correlation_times == 0) & (dot_products <= 0)] = sim_obj.t / sim_obj.t_total
 
     return None
 
 def _gather_statistics(sim_obj):
+    # Write cenH data
+    if sim_obj.write_cenH_data:
+        if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
+            data_file = open('/home/lars/Documents/masters_thesis/statistics/stable_silent_times.txt', 'a')
+            data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
+            data_file.close()
+            print(f'Wrote to file at seed {sim_obj.seed}')
+            sim_obj.stable_silent = True
 
     # Update R
-    update_Rs(sim_obj)
+    #update_Rs(sim_obj)
 
     # Count number of particles in each state
     update_states(sim_obj)
 
+    # Update time correlation of polymer
+    #update_correlation_times(sim_obj)
+
     # These statistics are taken from halfway through the simulation
-    #if sim_obj.t >= sim_obj.t_half:
+    if sim_obj.t >= sim_obj.t_half:
+        update_interaction_stats(sim_obj)
 
-        # Update radius of gyration
-        #update_rg(sim_obj)
-
-        # # Interaction only applies to distances lower than l_interacting
-        # # Relevant interactions are only counted once
-        # sim_obj.interaction_condition = (sim_obj.interaction_mask == True) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
-        # sim_obj.interaction_indices_i = torch.where(sim_obj.interaction_condition)[0]
-        # sim_obj.interaction_indices_j = torch.where(sim_obj.interaction_condition)[1]
-        #
-        # # Count interaction distances
-        # update_interaction_idx_differences(sim_obj)
-        #
-        # # Count correlations by shift
-        # update_correlation_sums(sim_obj)
-        #
-        # # Count lifetimes
-        # update_average_lifetimes(sim_obj)
-
-
-        #update_distances_to_com(sim_obj)
+    #     # Update radius of gyration
+    #     #update_rg(sim_obj)
+    #
+    #     # # Count correlations by shift
+    #     # update_correlation_sums(sim_obj)
 
 
     return None
