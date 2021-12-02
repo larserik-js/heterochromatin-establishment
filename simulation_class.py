@@ -5,7 +5,7 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-
+from formatting import create_param_filename, create_plot_title
 r = np.random
 
 class Simulation:
@@ -211,9 +211,8 @@ class Simulation:
         self.correlation_times = torch.zeros(size=(self.N,))
 
         ## Plot parameters
-        self.plot_title = r'$N$' + f' = {self.N}, ' + r'$t_{total}$' + f' = {self.t_total}, noise = {self.noise:.2f}'\
-                          + r'$l_0$' + ', ' + r'$\alpha_1$' + f' = {self.alpha_1:.5f}, ' + r'$\alpha_2$'\
-                          + f' = {self.alpha_2:.5f}, ' + r'$\beta$' + f' = {self.beta:.5f}'
+        self.plot_title = create_plot_title(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                                     self.beta, self.seed)
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
@@ -226,8 +225,8 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}'\
-                            + f'_beta={beta:.5f}_seed={seed}'
+        self.params_filename = create_param_filename(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                                     self.beta, self.seed)
 
     # Updates interaction types based on states
     def update_interaction_types(self):

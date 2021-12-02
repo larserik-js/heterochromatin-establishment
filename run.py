@@ -13,14 +13,14 @@ from matplotlib.animation import FuncAnimation
 from simulation_class import Simulation
 
 # Pathname
-from parameters import pathname
+from formatting import pathname
 
 # External animation file
 from animation_class import Animation
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, filename):
-    filename = '/home/lars/Documents/masters_thesis/' + filename + '.pkl'
+    filename = pathname + filename + '.pkl'
 
     # Detach tensors and turn them into numpy arrays
     new_var_list = []
@@ -152,7 +152,6 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
             # Plot final state
             x_final, y_final, z_final = sim_obj.X[:,0], sim_obj.X[:,1], sim_obj.X[:,2]
-            #u_final, v_final, w_final = sim_obj.P[:, 0], sim_obj.P[:, 1], sim_obj.P[:, 2]
 
             with torch.no_grad():
                 sim_obj.plot(x_final, y_final, z_final, ax, label='Final state')
