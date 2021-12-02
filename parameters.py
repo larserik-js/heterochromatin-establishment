@@ -3,11 +3,11 @@ import numpy as np
 
 ## SET PARAMETERS
 # Multiprocessing
-multi = True
+multi = False
 
 # Plots initial and final state, as well as statistics
 # Nothing (except possibly an animation) is saved
-test_mode = False
+test_mode = True
 
 # Additionally generates and saves an animation
 animate = False
@@ -54,8 +54,6 @@ alpha_1_list = np.linspace(25, 45, 21) * dt * 0.1
 alpha_2 = 49 * dt * 0.1
 # Noisy conversion probability
 beta = 1.5 * dt * 0.1
-
-pathname = '/home/lars/Documents/masters_thesis/'
 
 
 ##############################################################################
