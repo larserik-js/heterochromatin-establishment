@@ -80,7 +80,7 @@ def save_data(sim_obj):
 # from memory_profiler import profile
 # @profile
 def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        seed, test_mode, animate, allow_state_change, cenH, write_cenH_data, verbose):
+        seed, test_mode, animate, allow_state_change, cenH, write_cenH_data, barriers, verbose):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
@@ -91,7 +91,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         stats_t_interval, seed, allow_state_change, cenH, write_cenH_data)
+                         stats_t_interval, seed, allow_state_change, cenH, write_cenH_data, barriers)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -139,6 +139,18 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
             # Increment no. of time-steps
             sim_obj.t += 1
+
+            if not test_mode:
+                # if sim_obj.end_to_end_vec_dot <= 0:
+                #     data_file = open(f'/home/lars/Documents/masters_thesis/statistics/end_to_end_perpendicular_times_N={N}'
+                #                      + f'_t_total={t_total}_noise={noise:.4f}' f'_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}'
+                #                      + f'_beta={beta:.5f}.txt', 'a')
+                #     data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
+                #     data_file.close()
+                #     print(f'Wrote to file at seed {sim_obj.seed}')
+                #     break
+                if sim_obj.stable_silent == True:
+                    break
 
         # Just plot without saving:
         if test_mode:

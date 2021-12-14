@@ -3,7 +3,7 @@ import numpy as np
 
 ## SET PARAMETERS
 # Multiprocessing
-multi = False
+multi = True
 
 # Plots initial and final state, as well as statistics
 # Nothing (except possibly an animation) is saved
@@ -14,7 +14,7 @@ animate = False
 
 # Random seed
 seed = 0
-seed_list = np.arange(30)
+seed_list = np.arange(32)
 
 # No. of nucleosomes
 N = 40
@@ -42,18 +42,21 @@ allow_state_change = True
 cenH = False
 write_cenH_data = False
 
+# Include barriers
+barriers = False
+
 # Constants
 constant = 1
 constant_list = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1]
 
 # Recruited conversion probability
 # Towards S
-alpha_1 = 30 * dt * 0.1
-alpha_1_list = np.linspace(25, 45, 21) * dt * 0.1
+alpha_1 = 41 * dt
+alpha_1_list = np.linspace(25, 49, 25) * dt
 # Towards A
-alpha_2 = 49 * dt * 0.1
+alpha_2 = 49 * dt
 # Noisy conversion probability
-beta = 1.5 * dt * 0.1
+beta = 15 * dt
 
 
 ##############################################################################
