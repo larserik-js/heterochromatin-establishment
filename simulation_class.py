@@ -5,12 +5,13 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-from formatting import create_param_filename, create_plot_title
+from formatting import pathname, create_param_filename, create_plot_title
+import pickle
 r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, cenH, write_cenH_data):
+                 stats_t_interval, seed, allow_state_change, cenH, write_cenH_data, barriers):
 
         ## Parameters
         # No. of nucleosomes
@@ -42,8 +43,14 @@ class Simulation:
         self.cenH = cenH
         self.write_cenH_data = write_cenH_data
 
+        # Include barriers
+        self.barriers = barriers
+
         ## Initialize system
         random_init = False
+        quasi_random_init = True
+
+        # Random initial positions
         if random_init:
             xs = [0.0]
             ys = [0.0]
@@ -59,9 +66,18 @@ class Simulation:
             ys = np.array(ys)
             zs = np.array(zs)
 
+        # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
+        elif quasi_random_init:
+            open_filename = pathname + 'statistics/quasi_random_initial_state_N=40_t_total=1000000_noise=0.5000.pkl'
+
+            with open(open_filename, 'rb') as f:
+                xs, ys, zs, _, _, _, _= pickle.load(f)
+
+        # Stretched-out chain
         else:
             xs = np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0
             ys, zs = np.zeros(self.N), np.zeros(self.N)
+
 
         # Half the chain length
         r_system = self.l0 * self.N / 2
@@ -110,13 +126,13 @@ class Simulation:
         # states[int(self.N/2):] = 2
 
         # Include cenH region
-        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + int(self.N/20) + 1)
+        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + 5)
 
         if self.cenH:
-            states = 2 * torch.ones_like(self.X[:, 0], dtype=torch.int)
+            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
             states[self.cenH_indices] = 0
         else:
-            states = torch.ones_like(self.X[:, 0], dtype=torch.int)
+            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
 
         # Pick out the nucleosomes of the different states
         self.state_S = (states==0)
@@ -131,10 +147,6 @@ class Simulation:
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
         self.state_unreactive = self.state_U | self.state_A
-
-        # ## TEST ##
-        # self.state_two_interaction = (self.states==999)
-        # self.state_unreactive = self.state_S | self.state_A
 
         ## Distance vectors from all particles to all particles
         self.rij_all, self.norms_all = self.get_norms()
@@ -183,6 +195,9 @@ class Simulation:
         self.radius_of_gyration = 0
         # End-to-end distance
         self.Rs = torch.empty(size=(int(self.t_total / stats_t_interval),))
+        self.end_to_end_vec_init = self.X[-1] - self.X[0]
+        self.end_to_end_vec_dot = 999
+
         # For calculating interaction correlations
         self.shifts = np.arange(1,int(self.N/5),1)
         self.correlation_sums = np.zeros(len(self.shifts), dtype=float)
@@ -211,8 +226,8 @@ class Simulation:
         self.correlation_times = torch.zeros(size=(self.N,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                     self.beta, self.seed)
+        self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
+                                            self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
@@ -225,7 +240,7 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_filename(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+        self.params_filename = create_param_filename(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
                                                      self.beta, self.seed)
 
     # Updates interaction types based on states
@@ -332,7 +347,7 @@ class Simulation:
         else:
             raise AssertionError('Invalid index type given in function "update".')
 
-    # Turn off gradient
+    # Set gradient to 0
     def grad_zero(self):
         if self.index_type == 'even' or self.index_type == 'odd':
             # Reset gradients
@@ -380,6 +395,76 @@ class Simulation:
     def gather_statistics(self):
         return _gather_statistics(self)
 
+    # @staticmethod
+    # @njit
+    # def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH, cenH_indices):
+    #
+    #     # Particle on which to attempt a change
+    #     n1_index = r.randint(N)
+    #
+    #     # Does not change the cenH region
+    #     if cenH and (n1_index in cenH_indices):
+    #         pass
+    #
+    #     else:
+    #         # Choose reaction probability based on the state of n1
+    #         if states[n1_index] == 0:
+    #             alpha = alpha_2 + 0
+    #         elif states[n1_index] == 2:
+    #             alpha = alpha_1 + 0
+    #         elif states[n1_index] == 1:
+    #             alpha = (alpha_1 + alpha_2) / 2
+    #         else:
+    #             raise AssertionError('State not equal to 0, 1, or 2.')
+    #
+    #         # Recruited conversion
+    #         rand_alpha = r.rand()
+    #
+    #         if rand_alpha < alpha:
+    #
+    #             # Other particles within distance
+    #             particles_within_distance = \
+    #             np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
+    #
+    #             # If there are other particles within l_interacting
+    #             if len(particles_within_distance) > 0:
+    #
+    #                 # Choose one of those particles randomly
+    #                 n2_index = r.choice(particles_within_distance)
+    #
+    #                 # If the n2 state is U, do not perform any changes
+    #                 if states[n1_index] < states[n2_index] and states[n2_index] != 1:
+    #                     states[n1_index] += 1
+    #                 elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
+    #                     states[n1_index] -= 1
+    #
+    #     # Noisy conversion
+    #     # Choose new random particle
+    #     n1_index = r.randint(N)
+    #
+    #     # Does not change the cenH region
+    #     if cenH and (n1_index in cenH_indices):
+    #         pass
+    #
+    #     else:
+    #         rand_beta = r.rand()
+    #         if rand_beta < beta:
+    #
+    #             if states[n1_index] == 0:
+    #                 states[n1_index] += 1
+    #             elif states[n1_index] == 2:
+    #                 states[n1_index] -= 1
+    #
+    #             else:
+    #                 # If the particle is in the U state, choose a change to A or S randomly
+    #                 rand = r.rand()
+    #                 if states[n1_index] == 1 and rand < 0.5:
+    #                     states[n1_index] += 1
+    #                 elif states[n1_index] == 1 and rand >= 0.5:
+    #                     states[n1_index] -= 1
+    #
+    #     return states
+
     @staticmethod
     @njit
     def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH, cenH_indices):
@@ -391,37 +476,32 @@ class Simulation:
         if cenH and (n1_index in cenH_indices):
             pass
 
+        # If the nucleosome is not part of the cenH region
         else:
-            # Choose reaction probability based on the state of n1
-            if states[n1_index] == 0:
-                alpha = alpha_2 + 0
-            elif states[n1_index] == 2:
-                alpha = alpha_1 + 0
-            elif states[n1_index] == 1:
-                alpha = (alpha_1 + alpha_2) / 2
-            else:
-                raise AssertionError('State not equal to 0, 1, or 2.')
-
             # Recruited conversion
-            rand_alpha = r.rand()
+            # Other particles within distance
+            particles_within_distance = \
+            np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
 
-            if rand_alpha < alpha:
+            # If there are other particles within l_interacting
+            if len(particles_within_distance) > 0:
 
-                # Other particles within distance
-                particles_within_distance = \
-                np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
+                # Choose one of those particles randomly
+                n2_index = r.choice(particles_within_distance)
 
-                # If there are other particles within l_interacting
-                if len(particles_within_distance) > 0:
+                # Do nothing
+                if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
+                    pass
 
-                    # Choose one of those particles randomly
-                    n2_index = r.choice(particles_within_distance)
-
-                    # If the n2 state is U, do not perform any changes
-                    if states[n1_index] < states[n2_index] and states[n2_index] != 1:
-                        states[n1_index] += 1
-                    elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
-                        states[n1_index] -= 1
+                else:
+                    if states[n1_index] < states[n2_index]:
+                        if r.rand() < alpha_2:
+                            states[n1_index] += 1
+                    elif states[n1_index] > states[n2_index]:
+                        if r.rand() < alpha_1:
+                            states[n1_index] -= 1
+                    else:
+                        raise AssertionError('Something is wrong in the change_states function!')
 
         # Noisy conversion
         # Choose new random particle
@@ -432,23 +512,32 @@ class Simulation:
             pass
 
         else:
-            rand_beta = r.rand()
-            if rand_beta < beta:
-
+            if r.rand() < beta:
+                # If the particle is in the S state
                 if states[n1_index] == 0:
-                    states[n1_index] += 1
-                elif states[n1_index] == 2:
-                    states[n1_index] -= 1
+                    if r.rand() < alpha_2:
+                        states[n1_index] = 1
 
+                # If the particle is in the A state
+                elif states[n1_index] == 2:
+                    if r.rand() < alpha_1:
+                        states[n1_index] = 1
+
+                # If the particle is in the U state
+                elif states[n1_index] == 1:
+                    # Used to determine if the state should change to S or A
+                    symmetric_rand = r.rand()
+
+                    if symmetric_rand < 0.5 and r.rand() < alpha_2:
+                        states[n1_index] = 2
+                    elif symmetric_rand >= 0.5 and r.rand() < alpha_1:
+                        states[n1_index] = 0
                 else:
-                    # If the particle is in the U state, choose a change to A or S randomly
-                    rand = r.rand()
-                    if states[n1_index] == 1 and rand < 0.5:
-                        states[n1_index] += 1
-                    elif states[n1_index] == 1 and rand >= 0.5:
-                        states[n1_index] -= 1
+                    raise AssertionError("State other than 0, 1, or 2 given in function '_change_states'!")
 
         return states
+
+
 
     # Changes the nucleosome states based on probability
     def change_states(self):

@@ -12,7 +12,11 @@ import seaborn as sns
 from formatting import pathname, create_param_filename, create_plot_title
 
 class Plots:
-    def __init__(self, plot_N, plot_t_total, plot_noise, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+    def __init__(self, plot_cenH, plot_barriers, plot_N, plot_t_total, plot_noise, plot_alpha_1, plot_alpha_2,
+                 plot_beta, plot_seed):
+
+        self.cenH = plot_cenH
+        self.barriers = plot_barriers
         self.N = plot_N
         self.t_total = plot_t_total
         self.noise = plot_noise
@@ -25,10 +29,10 @@ class Plots:
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.pathname = pathname
-        self.param_filename = create_param_filename(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                    self.beta, self.seed)
-        self.plot_title = create_plot_title(self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                    self.beta, self.seed)
+        self.param_filename = create_param_filename(self.cenH, self.barriers, self.N, self.t_total, self.noise,
+                                                    self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
+                                            self.alpha_2, self.beta, self.seed)
 
     def create_full_filename(self, specific_filename, format):
         return pathname + specific_filename + self.param_filename + format
@@ -303,5 +307,27 @@ class Plots:
 
         fig.tight_layout()
         plt.show()
+
+    def plot_end_to_end_times(self):
+        open_filename = pathname + f'statistics/end_to_end_perpendicular_times_N={self.N}_t_total={self.t_total}' \
+                                   f'_noise={self.noise:.4f}' + '.txt'
+
+        data_array = np.loadtxt(open_filename, skiprows=1, usecols=0, delimiter=',')
+
+        mean = data_array.mean()
+        std = data_array.std(ddof=1)
+
+        fig, ax = plt.subplots()
+
+        ax.text(400000, 200, f'Mean: {mean:.0f} +/- {std/np.sqrt(len(data_array)):.0f}', c='r')
+
+        ax.set_xlabel('First time of perpendicular end-to-end vector')
+        ax.set_ylabel('Frequency')
+        ax.set_title(r'$N$' + f' = {self.N}, ' + r'$t_{total}$' + f' = {self.t_total}, '
+                      + f'noise = {self.noise:.2f}' + r'$l_0$')
+        ax.hist(data_array, bins=40)
+        plt.show()
+        return data_array
+
 
 

@@ -24,6 +24,10 @@ def update_Rs(sim_obj):
 
     return None
 
+def end_to_end_dot(sim_obj):
+    sim_obj.end_to_end_vec_dot = torch.sum((sim_obj.X[-1] - sim_obj.X[0]) * sim_obj.end_to_end_vec_init)
+    return None
+
 def get_correlations(interaction_indices_i, interaction_indices_j, shifts):
     correlation_sums = np.zeros_like(shifts)
 
@@ -109,7 +113,6 @@ def update_states(sim_obj):
         sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
 
-
     return None
 
 
@@ -129,11 +132,16 @@ def _gather_statistics(sim_obj):
     # Write cenH data
     if sim_obj.write_cenH_data:
         if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
-            data_file = open('/home/lars/Documents/masters_thesis/statistics/stable_silent_times.txt', 'a')
+            data_file = open(f'/home/lars/Documents/masters_thesis/statistics/stable_silent_times_cenH_N={sim_obj.N}'\
+                           + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' f'_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}'\
+                           + f'_beta={sim_obj.beta:.5f}.txt', 'a')
             data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
             data_file.close()
             print(f'Wrote to file at seed {sim_obj.seed}')
             sim_obj.stable_silent = True
+
+    # Calculate the dot product of the end-to-end vector with the initial end-to-end vector
+    #end_to_end_dot(sim_obj)
 
     # Update R
     #update_Rs(sim_obj)
@@ -145,8 +153,8 @@ def _gather_statistics(sim_obj):
     #update_correlation_times(sim_obj)
 
     # These statistics are taken from halfway through the simulation
-    if sim_obj.t >= sim_obj.t_half:
-        update_interaction_stats(sim_obj)
+    #if sim_obj.t >= sim_obj.t_half:
+    #    update_interaction_stats(sim_obj)
 
     #     # Update radius of gyration
     #     #update_rg(sim_obj)
