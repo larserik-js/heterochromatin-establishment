@@ -2,6 +2,7 @@ import copy
 import torch
 import pickle
 import matplotlib.pyplot as plt
+from matplotlib import colors, patches
 import numpy as np
 from glob import glob
 import seaborn as sns
@@ -12,10 +13,11 @@ import seaborn as sns
 from formatting import pathname, create_param_filename, create_plot_title
 
 class Plots:
-    def __init__(self, plot_cenH, plot_barriers, plot_N, plot_t_total, plot_noise, plot_alpha_1, plot_alpha_2,
+    def __init__(self, plot_cenH, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise, plot_alpha_1, plot_alpha_2,
                  plot_beta, plot_seed):
 
         self.cenH = plot_cenH
+        self.cell_division = plot_cell_division
         self.barriers = plot_barriers
         self.N = plot_N
         self.t_total = plot_t_total
@@ -25,14 +27,16 @@ class Plots:
         self.beta = plot_beta
         self.seed = plot_seed
 
-        self.state_colors = ['b', 'r', 'y']
+        self.state_colors = ['r', 'y', 'b']
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.pathname = pathname
-        self.param_filename = create_param_filename(self.cenH, self.barriers, self.N, self.t_total, self.noise,
+        self.param_filename = create_param_filename(self.cenH, self.cell_division, self.barriers, self.N, self.t_total, self.noise,
                                                     self.alpha_1, self.alpha_2, self.beta, self.seed)
         self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
                                             self.alpha_2, self.beta, self.seed)
+        r_system = self.N / 2
+        self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
     def create_full_filename(self, specific_filename, format):
         return pathname + specific_filename + self.param_filename + format
@@ -74,9 +78,9 @@ class Plots:
             ax.scatter([],[],c=self.state_colors[i],label=self.state_names[i])
 
         # Set plot dimensions
-        ax.set(xlim=(com[0] + plot_dim[0], com[0] + plot_dim[1]),
-               ylim=(com[1] + plot_dim[0], com[1] + plot_dim[1]),
-               zlim=(com[2] + plot_dim[0], com[2] + plot_dim[1]))
+        ax.set(xlim=(com[0] + self.plot_dim[0], com[0] + self.plot_dim[1]),
+               ylim=(com[1] + self.plot_dim[0], com[1] + self.plot_dim[1]),
+               zlim=(com[2] + self.plot_dim[0], com[2] + self.plot_dim[1]))
 
         self.format_plot(ax, xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$', legend_loc='upper left')
         plt.show()
@@ -249,6 +253,39 @@ class Plots:
 
         self.format_plot(ax, xlabel='Time-step', ylabel='No. of nucleosomes')
         plt.show()
+
+    def plot_states_time_space(self):
+        open_filename = self.create_full_filename('statistics/states_time_space/states_time_space_', '.pkl')
+
+        files = glob(open_filename)
+        print(open_filename)
+
+        n_files = len(files)
+
+        if n_files == 0:
+            print('No files to plot.')
+            return
+
+        fig,ax = plt.subplots(figsize=(12,6))
+
+        for i in range(n_files):
+
+            with open(files[i], 'rb') as f:
+                states_time_space = pickle.load(f)[0]
+
+        print(states_time_space)
+
+        labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
+        print(labels)
+        cmap = colors.ListedColormap(self.state_colors)
+        ax.imshow(states_time_space[::50].T, cmap=cmap)
+        #ax.set_xlabel('Time-steps / 2000', size=12)
+        #ax.set_ylabel('Nucleosome no.', size=12)
+        #self.format_plot(ax, xlabel='Time-steps / 2000', ylabel='Nucleosome no.')
+        plt.legend(handles=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
+        plt.show()
+
 
     def plot_Rs(self):
         open_filename = self.create_full_filename('statistics/Rs/Rs_', '.pkl')

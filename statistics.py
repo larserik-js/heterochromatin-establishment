@@ -115,6 +115,15 @@ def update_states(sim_obj):
 
     return None
 
+def update_states_time_space(sim_obj):
+    t = sim_obj.t
+    interval = int(sim_obj.t_total / sim_obj.states_time_space.shape[0])
+
+    if t%interval == 0:
+        t_interval = int(t / interval)
+        sim_obj.states_time_space[t_interval] = sim_obj.states
+
+    return None
 
 def update_correlation_times(sim_obj):
     # Current distance vectors from the nucleosomes to the center of mass
@@ -129,16 +138,16 @@ def update_correlation_times(sim_obj):
     return None
 
 def _gather_statistics(sim_obj):
-    # Write cenH data
-    if sim_obj.write_cenH_data:
-        if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
-            data_file = open(f'/home/lars/Documents/masters_thesis/statistics/stable_silent_times_cenH_N={sim_obj.N}'\
-                           + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' f'_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}'\
-                           + f'_beta={sim_obj.beta:.5f}.txt', 'a')
-            data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
-            data_file.close()
-            print(f'Wrote to file at seed {sim_obj.seed}')
-            sim_obj.stable_silent = True
+    # # Write cenH data
+    # if sim_obj.write_cenH_data:
+    #     if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
+    #         data_file = open(f'/home/lars/Documents/masters_thesis/statistics/stable_silent_times_cenH_N={sim_obj.N}'\
+    #                        + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' f'_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}'\
+    #                        + f'_beta={sim_obj.beta:.5f}.txt', 'a')
+    #         data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
+    #         data_file.close()
+    #         print(f'Wrote to file at seed {sim_obj.seed}')
+    #         sim_obj.stable_silent = True
 
     # Calculate the dot product of the end-to-end vector with the initial end-to-end vector
     #end_to_end_dot(sim_obj)
@@ -147,7 +156,8 @@ def _gather_statistics(sim_obj):
     #update_Rs(sim_obj)
 
     # Count number of particles in each state
-    update_states(sim_obj)
+    #update_states(sim_obj)
+    update_states_time_space(sim_obj)
 
     # Update time correlation of polymer
     #update_correlation_times(sim_obj)

@@ -38,19 +38,34 @@ def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
     parameter_string = sim_obj.params_filename
-    fs_filename =  f'statistics/final_state/final_state_' + parameter_string
+    #fs_filename =  f'statistics/final_state/final_state_' + parameter_string
+    seed = sim_obj.seed
+    fs_filename = f'statistics/final_state/final_state_N=40_t_total=1000000_noise=0.500_seed={seed}'
     interactions_filename =  f'statistics/interactions/interactions_' + parameter_string
     rg_filename = f'statistics/RG/RG_' + parameter_string
     Rs_filename = f'statistics/Rs/Rs_' + parameter_string
     correlation_filename = f'statistics/correlation/correlation_' + parameter_string
     states_filename = f'statistics/states/states_' + parameter_string
+    states_time_space_filename = f'statistics/states_time_space/states_time_space_' + parameter_string
     correlation_times_filename = f'statistics/correlation_times/correlation_times_' + parameter_string
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
-    pickle_var_list = [x_final, y_final, z_final, sim_obj.states,
-                       sim_obj.state_colors, sim_obj.state_names, sim_obj.plot_dim]
-    write_pkl(pickle_var_list, fs_filename)
+    pickle_var_list = [x_final, y_final, z_final, sim_obj.states]
+    #write_pkl(pickle_var_list, fs_filename)
+    filename = pathname + fs_filename + '.pkl'
+
+    # Detach tensors and turn them into numpy arrays
+    new_var_list = []
+    for var in pickle_var_list:
+        if torch.is_tensor(var):
+            new_var_list.append(var.detach().numpy())
+        else:
+            new_var_list.append(var)
+
+    # Write to pkl
+    with open(filename, 'wb') as f:
+        pickle.dump(new_var_list, f)
 
     # Statistics
     pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
@@ -72,6 +87,10 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.state_statistics]
     write_pkl(pickle_var_list, states_filename)
 
+    # States in time and space
+    pickle_var_list = [sim_obj.states_time_space]
+    write_pkl(pickle_var_list, states_time_space_filename)
+
     # Correlation times
     pickle_var_list = [sim_obj.correlation_times]
     write_pkl(pickle_var_list, correlation_times_filename)
@@ -80,7 +99,7 @@ def save_data(sim_obj):
 # from memory_profiler import profile
 # @profile
 def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        seed, test_mode, animate, allow_state_change, cenH, write_cenH_data, barriers, verbose):
+        seed, test_mode, animate, allow_state_change, cell_division, cenH, write_cenH_data, barriers):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
@@ -91,7 +110,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         stats_t_interval, seed, allow_state_change, cenH, write_cenH_data, barriers)
+                         stats_t_interval, seed, allow_state_change, cell_division, cenH, write_cenH_data, barriers)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -130,9 +149,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         # Iterate
         for t in range(t_total):
             # Print progress
-            if verbose:
-                if (t + 1) % (t_total / 10) == 0:
-                    print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}   (noise={noise})')
+            if (t + 1) % (t_total / 10) == 0:
+                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}   (noise={noise})')
 
             # Update
             sim_obj.update()

@@ -11,7 +11,7 @@ r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, cenH, write_cenH_data, barriers):
+                 stats_t_interval, seed, allow_state_change, cell_division, cenH, write_cenH_data, barriers):
 
         ## Parameters
         # No. of nucleosomes
@@ -24,6 +24,15 @@ class Simulation:
         self.l0 = l0
         # Noise constant
         self.noise = noise
+
+        # Total no. of time steps
+        self.t_total = t_total
+        self.t_half = int(self.t_total/2)
+
+        # Time-step
+        self.t = 0
+        self.dt = dt
+
         # Potential weights
         self.U_two_interaction_weight = U_two_interaction_weight
         self.U_pressure_weight = U_pressure_weight
@@ -39,51 +48,24 @@ class Simulation:
         # Allow states to change
         self.allow_state_change = allow_state_change
 
+        # Include cell divisions
+        self.cell_division = cell_division
+        self.cell_division_interval = 2000000
+
         # Include cenH region
         self.cenH = cenH
+        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + 2)
+
         self.write_cenH_data = write_cenH_data
 
         # Include barriers
         self.barriers = barriers
 
         ## Initialize system
-        random_init = False
-        quasi_random_init = True
-
-        # Random initial positions
-        if random_init:
-            xs = [0.0]
-            ys = [0.0]
-            zs = [0.0]
-            for i in range(self.N - 1):
-                d = np.random.randn(3)
-                d /= np.sqrt(np.sum(d**2))
-                d *= self.l0
-                xs.append(xs[-1] + d[0])
-                ys.append(ys[-1] + d[1])
-                zs.append(zs[-1] + d[2])
-            xs = np.array(xs)
-            ys = np.array(ys)
-            zs = np.array(zs)
-
-        # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
-        elif quasi_random_init:
-            open_filename = pathname + 'statistics/quasi_random_initial_state_N=40_t_total=1000000_noise=0.5000.pkl'
-
-            with open(open_filename, 'rb') as f:
-                xs, ys, zs, _, _, _, _= pickle.load(f)
-
-        # Stretched-out chain
-        else:
-            xs = np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0
-            ys, zs = np.zeros(self.N), np.zeros(self.N)
-
+        self.X = self.initialize_system('quasi-random')
 
         # Half the chain length
         r_system = self.l0 * self.N / 2
-
-        # Nucleosome positions
-        self.X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         # Index types to determine which nucleosomes to update
         self.index_types = ['even', 'odd', 'endpoints']
@@ -119,15 +101,7 @@ class Simulation:
         self.triu_indices = torch.triu_indices(self.N, self.N, offset=1)
         self.mask_upper[self.triu_indices[0], self.triu_indices[1]] = 1
 
-        ## States
-        #states = torch.zeros_like(self.X[:,0], dtype=torch.int)
-
-        # states[:int(self.N/2)] = 0
-        # states[int(self.N/2):] = 2
-
-        # Include cenH region
-        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + 5)
-
+        # States
         if self.cenH:
             states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
             states[self.cenH_indices] = 0
@@ -165,14 +139,6 @@ class Simulation:
 
         # Picks out nucleosomes that are allowed to interact with each other
         self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
-
-        # Total no. of time steps
-        self.t_total = t_total
-        self.t_half = int(t_total/2)
-
-        # Time-step
-        self.t = 0
-        self.dt = dt
 
         # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
@@ -220,6 +186,8 @@ class Simulation:
         self.stable_silent = False
         self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / stats_t_interval)))
 
+        self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
+
         # Distances from each nucleosome to the center of mass
         # Initial distance vectors
         self.init_dist_vecs_to_com = self.center_of_mass - self.X
@@ -240,8 +208,42 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_filename(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+        self.params_filename = create_param_filename(self.cenH, self.cell_division, self.barriers, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
                                                      self.beta, self.seed)
+
+    def initialize_system(self, init_system_type):
+        # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
+        # Select a random initial polymer
+        if init_system_type == 'quasi-random':
+            seed_no = r.randint(100)
+            open_filename = pathname + f'quasi_random_initial_states/final_state_N=40_t_total=1000000_noise=0.500_seed={seed_no}.pkl'
+
+            with open(open_filename, 'rb') as f:
+                xs, ys, zs, _ = pickle.load(f)
+
+        # Stretched-out chain
+        elif init_system_type == 'stretched':
+            xs = np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0
+            ys, zs = np.zeros(self.N), np.zeros(self.N)
+        else:
+            raise AssertionError("Invalid system type given in function 'initialize_system'!")
+
+        # Nucleosome positions
+        X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
+
+        return X
+
+    def states_after_cell_division(self):
+        change_probs = torch.rand(size=(self.N,))
+        change_conditions = change_probs >= 0.5
+
+        # If cenH, do not change
+        change_conditions[self.cenH_indices] = 0
+
+        # Change selected nucleosomes to unmodified
+        self.states[change_conditions] = 1
+
+        return None
 
     # Updates interaction types based on states
     def update_interaction_types(self):
@@ -626,6 +628,14 @@ class Simulation:
     # The update step
 
     def update(self):
+        if self.cell_division:
+            if self.t % self.cell_division_interval == 0 and self.t != 0:
+                # Initialize system in space
+                self.X = self.initialize_system(init_system_type='quasi-random')
+                self.X_tilde = self.get_X_tilde()
+                # Change (on average) half the states to unmodified
+                self.states_after_cell_division()
+
         # For update of nucleosomes of even and odd indices, plus the nucleosomes at each end of the chain
         for index_type in self.index_types:
             # Set index type for the update
