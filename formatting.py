@@ -1,9 +1,11 @@
 pathname = '/home/lars/Documents/masters_thesis/'
 
-def create_param_filename(cenH, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+def create_param_filename(cenH, cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
     param_string = ''
     if cenH:
         param_string += 'cenH_'
+    if cell_division:
+        param_string += 'cell_division_'
     if barriers:
         param_string += 'barriers_'
 
