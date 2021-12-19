@@ -13,8 +13,8 @@ import seaborn as sns
 from formatting import pathname, create_param_filename, create_plot_title
 
 class Plots:
-    def __init__(self, plot_cenH, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise, plot_alpha_1, plot_alpha_2,
-                 plot_beta, plot_seed):
+    def __init__(self, plot_cenH, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise,
+                 plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
 
         self.cenH = plot_cenH
         self.cell_division = plot_cell_division
@@ -31,8 +31,9 @@ class Plots:
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.pathname = pathname
-        self.param_filename = create_param_filename(self.cenH, self.cell_division, self.barriers, self.N, self.t_total, self.noise,
-                                                    self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.param_filename = create_param_filename(self.cenH, self.cell_division, self.barriers,
+                                                    self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                                    self.beta, self.seed)
         self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
                                             self.alpha_2, self.beta, self.seed)
         r_system = self.N / 2
@@ -278,10 +279,10 @@ class Plots:
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         print(labels)
         cmap = colors.ListedColormap(self.state_colors)
+        self.format_plot(ax, xlabel='Time-steps / 2000', ylabel='Nucleosome no.')
         ax.imshow(states_time_space[::50].T, cmap=cmap)
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
-        #self.format_plot(ax, xlabel='Time-steps / 2000', ylabel='Nucleosome no.')
         plt.legend(handles=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
         plt.show()

@@ -1,9 +1,9 @@
 pathname = '/home/lars/Documents/masters_thesis/'
 
-def create_param_filename(cenH, cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+def create_param_filename(cenH_size, cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
     param_string = ''
-    if cenH:
-        param_string += 'cenH_'
+    if cenH_size > 0:
+        param_string += f'cenH={cenH_size}_'
     if cell_division:
         param_string += 'cell_division_'
     if barriers:
@@ -15,10 +15,10 @@ def create_param_filename(cenH, cell_division, barriers, N, t_total, noise, alph
     return param_string
 
 
-def create_plot_title(cenH, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+def create_plot_title(cenH_size, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
     param_string = ''
-    if cenH:
-        param_string += 'cenH, '
+    if cenH_size > 0:
+        param_string += f'cenH = {cenH_size}, '
     if barriers:
         param_string += 'barriers, '
 
