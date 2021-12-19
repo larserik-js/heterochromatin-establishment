@@ -11,7 +11,7 @@ r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, cell_division, cenH, write_cenH_data, barriers):
+                 stats_t_interval, seed, allow_state_change, cell_division, cenH_size, write_cenH_data, barriers):
 
         ## Parameters
         # No. of nucleosomes
@@ -53,8 +53,8 @@ class Simulation:
         self.cell_division_interval = 2000000
 
         # Include cenH region
-        self.cenH = cenH
-        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + 2)
+        self.cenH_size = cenH_size
+        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + self.cenH_size)
 
         self.write_cenH_data = write_cenH_data
 
@@ -102,11 +102,8 @@ class Simulation:
         self.mask_upper[self.triu_indices[0], self.triu_indices[1]] = 1
 
         # States
-        if self.cenH:
-            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
-            states[self.cenH_indices] = 0
-        else:
-            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
+        states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
+        states[self.cenH_indices] = 0
 
         # Pick out the nucleosomes of the different states
         self.state_S = (states==0)
@@ -194,8 +191,8 @@ class Simulation:
         self.correlation_times = torch.zeros(size=(self.N,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
-                                            self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.cenH_size, self.barriers, self.N, self.t_total, self.noise,
+                                            self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
@@ -208,7 +205,8 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_filename(self.cenH, self.cell_division, self.barriers, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+        self.params_filename = create_param_filename(self.cenH_size, self.cell_division, self.barriers,
+                                                     self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
                                                      self.beta, self.seed)
 
     def initialize_system(self, init_system_type):
@@ -399,13 +397,13 @@ class Simulation:
 
     # @staticmethod
     # @njit
-    # def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH, cenH_indices):
+    # def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, cenH_indices):
     #
     #     # Particle on which to attempt a change
     #     n1_index = r.randint(N)
     #
     #     # Does not change the cenH region
-    #     if cenH and (n1_index in cenH_indices):
+    #     if (cenH_size > 0) and (n1_index in cenH_indices):
     #         pass
     #
     #     else:
@@ -445,7 +443,7 @@ class Simulation:
     #     n1_index = r.randint(N)
     #
     #     # Does not change the cenH region
-    #     if cenH and (n1_index in cenH_indices):
+    #     if (cenH_size > 0) and (n1_index in cenH_indices):
     #         pass
     #
     #     else:
@@ -469,13 +467,13 @@ class Simulation:
 
     @staticmethod
     @njit
-    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH, cenH_indices):
+    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, cenH_indices):
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
 
         # Does not change the cenH region
-        if cenH and (n1_index in cenH_indices):
+        if (cenH_size > 0) and (n1_index in cenH_indices):
             pass
 
         # If the nucleosome is not part of the cenH region
@@ -510,7 +508,7 @@ class Simulation:
         n1_index = r.randint(N)
 
         # Does not change the cenH region
-        if cenH and (n1_index in cenH_indices):
+        if (cenH_size > 0) and (n1_index in cenH_indices):
             pass
 
         else:
@@ -545,7 +543,7 @@ class Simulation:
     def change_states(self):
         # Numpy array
         states_numpy = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
-                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH,
+                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
                                           self.cenH_indices.numpy())
 
         # Change from Numpy array to Torch tensor
