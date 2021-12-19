@@ -57,7 +57,8 @@ if __name__ == '__main__':
             # data_file.close()
 
         # Create pool for multiprocessing
-        pool = Pool(cpu_count())
+        #pool = Pool(cpu_count())
+        pool = Pool(25)
 
         res = list(pool.map(curied_run, seed_list, chunksize=1))
 

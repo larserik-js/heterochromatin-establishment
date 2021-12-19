@@ -5,24 +5,24 @@ import argparse
 def get_parser_args():
     # Argparser from command line
     parser = argparse.ArgumentParser()
-    
+
     # Multiprocessing
     parser.add_argument('--multi',
-                        type=bool,
-                        default=False,
+                        type=int,
+                        default=0,
                         help='Use multiprocessing or not.')
 
     # Plots initial and final state, as well as statistics
     # Nothing (except possibly an animation) is saved
     parser.add_argument('--test_mode',
-                        type=bool,
-                        default=True,
+                        type=int,
+                        default=1,
                         help='If false, saves data. Else, nothing is saved, except possibly an animation.')
 
     # # Additionally generates and saves an animation
     parser.add_argument('--animate',
-                        type=bool,
-                        default=False,
+                        type=int,
+                        default=0,
                         help='If true, creates an animation.')
 
     # Random seed
@@ -89,14 +89,14 @@ def get_parser_args():
     ## State parameters
     # Allow states to change
     parser.add_argument('--allow_state_change',
-                        type=bool,
-                        default=True,
+                        type=int,
+                        default=1,
                         help='Enables the nucleosome states to change.')
 
     # Allow cell division
     parser.add_argument('--cell_division',
-                        type=bool,
-                        default=True,
+                        type=int,
+                        default=1,
                         help='Enables cell division.')
 
     # Include cenH region
@@ -106,14 +106,14 @@ def get_parser_args():
                         help='The size of the cenH region.')
 
     parser.add_argument('--write_cenH_data',
-                        type=bool,
-                        default=False,
+                        type=int,
+                        default=0,
                         help='Collects data on the spreading of the silent state.')
 
     # Include barriers
     parser.add_argument('--barriers',
-                        type=bool,
-                        default=False,
+                        type=int,
+                        default=0,
                         help='Includes system barriers.')
 
     # Constants
