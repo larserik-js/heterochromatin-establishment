@@ -1,25 +1,28 @@
 from plot_class import Plots
 
 # Plot parameters
-plot_cenH = True
-plot_cell_division = True
+plot_cell_division = False
 plot_barriers = False
 
-plot_cenH_size = 2
+plot_stats_interval = 10
+
+plot_cenH_size = 0
 plot_N = 40
-plot_t_total = 20000000
+plot_t_total = 1000
 plot_noise = 0.5
+plot_initial_state='active'
 
 constant = 0.1
 dt = 0.02
-plot_alpha_1 = 35 * dt * constant
-plot_alpha_2 = 49 * dt * constant
-plot_beta = 4 * dt * constant
-plot_seed = 8
+plot_alpha_1 = 25 * dt * constant
+plot_alpha_2 = 50 * dt * constant
+plot_beta = 2 * dt * constant
+plot_seed = 0
 
-plot_obj = Plots(plot_cenH=plot_cenH, plot_cell_division=plot_cell_division,
+plot_obj = Plots(plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size, plot_cell_division=plot_cell_division,
                  plot_barriers=plot_barriers, plot_N=plot_N, plot_t_total=plot_t_total, plot_noise=plot_noise,
-                 plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2, plot_beta=plot_beta, plot_seed=plot_seed)
+                 plot_initial_state=plot_initial_state, plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2,
+                 plot_beta=plot_beta, plot_seed=plot_seed)
 
 # Plot final state
 #plot_obj.plot_final_state()

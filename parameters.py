@@ -32,7 +32,7 @@ def get_parser_args():
                         help='Random seed for Pytorch and Numpy.')
 
     parser.add_argument('--seed_list',
-                        default=np.arange(25),
+                        default=np.arange(5),
                         help='Random seed list for Pytorch and Numpy.')
 
     # No. of nucleosomes
@@ -93,10 +93,21 @@ def get_parser_args():
                         default=1,
                         help='Enables the nucleosome states to change.')
 
+    # List of initial state types
+    parser.add_argument('--initial_state',
+                        type=str,
+                        default='active',
+                        help='The initial nucleosome state.')
+
+    # List of initial state types
+    parser.add_argument('--initial_state_list',
+                        default=['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent'],
+                        help='Five different initial states.')
+
     # Allow cell division
     parser.add_argument('--cell_division',
                         type=int,
-                        default=1,
+                        default=0,
                         help='Enables cell division.')
 
     # Include cenH region
@@ -168,6 +179,8 @@ def get_parser_args():
     U_two_interaction_weight = args.U_two_interaction_weight
     U_pressure_weight = args.U_pressure_weight
     allow_state_change = args.allow_state_change
+    initial_state = args.initial_state
+    initial_state_list = args.initial_state_list
     cell_division = args.cell_division
     cenH_size = args.cenH_size
     write_cenH_data = args.write_cenH_data
@@ -180,6 +193,7 @@ def get_parser_args():
     beta = args.beta
 
     return multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
-           U_two_interaction_weight, U_pressure_weight, allow_state_change, cell_division,cenH_size, write_cenH_data, \
-           barriers, constant, constant_list, alpha_1, alpha_1_list, alpha_2, beta
+           U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, \
+           cell_division, cenH_size, write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_list, \
+           alpha_2, beta
 
