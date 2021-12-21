@@ -10,16 +10,16 @@ from parameters import get_parser_args
 
 # Get all parameters
 multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
-U_two_interaction_weight, U_pressure_weight, allow_state_change, cell_division,cenH_size, write_cenH_data, barriers, \
-constant, constant_list, alpha_1, alpha_1_list, alpha_2, beta = get_parser_args()
+U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, cell_division,cenH_size,\
+write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_list, alpha_2, beta = get_parser_args()
 
 ##############################################################################
 ##############################################################################
 
-def curied_run(seed):
+def curied_run(initial_state):
     return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, constant*alpha_1,
                    constant*alpha_2, constant*beta, stats_t_interval, seed, False, animate, allow_state_change,
-                   cell_division, cenH_size, write_cenH_data, barriers)
+                   initial_state, cell_division, cenH_size, write_cenH_data, barriers)
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         #pool = Pool(cpu_count())
         pool = Pool(25)
 
-        res = list(pool.map(curied_run, seed_list, chunksize=1))
+        res = list(pool.map(curied_run, initial_state_list, chunksize=1))
 
         # Print time elapsed
         final_time = timer()-initial_time
@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
         # Run the simulation
         run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                stats_t_interval, seed, test_mode, animate, allow_state_change, cell_division, cenH_size, write_cenH_data,
+                stats_t_interval, seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data,
                 barriers)
 
         # Print time elapsed

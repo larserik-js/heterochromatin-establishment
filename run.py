@@ -99,7 +99,7 @@ def save_data(sim_obj):
 # from memory_profiler import profile
 # @profile
 def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        seed, test_mode, animate, allow_state_change, cell_division, cenH_size, write_cenH_data, barriers):
+        seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with noise = {noise}')
@@ -110,7 +110,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         stats_t_interval, seed, allow_state_change, cell_division, cenH_size, write_cenH_data, barriers)
+                         stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])

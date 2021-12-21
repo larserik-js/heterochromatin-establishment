@@ -13,15 +13,17 @@ import seaborn as sns
 from formatting import pathname, create_param_filename, create_plot_title
 
 class Plots:
-    def __init__(self, plot_cenH, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise,
-                 plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+    def __init__(self, plot_stats_interval, plot_cenH_size, plot_cell_division, plot_barriers, plot_N, plot_t_total,
+                 plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
 
-        self.cenH = plot_cenH
+        self.stats_interval = plot_stats_interval
+        self.cenH_size = plot_cenH_size
         self.cell_division = plot_cell_division
         self.barriers = plot_barriers
         self.N = plot_N
         self.t_total = plot_t_total
         self.noise = plot_noise
+        self.initial_state = plot_initial_state
         self.alpha_1 = plot_alpha_1
         self.alpha_2 = plot_alpha_2
         self.beta = plot_beta
@@ -31,10 +33,10 @@ class Plots:
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.pathname = pathname
-        self.param_filename = create_param_filename(self.cenH, self.cell_division, self.barriers,
+        self.param_filename = create_param_filename(self.initial_state, self.cenH_size, self.cell_division, self.barriers,
                                                     self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
                                                     self.beta, self.seed)
-        self.plot_title = create_plot_title(self.cenH, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
+        self.plot_title = create_plot_title(self.cenH_size, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
                                             self.alpha_2, self.beta, self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
@@ -274,13 +276,12 @@ class Plots:
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
 
-        print(states_time_space)
+        internal_stats_interval = 20
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
-        print(labels)
         cmap = colors.ListedColormap(self.state_colors)
-        self.format_plot(ax, xlabel='Time-steps / 2000', ylabel='Nucleosome no.')
-        ax.imshow(states_time_space[::50].T, cmap=cmap)
+        ax.imshow(states_time_space[::internal_stats_interval].T, cmap=cmap)
+        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * internal_stats_interval}', ylabel='Nucleosome no.')
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
         plt.legend(handles=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)

@@ -11,7 +11,7 @@ r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, cell_division, cenH_size, write_cenH_data, barriers):
+                 stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers):
 
         ## Parameters
         # No. of nucleosomes
@@ -47,6 +47,7 @@ class Simulation:
 
         # Allow states to change
         self.allow_state_change = allow_state_change
+        self.initial_state = initial_state
 
         # Include cell divisions
         self.cell_division = cell_division
@@ -101,17 +102,13 @@ class Simulation:
         self.triu_indices = torch.triu_indices(self.N, self.N, offset=1)
         self.mask_upper[self.triu_indices[0], self.triu_indices[1]] = 1
 
-        # States
-        states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
-        states[self.cenH_indices] = 0
+        # All states
+        self.states = self.initialize_states()
 
         # Pick out the nucleosomes of the different states
-        self.state_S = (states==0)
-        self.state_U = (states==1)
-        self.state_A = (states==2)
-
-        # All states
-        self.states = states
+        self.state_S = (self.states==0)
+        self.state_U = (self.states==1)
+        self.state_A = (self.states==2)
 
         self.states_booleans = torch.cat([self.state_S[None,:], self.state_U[None,:], self.state_A[None,:]], dim=0)
 
@@ -205,7 +202,7 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_filename(self.cenH_size, self.cell_division, self.barriers,
+        self.params_filename = create_param_filename(self.initial_state, self.cenH_size, self.cell_division, self.barriers,
                                                      self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
                                                      self.beta, self.seed)
 
@@ -230,6 +227,40 @@ class Simulation:
         X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         return X
+
+    def initialize_states(self):
+        if self.initial_state == 'active':
+            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
+        elif self.initial_state == 'active_unmodified':
+            states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
+
+            change_probs = torch.rand(size=(self.N,))
+            change_conditions = change_probs >= 0.5
+
+            # Change selected nucleosomes to unmodified
+            states[change_conditions] = 1
+
+        elif self.initial_state == 'unmodified':
+            states = torch.ones_like(self.X[:, 0], dtype=torch.int)
+        elif self.initial_state == 'unmodified_silent':
+            states = torch.ones_like(self.X[:, 0], dtype=torch.int)
+
+            change_probs = torch.rand(size=(self.N,))
+            change_conditions = change_probs >= 0.5
+
+            # Change selected nucleosomes to silent
+            states[change_conditions] = 0
+
+        elif self.initial_state == 'silent':
+            states = torch.zeros_like(self.X[:, 0], dtype=torch.int)
+
+        else:
+            raise AssertionError('Invalid initial state given!')
+
+        # Set cenH states to silent
+        states[self.cenH_indices] = 0
+
+        return states
 
     def states_after_cell_division(self):
         change_probs = torch.rand(size=(self.N,))
