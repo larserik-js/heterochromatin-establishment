@@ -6,7 +6,7 @@ plot_barriers = False
 
 plot_stats_interval = 100
 
-plot_cenH_size = 3
+plot_cenH_size = 0
 plot_N = 40
 plot_t_total = 2000000
 plot_noise = 0.5
@@ -16,7 +16,7 @@ plot_initial_state = initial_states[0]
 
 constant = 0.1
 dt = 0.02
-plot_alpha_1 = 50 * dt * constant * 5
+plot_alpha_1 = 45 * dt * constant * 5
 plot_alpha_2 = 50 * dt * constant * 5
 plot_beta = 2 * dt * constant *5
 plot_seed = 0
@@ -43,7 +43,13 @@ plot_obj = Plots(plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_ce
 #plot_obj.plot_states()
 
 # Plot states in time and space
-plot_obj.plot_states_time_space()
+# plot_obj.plot_states_time_space()
+
+# Plot fractions from Christmas simulations
+plot_obj.plot_fractions()
+
+plot_obj.plot_fractions_std()
+
 
 # Plot end-to-end distance R
 #plot_obj.plot_Rs()
