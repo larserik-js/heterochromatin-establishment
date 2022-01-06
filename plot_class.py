@@ -6,6 +6,7 @@ from matplotlib import colors, patches
 import numpy as np
 from glob import glob
 import seaborn as sns
+from torch.multiprocessing import Pool, cpu_count
 
 # from mayavi import mlab
 # from mayavi.mlab import *
@@ -287,7 +288,6 @@ class Plots:
         plt.legend(handles=labels, bbox_to_anchor=(0.05, 2), loc=2, borderaxespad=0.)
 
         plt.show()
-
 
     def plot_Rs(self):
         open_filename = self.create_full_filename('statistics/Rs/Rs_', '.pkl')
