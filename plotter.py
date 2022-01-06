@@ -4,19 +4,21 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
-plot_stats_interval = 10
+plot_stats_interval = 100
 
-plot_cenH_size = 0
+plot_cenH_size = 3
 plot_N = 40
-plot_t_total = 1000
+plot_t_total = 2000000
 plot_noise = 0.5
-plot_initial_state='active'
+
+initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
+plot_initial_state = initial_states[0]
 
 constant = 0.1
 dt = 0.02
-plot_alpha_1 = 25 * dt * constant
-plot_alpha_2 = 50 * dt * constant
-plot_beta = 2 * dt * constant
+plot_alpha_1 = 50 * dt * constant * 5
+plot_alpha_2 = 50 * dt * constant * 5
+plot_beta = 2 * dt * constant *5
 plot_seed = 0
 
 plot_obj = Plots(plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size, plot_cell_division=plot_cell_division,
