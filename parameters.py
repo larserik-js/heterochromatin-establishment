@@ -144,8 +144,9 @@ def get_parser_args():
                         default=35*0.02*0.1,
                         help='The reaction rate for the recruited conversions of A to U and U to S.')
 
-    parser.add_argument('--alpha_1_list',
-                        default=np.linspace(25, 49, 25) * 0.02 * 0.1,
+    parser.add_argument('--alpha_1_const',
+                        type=float,
+                        default=1,
                         help='The reaction rates for the recruited conversions of A to U and U to S.')
 
     # Towards A
@@ -188,12 +189,12 @@ def get_parser_args():
     constant = args.constant
     constant_list = args.constant_list
     alpha_1 = args.alpha_1
-    alpha_1_list = args.alpha_1_list
+    alpha_1_const = args.alpha_1_const
     alpha_2 = args.alpha_2
     beta = args.beta
 
     return multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
            U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, \
-           cell_division, cenH_size, write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_list, \
+           cell_division, cenH_size, write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_const, \
            alpha_2, beta
 

@@ -276,7 +276,7 @@ class Plots:
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
 
-        internal_stats_interval = 20
+        internal_stats_interval = 50
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
@@ -284,7 +284,7 @@ class Plots:
         self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * internal_stats_interval}', ylabel='Nucleosome no.')
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
-        plt.legend(handles=labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.legend(handles=labels, bbox_to_anchor=(0.05, 2), loc=2, borderaxespad=0.)
 
         plt.show()
 

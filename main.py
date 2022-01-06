@@ -2,6 +2,7 @@
 from timeit import default_timer as timer
 import torch
 from torch.multiprocessing import Pool, cpu_count
+import numpy as np
 
 ## Own scripts
 import run
@@ -11,12 +12,14 @@ from parameters import get_parser_args
 # Get all parameters
 multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
 U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, cell_division,cenH_size,\
-write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_list, alpha_2, beta = get_parser_args()
+write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_const, alpha_2, beta = get_parser_args()
 
+alpha_1_list = np.linspace(25, 50, 101) * 0.02 * 0.1 * alpha_1_const
+#alpha_1_list = np.linspace(25,50,2) * 0.02 * 0.1 * alpha_1_const
 ##############################################################################
 ##############################################################################
 
-def curied_run(initial_state):
+def curied_run(alpha_1):
     return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, constant*alpha_1,
                    constant*alpha_2, constant*beta, stats_t_interval, seed, False, animate, allow_state_change,
                    initial_state, cell_division, cenH_size, write_cenH_data, barriers)
@@ -58,9 +61,9 @@ if __name__ == '__main__':
 
         # Create pool for multiprocessing
         #pool = Pool(cpu_count())
-        pool = Pool(25)
+        pool = Pool(26)
 
-        res = list(pool.map(curied_run, initial_state_list, chunksize=1))
+        res = list(pool.map(curied_run, alpha_1_list, chunksize=1))
 
         # Print time elapsed
         final_time = timer()-initial_time
