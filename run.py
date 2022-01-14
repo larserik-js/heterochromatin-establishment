@@ -20,7 +20,7 @@ from animation_class import Animation
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, filename):
-    filename = pathname + filename + '.pkl'
+    filename = pathname + 'data/statistics/' + filename + '.pkl'
 
     # Detach tensors and turn them into numpy arrays
     new_var_list = []
@@ -38,34 +38,20 @@ def save_data(sim_obj):
     ## Save final state and statistics
     # Filenames
     parameter_string = sim_obj.params_filename
-    #fs_filename =  f'statistics/final_state/final_state_' + parameter_string
-    seed = sim_obj.seed
-    fs_filename = f'statistics/final_state/final_state_N=40_t_total=1000000_noise=0.500_seed={seed}'
-    interactions_filename =  f'statistics/interactions/interactions_' + parameter_string
-    rg_filename = f'statistics/RG/RG_' + parameter_string
-    Rs_filename = f'statistics/Rs/Rs_' + parameter_string
-    correlation_filename = f'statistics/correlation/correlation_' + parameter_string
-    states_filename = f'statistics/states/states_' + parameter_string
-    states_time_space_filename = f'statistics/states_time_space/states_time_space_' + parameter_string
-    correlation_times_filename = f'statistics/correlation_times/correlation_times_' + parameter_string
+
+    fs_filename =  'final_state/final_state_' + parameter_string
+    interactions_filename =  'interactions/interactions_' + parameter_string
+    rg_filename = 'RG/RG_' + parameter_string
+    Rs_filename = 'Rs/Rs_' + parameter_string
+    correlation_filename = 'correlation/correlation_' + parameter_string
+    states_filename = 'states/states_' + parameter_string
+    states_time_space_filename = 'states_time_space/states_time_space_' + parameter_string
+    correlation_times_filename = 'correlation_times/correlation_times_' + parameter_string
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
     pickle_var_list = [x_final, y_final, z_final, sim_obj.states]
-    #write_pkl(pickle_var_list, fs_filename)
-    filename = pathname + fs_filename + '.pkl'
-
-    # Detach tensors and turn them into numpy arrays
-    new_var_list = []
-    for var in pickle_var_list:
-        if torch.is_tensor(var):
-            new_var_list.append(var.detach().numpy())
-        else:
-            new_var_list.append(var)
-
-    # Write to pkl
-    with open(filename, 'wb') as f:
-        pickle.dump(new_var_list, f)
+    write_pkl(pickle_var_list, fs_filename)
 
     # Statistics
     pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
@@ -99,10 +85,11 @@ def save_data(sim_obj):
 # from memory_profiler import profile
 # @profile
 def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers):
+        seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
+        write_cenH_data, barriers):
 
     # torch.set_num_threads(1)
-    print(f'Started simulation with noise = {noise}')
+    print(f'Started simulation with seed = {seed}.')
 
     # Fix seed value
     np.random.seed(seed)
@@ -110,7 +97,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers)
+                         stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
+                         cenH_init_idx, write_cenH_data, barriers)
 
     # Save initial state for plotting
     x_init = copy.deepcopy(sim_obj.X[:,0])
@@ -139,7 +127,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         # Save a named gif, plus pickled final states and statistics
         else:
             ## Save animation
-            filename = pathname + 'animations/' + sim_obj.params_filename + '.gif'
+            filename = pathname + 'data/animations/' + sim_obj.params_filename + '.gif'
             anim.save(filename, dpi=200, writer=writergif)
 
             ## Save data
@@ -206,7 +194,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
             ## Save data
             save_data(sim_obj)
 
-    print(f'Finished simulation with noise = {noise}')
+    print(f'Finished simulation with seed = {seed}.')
 
 ##############################################################################
 ##############################################################################

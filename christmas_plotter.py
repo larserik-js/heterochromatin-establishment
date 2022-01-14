@@ -12,6 +12,7 @@ def plot_fractions():
     cenH_lengths = [0, 3]
     initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
     state_colors = ['b', 'g', 'y', 'orange', 'r']
+    markers = ['.', 'o', 's', '*', '+']
 
     dt = 0.02
     t_total = 2000000
@@ -62,8 +63,8 @@ def plot_fractions():
                     fractions[l] = silent_fraction
 
                 # Plot fractions
-                ax[i, j].scatter(alpha_1_list, fractions, s=1, c=state_colors[k], label=f'{initial_states[k]}',
-                                 zorder=k)
+                ax[i, j].scatter(alpha_1_list, fractions, s=3, alpha=1, c=state_colors[k], marker=markers[k],
+                                 label=f'{initial_states[k]}', zorder=k)
                 ax[i, j].legend(loc='best')
                 ax[i, j].set(ylim=(-0.05, 1.05))
 
@@ -232,10 +233,8 @@ def plot_decay_times():
                         else:
                             decay_times[m] = measure_first_decay_time(all_fractions[k], l)
 
-                    print(decay_times)
-
                     # Plot fractions
-                    ax[i, j].plot(alpha_1_list, decay_times, ls=linestyles[l], c=state_colors[k], label=f'{initial_states[k]}')
+                    ax[i, j].plot(alpha_1_list, 100*decay_times, ls=linestyles[l], c=state_colors[k], label=f'{initial_states[k]}')
                     ax[i, j].legend(loc='best')
                    # ax[i, j].set(ylim=(-0.05, 0.55))
 
@@ -255,8 +254,8 @@ def plot_decay_times():
 
     return None
 
-#plot_fractions()
+plot_fractions()
 
 #plot_fractions_std()
 
-plot_decay_times()
+#plot_decay_times()

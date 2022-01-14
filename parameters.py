@@ -116,6 +116,11 @@ def get_parser_args():
                         default=0,
                         help='The size of the cenH region.')
 
+    parser.add_argument('--cenH_init_idx',
+                        type=int,
+                        default=20,
+                        help='The index of the first nucleosome of the cenH region.')
+
     parser.add_argument('--write_cenH_data',
                         type=int,
                         default=0,
@@ -184,6 +189,7 @@ def get_parser_args():
     initial_state_list = args.initial_state_list
     cell_division = args.cell_division
     cenH_size = args.cenH_size
+    cenH_init_idx = args.cenH_init_idx
     write_cenH_data = args.write_cenH_data
     barriers = args.barriers
     constant = args.constant
@@ -195,6 +201,6 @@ def get_parser_args():
 
     return multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
            U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, \
-           cell_division, cenH_size, write_cenH_data, barriers, constant, constant_list, alpha_1, alpha_1_const, \
-           alpha_2, beta
+           cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers, constant, constant_list, alpha_1,\
+           alpha_1_const, alpha_2, beta
 

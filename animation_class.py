@@ -26,8 +26,8 @@ class Animation:
             # Increment time-step
             self.sim_obj.t = idx + 1
 
-            # Only generates a .gif image for every 100th update
-            if idx % 100 == 0:
+            # Only generates a .gif image for every 2000th update
+            if idx % 200 == 0:
                 yield idx
 
         # Generates 10 identical images at the end of the animation
@@ -65,7 +65,7 @@ class Animation:
                                self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
 
         # Set title, labels and legend
-        self.ax_anim.set_title(self.sim_obj.plot_title, size=10)
+        self.ax_anim.set_title(self.sim_obj.plot_title, size=7)
         self.ax_anim.set_xlabel('x', size=14)
         self.ax_anim.set_ylabel('y', size=14)
         self.ax_anim.set_zlabel('z', size=14)
