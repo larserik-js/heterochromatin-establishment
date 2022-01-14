@@ -5,13 +5,14 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-from formatting import pathname, create_param_filename, create_plot_title
+from formatting import pathname, create_param_string, create_plot_title
 import pickle
 r = np.random
 
 class Simulation:
     def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, write_cenH_data, barriers):
+                 stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
+                 write_cenH_data, barriers):
 
         ## Parameters
         # No. of nucleosomes
@@ -55,7 +56,8 @@ class Simulation:
 
         # Include cenH region
         self.cenH_size = cenH_size
-        self.cenH_indices = torch.arange(int(self.N/2), int(self.N/2) + self.cenH_size)
+        self.cenH_init_idx = cenH_init_idx
+        self.cenH_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
 
         self.write_cenH_data = write_cenH_data
 
@@ -188,23 +190,23 @@ class Simulation:
         self.correlation_times = torch.zeros(size=(self.N,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.cenH_size, self.barriers, self.N, self.t_total, self.noise,
-                                            self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.cenH_size, self.cenH_init_idx, self.barriers, self.N, self.t_total,
+                                            self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
         self.chain_s = 1
         # Colors of scatter plot markers
-        self.state_colors = ['b', 'r', 'y']
+        self.state_colors = ['r', 'y', 'b']
         self.state_names = ['Silent', 'Unmodified', 'Active']
         # Plot dimensions
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_filename(self.initial_state, self.cenH_size, self.cell_division, self.barriers,
-                                                     self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                     self.beta, self.seed)
+        self.params_filename = create_param_string(self.initial_state, self.cenH_size, self.cenH_init_idx,
+                                                     self.cell_division, self.barriers, self.N, self.t_total,
+                                                     self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
 
     def initialize_system(self, init_system_type):
         # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer

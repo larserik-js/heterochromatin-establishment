@@ -2,6 +2,7 @@ import torch
 import numpy as np
 from numba import njit
 import matplotlib.pyplot as plt
+from formatting import pathname
 
 # Calculate radius of gyration
 def update_rg(sim_obj):
@@ -125,6 +126,8 @@ def update_states_time_space(sim_obj):
 
     return None
 
+# For each nucleosome, measures the time it takes for the distance vector to the center of mass to
+# rotate more than 90 degrees
 def update_correlation_times(sim_obj):
     # Current distance vectors from the nucleosomes to the center of mass
     distance_vecs_to_com = sim_obj.center_of_mass - sim_obj.X
@@ -138,16 +141,18 @@ def update_correlation_times(sim_obj):
     return None
 
 def _gather_statistics(sim_obj):
-    # # Write cenH data
-    # if sim_obj.write_cenH_data:
-    #     if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
-    #         data_file = open(f'/home/lars/Documents/masters_thesis/statistics/stable_silent_times_cenH_N={sim_obj.N}'\
-    #                        + f'_t_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}' f'_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}'\
-    #                        + f'_beta={sim_obj.beta:.5f}.txt', 'a')
-    #         data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
-    #         data_file.close()
-    #         print(f'Wrote to file at seed {sim_obj.seed}')
-    #         sim_obj.stable_silent = True
+    # Write cenH data
+    if sim_obj.write_cenH_data:
+        if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
+            data_file = open(pathname + f'data/statistics/stable_silent_times_init_state={sim_obj.initial_state}_'\
+                             + f'cenH={sim_obj.cenH_size}_cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_'\
+                             + f't_total={sim_obj.t_total}_noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_'\
+                             + f'alpha_2={sim_obj.alpha_2:.5f}_beta={sim_obj.beta:.5f}.txt', 'a')
+
+            data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
+            data_file.close()
+            print(f'Wrote to file at seed {sim_obj.seed}')
+            sim_obj.stable_silent = True
 
     # Calculate the dot product of the end-to-end vector with the initial end-to-end vector
     #end_to_end_dot(sim_obj)
@@ -162,10 +167,10 @@ def _gather_statistics(sim_obj):
     # Update time correlation of polymer
     #update_correlation_times(sim_obj)
 
+    #update_interaction_stats(sim_obj)
+
     # These statistics are taken from halfway through the simulation
     #if sim_obj.t >= sim_obj.t_half:
-    #    update_interaction_stats(sim_obj)
-
     #     # Update radius of gyration
     #     #update_rg(sim_obj)
     #

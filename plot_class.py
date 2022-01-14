@@ -11,14 +11,15 @@ from torch.multiprocessing import Pool, cpu_count
 # from mayavi import mlab
 # from mayavi.mlab import *
 
-from formatting import pathname, create_param_filename, create_plot_title
+from formatting import pathname, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, plot_stats_interval, plot_cenH_size, plot_cell_division, plot_barriers, plot_N, plot_t_total,
-                 plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+    def __init__(self, plot_stats_interval, plot_cenH_size, plot_cenH_init_idx, plot_cell_division, plot_barriers,
+                 plot_N, plot_t_total, plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
 
         self.stats_interval = plot_stats_interval
         self.cenH_size = plot_cenH_size
+        self.cenH_init_idx = plot_cenH_init_idx
         self.cell_division = plot_cell_division
         self.barriers = plot_barriers
         self.N = plot_N
@@ -34,11 +35,11 @@ class Plots:
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.pathname = pathname
-        self.param_filename = create_param_filename(self.initial_state, self.cenH_size, self.cell_division, self.barriers,
-                                                    self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                    self.beta, self.seed)
-        self.plot_title = create_plot_title(self.cenH_size, self.barriers, self.N, self.t_total, self.noise, self.alpha_1,
-                                            self.alpha_2, self.beta, self.seed)
+        self.param_filename = create_param_string(self.initial_state, self.cenH_size, self.cenH_init_idx,
+                                                    self.cell_division, self.barriers, self.N, self.t_total, self.noise,
+                                                    self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.cenH_size, self.cenH_init_idx, self.barriers, self.N, self.t_total,
+                                            self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
@@ -93,7 +94,7 @@ class Plots:
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
         alpha = 0.5
-        open_filename = self.create_full_filename('statistics/interactions/interactions_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/interactions/interactions_', '.pkl')
 
         # Finds all .pkl files for N = N
         files = glob(open_filename)
@@ -101,13 +102,13 @@ class Plots:
         if len(files) > 0:
             with open(files[0], 'rb') as f:
                 N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
-                ax[0].bar(np.arange(N), average_lifetimes, alpha=alpha, label='Average lifetimes')
+                ax[0].plot(np.arange(N), average_lifetimes, label='Average lifetimes')
                 ax[1].bar(np.arange(N), interaction_idx_difference, alpha=alpha, label='Interaction length')
 
         # Set plot title
         self.format_plot(ax[0], ylabel='Average lifetimes')
         ax[0].set_xticklabels([])
-        ax[0].set_yscale('log')
+        #ax[0].set_yscale('log')
 
         self.format_plot(ax[1], xlabel='Index difference', ylabel='Frequency')
         ax[1].set_yscale('log')
@@ -259,7 +260,7 @@ class Plots:
         plt.show()
 
     def plot_states_time_space(self):
-        open_filename = self.create_full_filename('statistics/states_time_space/states_time_space_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/states_time_space/states_time_space_', '.pkl')
 
         files = glob(open_filename)
         print(open_filename)
@@ -276,8 +277,7 @@ class Plots:
 
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
-
-        internal_stats_interval = 50
+        internal_stats_interval = 80
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
@@ -367,6 +367,19 @@ class Plots:
         ax.hist(data_array, bins=40)
         plt.show()
         return data_array
+
+    def plot_silent_times(self):
+        param_string = f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_'\
+                       + f'N={self.N}_t_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_'\
+                       + f'alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
+        silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times_' + param_string,
+                                  skiprows=1, delimiter=',')
+
+        plt.hist(silent_times[:,0], bins=6)
+        plt.show()
+
+        return None
+
 
 
 
