@@ -277,7 +277,7 @@ class Plots:
 
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
-        internal_stats_interval = 80
+        internal_stats_interval = 10
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
@@ -367,19 +367,6 @@ class Plots:
         ax.hist(data_array, bins=40)
         plt.show()
         return data_array
-
-    def plot_silent_times(self):
-        param_string = f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_'\
-                       + f'N={self.N}_t_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_'\
-                       + f'alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
-        silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times_' + param_string,
-                                  skiprows=1, delimiter=',')
-
-        plt.hist(silent_times[:,0], bins=6)
-        plt.show()
-
-        return None
-
 
 
 

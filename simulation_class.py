@@ -207,6 +207,10 @@ class Simulation:
         self.params_filename = create_param_string(self.initial_state, self.cenH_size, self.cenH_init_idx,
                                                      self.cell_division, self.barriers, self.N, self.t_total,
                                                      self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        # Create figure
+        self.fig = plt.figure(figsize=(10,10))
+        self.ax = self.fig.add_subplot(111, projection='3d')
+
 
     def initialize_system(self, init_system_type):
         # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
@@ -428,82 +432,13 @@ class Simulation:
     def gather_statistics(self):
         return _gather_statistics(self)
 
-    # @staticmethod
-    # @njit
-    # def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, cenH_indices):
-    #
-    #     # Particle on which to attempt a change
-    #     n1_index = r.randint(N)
-    #
-    #     # Does not change the cenH region
-    #     if (cenH_size > 0) and (n1_index in cenH_indices):
-    #         pass
-    #
-    #     else:
-    #         # Choose reaction probability based on the state of n1
-    #         if states[n1_index] == 0:
-    #             alpha = alpha_2 + 0
-    #         elif states[n1_index] == 2:
-    #             alpha = alpha_1 + 0
-    #         elif states[n1_index] == 1:
-    #             alpha = (alpha_1 + alpha_2) / 2
-    #         else:
-    #             raise AssertionError('State not equal to 0, 1, or 2.')
-    #
-    #         # Recruited conversion
-    #         rand_alpha = r.rand()
-    #
-    #         if rand_alpha < alpha:
-    #
-    #             # Other particles within distance
-    #             particles_within_distance = \
-    #             np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
-    #
-    #             # If there are other particles within l_interacting
-    #             if len(particles_within_distance) > 0:
-    #
-    #                 # Choose one of those particles randomly
-    #                 n2_index = r.choice(particles_within_distance)
-    #
-    #                 # If the n2 state is U, do not perform any changes
-    #                 if states[n1_index] < states[n2_index] and states[n2_index] != 1:
-    #                     states[n1_index] += 1
-    #                 elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
-    #                     states[n1_index] -= 1
-    #
-    #     # Noisy conversion
-    #     # Choose new random particle
-    #     n1_index = r.randint(N)
-    #
-    #     # Does not change the cenH region
-    #     if (cenH_size > 0) and (n1_index in cenH_indices):
-    #         pass
-    #
-    #     else:
-    #         rand_beta = r.rand()
-    #         if rand_beta < beta:
-    #
-    #             if states[n1_index] == 0:
-    #                 states[n1_index] += 1
-    #             elif states[n1_index] == 2:
-    #                 states[n1_index] -= 1
-    #
-    #             else:
-    #                 # If the particle is in the U state, choose a change to A or S randomly
-    #                 rand = r.rand()
-    #                 if states[n1_index] == 1 and rand < 0.5:
-    #                     states[n1_index] += 1
-    #                 elif states[n1_index] == 1 and rand >= 0.5:
-    #                     states[n1_index] -= 1
-    #
-    #     return states
-
     @staticmethod
     @njit
     def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, cenH_indices):
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
+        #print(n1_index)
 
         # Does not change the cenH region
         if (cenH_size > 0) and (n1_index in cenH_indices):
@@ -657,7 +592,6 @@ class Simulation:
         return rij_all, norms_all
 
     # The update step
-
     def update(self):
         if self.cell_division:
             if self.t % self.cell_division_interval == 0 and self.t != 0:
@@ -739,6 +673,7 @@ class Simulation:
                 self.thetas = self.get_theta_zeros()
                 self.X = self.X.detach()
 
+
         # Statistics
         with torch.no_grad():
             # New center of mass
@@ -765,47 +700,46 @@ class Simulation:
                 # Updates interaction types based on states
                 self.update_interaction_types()
 
+    # Clears the figure object and plots the current polymer
+    def plot(self):
+        # Clear the figure
+        self.ax.clear()
 
-    def plot(self, x_plot, y_plot, z_plot, ax, label, ls='solid'):
-        # Plot the different states
+        # Polymer position
+        X, Y, Z = self.X[:,0].numpy(), self.X[:,1].numpy(), self.X[:,2].numpy()
+
+        # Figure text
+        text_str = r'$t = $' + f' {self.t} / {self.t_total}'
+        r = self.r_system
+        com = self.center_of_mass
+
+        self.ax.text(r + com[0], -r + com[1], 1.8*r + com[2], text_str)
+
+        # Plot chain
+        self.ax.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
+
+
+        # Plot each state type separately
         for i in range(len(self.states_booleans)):
-            ax.scatter(x_plot[self.states_booleans[i]].cpu(), y_plot[self.states_booleans[i]].cpu(),
-                       z_plot[self.states_booleans[i]].cpu(), s=self.nucleosome_s, c=self.state_colors[i])
+            x_plot = X[self.states_booleans[i]]
+            y_plot = Y[self.states_booleans[i]]
+            z_plot = Z[self.states_booleans[i]]
 
-        # Plot chain line
-        all_condition = torch.ones_like(self.states_booleans[0], dtype=torch.bool)
+            self.ax.scatter(x_plot, y_plot, z_plot, s=self.nucleosome_s, c=self.state_colors[i],
+                                 label=self.state_names[i])
 
-        ax.plot(x_plot[all_condition].cpu(), y_plot[all_condition].cpu(), z_plot[all_condition].cpu(),
-                marker='o', ls=ls, markersize=self.chain_s, c='k', lw=0.7, label=label)
+        # Set plot dimensions
+        self.ax.set(xlim=(com[0] + self.plot_dim[0], com[0] + self.plot_dim[1]),
+               ylim=(com[1] + self.plot_dim[0], com[1] + self.plot_dim[1]),
+               zlim=(com[2] + self.plot_dim[0], com[2] + self.plot_dim[1]))
 
-        # Plot center of mass
-        ax.scatter(self.center_of_mass[0], self.center_of_mass[1], self.center_of_mass[2], s=0.5, c='g')
+        # Set title, labels and legend
+        self.ax.set_title(self.plot_title, size=7)
+        self.ax.set_xlabel('x', size=14)
+        self.ax.set_ylabel('y', size=14)
+        self.ax.set_zlabel('z', size=14)
+        self.ax.legend(loc='upper left')
 
-    def finalize_plot(self, ax):
-        for i in range(len(self.state_colors)):
-            ax.scatter([],[],c=self.state_colors[i],label=self.state_names[i])
+        return None
 
-        ax.legend(loc='upper left')
-        ax.set_title(f'No. of nucleosomes = {self.N}', size=16)
-        ax.set(xlim=self.plot_dim, ylim=self.plot_dim, zlim=self.plot_dim)
-        plt.show()
 
-    def plot_statistics(self):
-        s = 0.5
-        fig, ax = plt.subplots(2,1,figsize=(8,6))
-        #ts = torch.arange(self.t_half)
-        #ax[0].scatter(ts, self.interaction_stats[0], s=s, label='Interacting states')
-        #ax[0].scatter(ts, self.interaction_stats[1], s=s, label='Non-interacting states')
-
-        ax[1].plot(np.arange(self.n_interacting), self.interaction_idx_difference)
-
-        ax[0].set_xlabel(r'$t$', size=14)
-        ax[0].set_ylabel('No. of interactions', size=14)
-        ax[0].set_title(f'No. of nucleosomes = {self.N}', size=16)
-
-        ax[1].set_xlabel('Index difference', size=14)
-        ax[1].set_ylabel('No. of interactions', size=14)
-
-        #ax[0].legend(loc='best')
-        plt.tight_layout()
-        plt.show()

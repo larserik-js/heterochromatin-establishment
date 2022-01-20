@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     else:
         # Start the timer
-        print(f'Simulation started. Noise = {noise:.2f}')
+        print(f'Simulation started.')
         initial_time = timer()
 
         # Run the simulation

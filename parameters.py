@@ -32,7 +32,7 @@ def get_parser_args():
                         help='Random seed for Pytorch and Numpy.')
 
     parser.add_argument('--seed_list',
-                        default=np.arange(5),
+                        default=np.arange(3000),
                         help='Random seed list for Pytorch and Numpy.')
 
     # No. of nucleosomes
