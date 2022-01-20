@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import torch
 import copy
 import os
+from numba import njit
 
 # Animation packages
 import matplotlib.animation as animation
@@ -13,10 +14,10 @@ from matplotlib.animation import FuncAnimation
 from simulation_class import Simulation
 
 # Pathname
-from formatting import pathname
+from formatting import pathname, create_param_string
 
 # External animation file
-from animation_class import Animation
+from animation_class import Animation, create_animation_directory
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, filename):
@@ -81,6 +82,12 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.correlation_times]
     write_pkl(pickle_var_list, correlation_times_filename)
 
+# Fix seed value for Numba
+@njit
+def set_numba_seed(seed):
+    np.random.seed(seed)
+    return None
+
 # Runs the script
 # from memory_profiler import profile
 # @profile
@@ -91,54 +98,61 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
     # torch.set_num_threads(1)
     print(f'Started simulation with seed = {seed}.')
 
-    # Fix seed value
+    # Fix seed values
     np.random.seed(seed)
     torch.manual_seed(seed)
+    set_numba_seed(seed)
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
                          stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
                          cenH_init_idx, write_cenH_data, barriers)
 
-    # Save initial state for plotting
-    x_init = copy.deepcopy(sim_obj.X[:,0])
-    y_init = copy.deepcopy(sim_obj.X[:,1])
-    z_init = copy.deepcopy(sim_obj.X[:,2])
-
-    coords_init = [x_init, y_init, z_init]
-
     # Simulation loop
     if animate:
-        # Create animation object
-        anim_obj = Animation(sim_obj, t_total, coords_init)
-
-        # The animation loop
-        # The function 'animation_loop' gets called t_total times
-        anim = FuncAnimation(anim_obj.fig_anim, anim_obj.animation_loop, frames=anim_obj.frame_generator,
-                             interval=100, save_count=t_total + 10)
-        # Format and save
-        writergif = animation.PillowWriter(fps=30)
-
-        # Just save a test gif
+        # Create destination folder for the individual images
         if test_mode:
-            filename = pathname + 'animations/test.gif'
-            anim.save(filename, dpi=200, writer=writergif)
-
-        # Save a named gif, plus pickled final states and statistics
+            animation_folder = pathname + 'data/animations/test/'
+            create_animation_directory(animation_folder)
         else:
-            ## Save animation
-            filename = pathname + 'data/animations/' + sim_obj.params_filename + '.gif'
-            anim.save(filename, dpi=200, writer=writergif)
+            param_string = create_param_string(initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total,
+                                               noise, alpha_1, alpha_2, beta, seed)
+            animation_folder = pathname + 'data/animations/' + param_string + '/'
+            create_animation_directory(animation_folder)
 
-            ## Save data
-            save_data(sim_obj)
+        # Iterate
+        # Ensures that a total of 500 images will be created
+        n_images = 500
+        iterations_per_image = int(t_total / n_images)
 
+        # Filename formatting
+        image_idx = 0
+
+        for t in range(t_total):
+            # Print progress
+            if (t + 1) % (t_total / 10) == 0:
+                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
+
+            # Update
+            sim_obj.update()
+
+            # Increment no. of time-steps
+            sim_obj.t += 1
+
+            # Save figure
+            if t%iterations_per_image == 0:
+                # Plot
+                sim_obj.plot()
+                image_idx += 1
+                sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
+
+    # No animation
     else:
         # Iterate
         for t in range(t_total):
             # Print progress
             if (t + 1) % (t_total / 10) == 0:
-                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}   (noise={noise})')
+                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
 
             # Update
             sim_obj.update()
@@ -158,40 +172,15 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
                 if sim_obj.stable_silent == True:
                     break
 
-        # Just plot without saving:
+        # Just plot final state without saving
         if test_mode:
-            ## Make figure
-            fig = plt.figure()
-            ax = fig.add_subplot(111, projection='3d')
-
-            # # Plot initial state
-            # with torch.no_grad():
-            #     sim_obj.plot(x_init, y_init, z_init, ax, label='Initial state', ls='--')
-
-            # Plot final state
-            x_final, y_final, z_final = sim_obj.X[:,0], sim_obj.X[:,1], sim_obj.X[:,2]
-
             with torch.no_grad():
-                sim_obj.plot(x_final, y_final, z_final, ax, label='Final state')
-
-            # Plot MD
-            sim_obj.finalize_plot(ax)
-            #
-            # # Plot statistics
-            # sim_obj.plot_statistics()
-            #import plotter
-            # ts = torch.arange(len(sim_obj.state_statistics[0]))
-            # plt.plot(ts, sim_obj.state_statistics[0], lw=0.1, label='State S')
-            # plt.plot(ts, sim_obj.state_statistics[1], lw=0.1, label='State U')
-            # plt.plot(ts, sim_obj.state_statistics[2], lw=0.1, label='State A')
-            #plt.legend()
-            #plt.show()
+                sim_obj.plot()
+                plt.show()
 
         # Just save statistics, no plotting
         else:
-
-            print(sim_obj.t)
-            ## Save data
+            # Save data
             save_data(sim_obj)
 
     print(f'Finished simulation with seed = {seed}.')

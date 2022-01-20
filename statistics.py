@@ -6,16 +6,18 @@ from formatting import pathname
 
 # Calculate radius of gyration
 def update_rg(sim_obj):
+    # The distance from each individual nucleosome to the center of mass
     distances_to_com = torch.norm(sim_obj.X - sim_obj.center_of_mass)
-    ## Add new value of RG to itsim_obj
-    # At the end divided by t_half for time average
+
+    # Add the value to the previous values
     sim_obj.radius_of_gyration += torch.sqrt(torch.mean(distances_to_com ** 2))
 
     # Calculate the average in the last time-step
     if sim_obj.t == sim_obj.t_total - 1:
-        sim_obj.radius_of_gyration = sim_obj.radius_of_gyration / sim_obj.t_half
+        sim_obj.radius_of_gyration = sim_obj.radius_of_gyration / sim_obj.t_total
     return None
 
+# Update the end-to-end vector
 def update_Rs(sim_obj):
     t = sim_obj.t
     interval = int(sim_obj.t_total / len(sim_obj.Rs))
@@ -169,10 +171,12 @@ def _gather_statistics(sim_obj):
 
     #update_interaction_stats(sim_obj)
 
+    # Update radius of gyration
+    #update_rg(sim_obj)
+
     # These statistics are taken from halfway through the simulation
     #if sim_obj.t >= sim_obj.t_half:
-    #     # Update radius of gyration
-    #     #update_rg(sim_obj)
+
     #
     #     # # Count correlations by shift
     #     # update_correlation_sums(sim_obj)

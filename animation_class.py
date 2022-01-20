@@ -1,5 +1,7 @@
 import matplotlib.pyplot as plt
 import torch
+import sys
+import os
 
 class Animation:
     def __init__(self, sim_obj, t_total, coords_init):
@@ -15,7 +17,7 @@ class Animation:
     def frame_generator(self):
         # Updates the simulation
         for idx in range(self.t_total):
-
+            print(idx)
             # Print progress
             if (idx+1)%(self.t_total/10) == 0:
                 print(f'Time-step: {idx+1} / {self.t_total}')
@@ -26,8 +28,12 @@ class Animation:
             # Increment time-step
             self.sim_obj.t = idx + 1
 
+            if self.sim_obj.t == 1:
+                print('here')
+                print(f'Torch rand: {torch.randint(0, 100, size=(1,))[0]}')
+
             # Only generates a .gif image for every 2000th update
-            if idx % 200 == 0:
+            if idx % 2000 == 0:
                 yield idx
 
         # Generates 10 identical images at the end of the animation
@@ -90,3 +96,19 @@ class Animation:
             self.ax_anim.clear()
 
             self.plot(X_plot, Y_plot, Z_plot)
+
+def create_animation_directory(folder_name):
+    try:
+        os.mkdir(folder_name)
+    except FileExistsError:
+        while True:
+            user_input = input('Directory already exists. Overwrite files (y/n)? ')
+            if user_input == 'y':
+                break
+            elif user_input == 'n':
+                print('Ended the simulation.')
+                sys.exit()
+            else:
+                print('Invalid answer.')
+        pass
+    return None
