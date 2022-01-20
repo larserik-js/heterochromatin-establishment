@@ -153,6 +153,7 @@ class Simulation:
         ## For statistics
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
+        self.init_center_of_mass = torch.sum(self.X, dim=0) / self.N
         # Radius of gyration
         self.radius_of_gyration = 0
         # End-to-end distance
@@ -189,9 +190,12 @@ class Simulation:
         self.init_dist_vecs_to_com = self.center_of_mass - self.X
         self.correlation_times = torch.zeros(size=(self.N,))
 
+        # Succesful recruited conversions
+        self.succesful_recruited_conversions = torch.zeros(size=(4,self.N))
+
         ## Plot parameters
-        self.plot_title = create_plot_title(self.cenH_size, self.cenH_init_idx, self.barriers, self.N, self.t_total,
-                                            self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
         self.nucleosome_s = 5
         # Chain scatter marker size
@@ -204,9 +208,9 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_string(self.initial_state, self.cenH_size, self.cenH_init_idx,
-                                                     self.cell_division, self.barriers, self.N, self.t_total,
-                                                     self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.params_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
+                                                   self.cenH_init_idx, self.cell_division, self.barriers, self.N, self.t_total,
+                                                   self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Create figure
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -409,10 +413,12 @@ class Simulation:
 
     # Nuclear envelope pressure potential
     def pressure_potential(self):
-        # Enacted by the nuclear envelope
-        norms = torch.linalg.norm(self.X, dim=1)
-        U_pressure = torch.sum(1/(torch.abs(norms-2*self.r_system) + 1e-10) )
-        #U_pressure = torch.sum(norms)
+        # Enacted by the surroundings of the polymer
+        norms = torch.linalg.norm(self.X - self.init_center_of_mass, dim=1)
+        #U_pressure = torch.sum(1/(torch.abs(norms-2*self.r_system) + 1e-10) )
+
+        # Hooke potential
+        U_pressure = self.U_pressure_weight * torch.sum(norms**2)
         return U_pressure
 
     # Returns (overall) system potential
@@ -421,11 +427,12 @@ class Simulation:
         U_interaction = self.interaction_potential()
 
         ## PRESSURE POTENTIAL
-        #U_pressure = self.pressure_potential()
+        #U_pressure = 0
+        U_pressure = self.pressure_potential()
 
         #return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
         #return U_interaction + self.U_pressure_weight * U_pressure
-        return U_interaction
+        return U_interaction + U_pressure
 
 
     # Uses imported function
@@ -438,10 +445,11 @@ class Simulation:
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
-        #print(n1_index)
 
         # Does not change the cenH region
         if (cenH_size > 0) and (n1_index in cenH_indices):
+            recruited_conversion_pair = None
+            recruited_conversion_dist = None
             pass
 
         # If the nucleosome is not part of the cenH region
@@ -459,17 +467,38 @@ class Simulation:
 
                 # Do nothing
                 if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
+                    recruited_conversion_pair = None
+                    recruited_conversion_dist = None
                     pass
 
+                # Recruited conversion takes place
                 else:
                     if states[n1_index] < states[n2_index]:
                         if r.rand() < alpha_2:
+                            recruited_conversion_pair = (states[n1_index], states[n2_index])
                             states[n1_index] += 1
+                        else:
+                            recruited_conversion_pair = None
+                            pass
                     elif states[n1_index] > states[n2_index]:
                         if r.rand() < alpha_1:
+                            recruited_conversion_pair = (states[n1_index], states[n2_index])
                             states[n1_index] -= 1
+                        else:
+                            recruited_conversion_pair = None
+                            pass
                     else:
                         raise AssertionError('Something is wrong in the change_states function!')
+
+                    # The distance (in terms of indexed position in the chain) between the nucleosomes in the conversion
+                    recruited_conversion_dist = np.abs(n1_index - n2_index)
+
+            # No particles within l_interacting
+            # No recruited conversion
+            else:
+                recruited_conversion_pair = None
+                recruited_conversion_dist = None
+                pass
 
         # Noisy conversion
         # Choose new random particle
@@ -503,16 +532,31 @@ class Simulation:
                 else:
                     raise AssertionError("State other than 0, 1, or 2 given in function '_change_states'!")
 
-        return states
-
+        return states, recruited_conversion_pair, recruited_conversion_dist
 
 
     # Changes the nucleosome states based on probability
     def change_states(self):
         # Numpy array
-        states_numpy = self._change_states(self.N, self.states.numpy(), self.norms_all.detach().numpy(),
-                                          self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
-                                          self.cenH_indices.numpy())
+        states_numpy, recruited_conversion_pair, recruited_conversion_dist = self._change_states(
+                                        self.N, self.states.numpy(), self.norms_all.detach().numpy(),
+                                        self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
+                                        self.cenH_indices.numpy())
+
+        # Update the number of succesful recruited conversions
+        # A to U
+        if recruited_conversion_pair == (0,2):
+            self.succesful_recruited_conversions[0,recruited_conversion_dist] += 1
+        elif recruited_conversion_pair == (1,2):
+            self.succesful_recruited_conversions[1,recruited_conversion_dist] += 1
+        elif recruited_conversion_pair == (2,0):
+            self.succesful_recruited_conversions[2,recruited_conversion_dist] += 1
+        elif recruited_conversion_pair == (1,0):
+            self.succesful_recruited_conversions[3,recruited_conversion_dist] += 1
+        elif recruited_conversion_pair == None:
+            pass
+        else:
+            raise AssertionError("Invalid recruited conversion pair in function 'change_states'!")
 
         # Change from Numpy array to Torch tensor
         states_torch = torch.from_numpy(states_numpy)

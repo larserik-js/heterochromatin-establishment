@@ -7,11 +7,9 @@ plot_barriers = False
 plot_stats_interval = 100
 
 plot_cenH_size = 6
-cenH_init_indices = [19, 23, 27, 31, 35]
-plot_cenH_init_idx = cenH_init_indices[4]
 plot_cenH_init_idx = 16
 plot_N = 40
-plot_t_total = 400000
+plot_t_total = 500000
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
@@ -19,10 +17,10 @@ plot_initial_state = initial_states[0]
 
 constant = 0.1
 dt = 0.02
-plot_alpha_1 = 42 * dt * constant *5
-plot_alpha_2 = 50 * dt * constant *5
+plot_alpha_1 = 42 * dt * constant
+plot_alpha_2 = 50 * dt * constant
 plot_beta = 2 * dt * constant
-plot_seed = 24
+plot_seed = 0
 
 plot_obj = Plots(plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
                  plot_cenH_init_idx=plot_cenH_init_idx, plot_cell_division=plot_cell_division,

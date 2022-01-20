@@ -7,10 +7,10 @@ pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 statistics_folder_names = ['correlation', 'correlation_times', 'final_state', 'interactions', 'RG', 'Rs',
                            'states', 'states_time_space']
 
-def create_param_string(initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
+def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
                           alpha_2, beta, seed):
 
-    param_string = f'init_state={initial_state}_'
+    param_string = f'pressure={U_pressure_weight:.2f}_init_state={initial_state}_'
 
     if cell_division:
         param_string += 'cell_division_'
@@ -23,13 +23,14 @@ def create_param_string(initial_state, cenH_size, cenH_init_idx, cell_division, 
     return param_string
 
 
-def create_plot_title(cenH_size, cenH_init_idx, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
     param_string = ''
 
     if barriers:
         param_string += 'barriers, '
 
-    param_string += f'cenH = {cenH_size}, cenH_indices = {cenH_init_idx}...{cenH_init_idx + cenH_size - 1}, '\
+    param_string += f'pressure = {U_pressure_weight:.2f}, cenH = {cenH_size}, '\
+                    + f'cenH_indices = {cenH_init_idx}...{cenH_init_idx + cenH_size - 1}, '\
                     + r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise:.2f}'\
                     + r'$l_0$' + ', ' + r'$\alpha_1$' + f' = {alpha_1:.5f}, ' + r'$\alpha_2$' + f' = {alpha_2:.5f}, '\
                     + r'$\beta$' + f' = {beta:.5f}, seed = {seed}'
