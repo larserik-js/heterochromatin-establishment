@@ -131,7 +131,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         for t in range(t_total):
             # Print progress
             if (t + 1) % (t_total / 10) == 0:
-                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
+                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}, RG = {sim_obj.radius_of_gyration:.2f}')
 
             # Update
             sim_obj.update()
@@ -145,6 +145,9 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
                 sim_obj.plot()
                 image_idx += 1
                 sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
+
+        # Save data
+        save_data(sim_obj)
 
     # No animation
     else:
@@ -182,6 +185,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         else:
             # Save data
             save_data(sim_obj)
+            print(sim_obj.succesful_recruited_conversions)
 
     print(f'Finished simulation with seed = {seed}.')
 
