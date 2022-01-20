@@ -47,8 +47,9 @@ if __name__ == '__main__':
             # Creates the file for cenH statistics
             if (cenH_size > 0) and write_cenH_data:
                 write_name = pathname + 'data/statistics/stable_silent_times_'
-                write_name += f'init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_'\
-                + f't_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
+                write_name += f'pressure={U_pressure_weight:.2f}_init_state={initial_state}_cenH={cenH_size}_'\
+                            + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_noise={noise:.4f}_'\
+                            + f'alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
                 data_file = open(write_name, 'w')
                 data_file.write('t,seed' + '\n')
                 data_file.close()

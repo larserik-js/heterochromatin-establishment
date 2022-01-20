@@ -48,6 +48,7 @@ def save_data(sim_obj):
     states_filename = 'states/states_' + parameter_string
     states_time_space_filename = 'states_time_space/states_time_space_' + parameter_string
     correlation_times_filename = 'correlation_times/correlation_times_' + parameter_string
+    succesful_recruited_conversions_filename = 'succesful_recruited_conversions/succesful_recruited_conversions_' + parameter_string
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
@@ -81,6 +82,10 @@ def save_data(sim_obj):
     # Correlation times
     pickle_var_list = [sim_obj.correlation_times]
     write_pkl(pickle_var_list, correlation_times_filename)
+
+    # Succesful recruited conversions
+    pickle_var_list = [sim_obj.succesful_recruited_conversions]
+    write_pkl(pickle_var_list, succesful_recruited_conversions_filename)
 
 # Fix seed value for Numba
 @njit
@@ -185,7 +190,6 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         else:
             # Save data
             save_data(sim_obj)
-            print(sim_obj.succesful_recruited_conversions)
 
     print(f'Finished simulation with seed = {seed}.')
 

@@ -544,15 +544,19 @@ class Simulation:
                                         self.cenH_indices.numpy())
 
         # Update the number of succesful recruited conversions
-        # A to U
+        # S to U
         if recruited_conversion_pair == (0,2):
             self.succesful_recruited_conversions[0,recruited_conversion_dist] += 1
+        # U to A
         elif recruited_conversion_pair == (1,2):
             self.succesful_recruited_conversions[1,recruited_conversion_dist] += 1
+        # A to U
         elif recruited_conversion_pair == (2,0):
             self.succesful_recruited_conversions[2,recruited_conversion_dist] += 1
+        # U to S
         elif recruited_conversion_pair == (1,0):
             self.succesful_recruited_conversions[3,recruited_conversion_dist] += 1
+        # No recruited conversion
         elif recruited_conversion_pair == None:
             pass
         else:
