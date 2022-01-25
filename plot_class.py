@@ -6,6 +6,9 @@ from matplotlib import colors, patches
 import numpy as np
 from glob import glob
 import seaborn as sns
+import sys
+import re
+
 from torch.multiprocessing import Pool, cpu_count
 
 # from mayavi import mlab
@@ -114,31 +117,6 @@ class Plots:
         self.format_plot(ax[1], xlabel='Index difference', ylabel='Frequency')
         ax[1].set_yscale('log')
 
-        plt.show()
-
-    def plot_rg_vs_noise(self):
-        polymer_types = ['classic', 'non-classic']
-        # Plot
-        fig, ax = plt.subplots(figsize=(8,6))
-
-        for polymer_type in polymer_types:
-            open_filename = self.create_full_filename('statistics/RG/', '.pkl')
-            files = glob(open_filename)
-
-            n_files = len(files)
-            noise_list = np.empty(len(files))
-            rg_list = np.empty(len(files))
-
-            if n_files > 0:
-                for i in range(n_files):
-                    noise_list[i] = float(files[i].split('noise=')[1].split('.pkl')[0])
-
-                    with open(files[i], 'rb') as f:
-                        rg_list[i] = pickle.load(f)[0]
-
-                ax.scatter(noise_list, rg_list, label=polymer_type)
-
-        self.format_plot(ax, xlabel='Noise / ' + r'$l_0$', ylabel='Average radius of gyration')
         plt.show()
 
     def plot_heatmap(self):
@@ -278,15 +256,15 @@ class Plots:
 
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
-        internal_stats_interval = 20
+        internal_stats_interval = 10
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
-        ax.imshow(states_time_space[::internal_stats_interval].T, cmap=cmap)
+        ax.imshow(states_time_space[:4000:internal_stats_interval].T, cmap=cmap)
         self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * internal_stats_interval}', ylabel='Nucleosome no.')
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
-        plt.legend(handles=labels, bbox_to_anchor=(0.05, 2), loc=2, borderaxespad=0.)
+        plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2, borderaxespad=0.)
 
         plt.show()
 
@@ -327,8 +305,81 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
+    def plot_RMS(self):
+        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
+        # Replace the pressure values with the wildcard * to include all pressure values
+        open_filename = open_filename.replace(f'pressure={self.U_pressure_weight:.2f}', 'pressure=*')
+
+        files = glob(open_filename)
+        n_files = len(files)
+
+        if n_files == 0:
+            print('No files to plot.')
+            return
+
+        else:
+            fig, ax = plt.subplots(figsize=(8,6))
+            pressures, RMSs = [], []
+
+            for i in range(n_files):
+                # Get the pressure value
+                search_result = re.search('pressure=(.*)_init_state', files[i])
+                pressures.append(float(search_result.group(1)))
+
+                with open(files[i], 'rb') as f:
+                    dist_vecs_to_com = pickle.load(f)[0]
+                    t_idx, N = dist_vecs_to_com.shape[0], dist_vecs_to_com.shape[1]
+                    RMSs.append(np.sqrt(np.square(dist_vecs_to_com).sum() / t_idx / N))
+
+        ax.scatter(pressures, RMSs)
+        ax.set_xlabel('Pressure', size=14)
+        ax.set_ylabel('RMS', size=14)
+        ax.set_title('RMS, ' + r'$t_{total}$' + f' = {self.t_total}', size=16)
+        plt.show()
+
+    def plot_dynamics_time(self):
+        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
+
+        files = glob(open_filename)
+        n_files = len(files)
+
+        if n_files == 0:
+            print('No files to plot.')
+
+        else:
+            with open(files[0], 'rb') as f:
+                dist_vecs_to_com = pickle.load(f)[0]
+
+            # The time interval (no. of time steps) between each data point
+            stats_t_interval = int(self.t_total / dist_vecs_to_com.shape[0])
+
+            # The number of data points
+            n_taus = dist_vecs_to_com.shape[0]
+            correlations = np.empty(n_taus)
+
+            # Vectors time correlation
+            for i in range(n_taus):
+                numerator = (dist_vecs_to_com[:(n_taus - i)] * dist_vecs_to_com[i:]).sum() / (n_taus - i)
+                denominator = (dist_vecs_to_com**2).sum() / n_taus
+                correlations[i] = numerator / denominator
+
+            taus = np.arange(n_taus) * stats_t_interval
+
+            fig, ax = plt.subplots(figsize=(8,6))
+
+            ax.scatter(taus, correlations)
+            ax.set(ylim=(-0.05, 1.05))
+
+            ax.set_title('Dynamics time, ' + f'pressure = {self.U_pressure_weight:.2f}', size=16)
+            ax.set_xlabel(r'$\tau$', size=14)
+            ax.set_ylabel('Correlation', size=14)
+            plt.show()
+
+        return None
+
+
     def plot_correlation_times(self):
-        open_filename = self.create_full_filename('statistics/correlation_times/correlation_times_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/correlation_times/correlation_times_', '.pkl')
         files = glob(open_filename)
 
         n_files = len(files)
@@ -375,7 +426,7 @@ class Plots:
         files = glob(open_filename)
         print(open_filename)
 
-        fig, ax = plt.subplots(2,2, figsize=(12, 10))
+        fig, ax = plt.subplots(2,2, figsize=(12, 8))
 
         n_files = len(files)
 
@@ -410,7 +461,7 @@ class Plots:
         ax[1,1].set_xlabel('Index difference', size=12)
         ax[1,1].set(ylim=(0,max_frequency))
 
-        #self.format_plot(ax, xlabel='Nucleosome index', ylabel='Correlation time / ' + r'$t_{total}$')
+        fig.suptitle('Succesful recruited conversions', size=16)
 
         fig.tight_layout()
         plt.show()

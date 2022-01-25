@@ -17,16 +17,19 @@ cenH_init_idx, write_cenH_data, barriers, constant, constant_list, alpha_1, alph
 
 alpha_1_list = np.linspace(25, 50, 101) * 0.02 * 0.1 * alpha_1_const
 #alpha_1_list = np.linspace(25,50,2) * 0.02 * 0.1 * alpha_1_const
+
+U_pressure_weight_list = np.arange(11) * U_pressure_weight
 ##############################################################################
 ##############################################################################
 
-def curied_run(seed):
+def curied_run(U_pressure_weight):
     return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, constant*alpha_1,
-                   constant*alpha_2, constant*beta, stats_t_interval, seed, False, animate, allow_state_change,
+                   constant*alpha_2, constant*beta, stats_t_interval, seed, test_mode, animate, allow_state_change,
                    initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
+
     # Create necessary directories
     create_directories()
 
@@ -63,9 +66,9 @@ if __name__ == '__main__':
 
         # Create pool for multiprocessing
         #pool = Pool(cpu_count())
-        pool = Pool(25)
+        pool = Pool(11)
 
-        res = list(pool.map(curied_run, seed_list, chunksize=1))
+        res = list(pool.map(curied_run, U_pressure_weight_list, chunksize=1))
 
         # Print time elapsed
         final_time = timer()-initial_time

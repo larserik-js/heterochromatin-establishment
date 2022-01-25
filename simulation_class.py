@@ -65,7 +65,7 @@ class Simulation:
         self.barriers = barriers
 
         ## Initialize system
-        self.X = self.initialize_system('quasi-random')
+        self.X = self.initialize_system('quasi-random-pressure')
 
         # Half the chain length
         r_system = self.l0 * self.N / 2
@@ -141,7 +141,7 @@ class Simulation:
         self.r0 = self.l0 / 2
 
         # Particles within the following distance are counted for statistics
-        self.l_interacting = 2 * self.r0
+        self.l_interacting = 4 * self.r0
 
         # Regulate the potential function
         # b is the value which ensures that r0 is a local extremum for U_interaction
@@ -154,8 +154,14 @@ class Simulation:
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         self.init_center_of_mass = torch.sum(self.X, dim=0) / self.N
-        # Radius of gyration
-        self.radius_of_gyration = 0
+        # Distances from each nucleosome to the center of mass
+        # All distance vectors from the nucleosomes to the center of mass
+        self.dist_vecs_to_com = torch.empty(size=(int(self.t_total / stats_t_interval), self.N, 3))
+        self.dist_vecs_to_com[0] = self.center_of_mass - self.X
+        self.init_dist_vecs_to_com = self.dist_vecs_to_com[0]
+
+        self.correlation_times = torch.zeros(size=(self.N,))
+
         # End-to-end distance
         self.Rs = torch.empty(size=(int(self.t_total / stats_t_interval),))
         self.end_to_end_vec_init = self.X[-1] - self.X[0]
@@ -185,13 +191,9 @@ class Simulation:
 
         self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
 
-        # Distances from each nucleosome to the center of mass
-        # Initial distance vectors
-        self.init_dist_vecs_to_com = self.center_of_mass - self.X
-        self.correlation_times = torch.zeros(size=(self.N,))
-
         # Succesful recruited conversions
         self.succesful_recruited_conversions = torch.zeros(size=(4,self.N))
+        self.succesful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
         self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
@@ -219,12 +221,24 @@ class Simulation:
     def initialize_system(self, init_system_type):
         # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
         # Select a random initial polymer
-        if init_system_type == 'quasi-random':
+        # Free polymer
+        if init_system_type == 'quasi-random-free':
             seed_no = r.randint(100)
-            open_filename = pathname + f'quasi_random_initial_states/final_state_N=40_t_total=1000000_noise=0.500_seed={seed_no}.pkl'
+            open_filename = pathname + 'quasi_random_initial_states_free/'\
+                                     + f'final_state_N=40_t_total=1000000_noise=0.500_seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
                 xs, ys, zs, _ = pickle.load(f)
+
+        # With external pressure
+        elif init_system_type == 'quasi-random-pressure':
+            seed_no = r.randint(100)
+            open_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/'\
+                                     + f'pressure={self.U_pressure_weight:.2f}/seed={seed_no}.pkl'
+
+            with open(open_filename, 'rb') as f:
+                X = pickle.load(f)[0]
+                xs, ys, zs = X[:,0], X[:,1], X[:,2]
 
         # Stretched-out chain
         elif init_system_type == 'stretched':
@@ -465,7 +479,8 @@ class Simulation:
                 # Choose one of those particles randomly
                 n2_index = r.choice(particles_within_distance)
 
-                # Do nothing
+                # Do nothing if the recruiting nucleosome is unmodified, or
+                # if the recruiting nucleosome is of the same state as the recruited nucleosome
                 if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
                     recruited_conversion_pair = None
                     recruited_conversion_dist = None
@@ -506,39 +521,59 @@ class Simulation:
 
         # Does not change the cenH region
         if (cenH_size > 0) and (n1_index in cenH_indices):
+            noisy_conversion_idx = None
             pass
 
+        # The chosen nucleosome is not in the cenH region
         else:
             if r.rand() < beta:
                 # If the particle is in the S state
                 if states[n1_index] == 0:
                     if r.rand() < alpha_2:
                         states[n1_index] = 1
+                        noisy_conversion_idx = 0
+                    else:
+                        noisy_conversion_idx = None
 
                 # If the particle is in the A state
                 elif states[n1_index] == 2:
                     if r.rand() < alpha_1:
                         states[n1_index] = 1
+                        noisy_conversion_idx = 2
+                    else:
+                        noisy_conversion_idx = None
+
 
                 # If the particle is in the U state
                 elif states[n1_index] == 1:
                     # Used to determine if the state should change to S or A
                     symmetric_rand = r.rand()
 
+                    # U to A
                     if symmetric_rand < 0.5 and r.rand() < alpha_2:
                         states[n1_index] = 2
+                        noisy_conversion_idx = 1
+
+                    # U to S
                     elif symmetric_rand >= 0.5 and r.rand() < alpha_1:
                         states[n1_index] = 0
+                        noisy_conversion_idx = 3
+                    else:
+                        noisy_conversion_idx = None
                 else:
                     raise AssertionError("State other than 0, 1, or 2 given in function '_change_states'!")
 
-        return states, recruited_conversion_pair, recruited_conversion_dist
+            # No noisy conversion
+            else:
+                noisy_conversion_idx = None
+
+        return states, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx
 
 
     # Changes the nucleosome states based on probability
     def change_states(self):
         # Numpy array
-        states_numpy, recruited_conversion_pair, recruited_conversion_dist = self._change_states(
+        states_numpy, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx = self._change_states(
                                         self.N, self.states.numpy(), self.norms_all.detach().numpy(),
                                         self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
                                         self.cenH_indices.numpy())
@@ -561,6 +596,14 @@ class Simulation:
             pass
         else:
             raise AssertionError("Invalid recruited conversion pair in function 'change_states'!")
+
+        # Update the number of noisy conversions
+        if noisy_conversion_idx == None:
+            pass
+        elif type(noisy_conversion_idx) == 'int' and noisy_conversion_idx <= 3:
+            self.succesful_noisy_conversions[noisy_conversion_idx] += 1
+        else:
+            raise AssertionError("Invalid noisy conversion index in function 'change_states'!")
 
         # Change from Numpy array to Torch tensor
         states_torch = torch.from_numpy(states_numpy)

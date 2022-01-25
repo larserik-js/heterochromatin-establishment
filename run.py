@@ -42,8 +42,8 @@ def save_data(sim_obj):
 
     fs_filename =  'final_state/final_state_' + parameter_string
     interactions_filename =  'interactions/interactions_' + parameter_string
-    rg_filename = 'RG/RG_' + parameter_string
     Rs_filename = 'Rs/Rs_' + parameter_string
+    dist_vecs_to_com_filename = 'dist_vecs_to_com/dist_vecs_to_com_' + parameter_string
     correlation_filename = 'correlation/correlation_' + parameter_string
     states_filename = 'states/states_' + parameter_string
     states_time_space_filename = 'states_time_space/states_time_space_' + parameter_string
@@ -59,13 +59,13 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
     write_pkl(pickle_var_list, interactions_filename)
 
-    # Radius of gyration
-    pickle_var_list = [sim_obj.radius_of_gyration]
-    write_pkl(pickle_var_list, rg_filename)
-
     # End-to-end distance
     pickle_var_list = [sim_obj.Rs]
     write_pkl(pickle_var_list, Rs_filename)
+
+    # Distance vectors to center of mass
+    pickle_var_list = [sim_obj.dist_vecs_to_com]
+    write_pkl(pickle_var_list, dist_vecs_to_com_filename)
 
     # Correlation
     pickle_var_list = [sim_obj.correlation_sums]
@@ -120,8 +120,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
             animation_folder = pathname + 'data/animations/test/'
             create_animation_directory(animation_folder)
         else:
-            param_string = create_param_string(initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total,
-                                               noise, alpha_1, alpha_2, beta, seed)
+            param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                               cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed)
             animation_folder = pathname + 'data/animations/' + param_string + '/'
             create_animation_directory(animation_folder)
 
@@ -136,7 +136,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
         for t in range(t_total):
             # Print progress
             if (t + 1) % (t_total / 10) == 0:
-                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}, RG = {sim_obj.radius_of_gyration:.2f}')
+                print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
 
             # Update
             sim_obj.update()
@@ -182,9 +182,30 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
 
         # Just plot final state without saving
         if test_mode:
+            # try:
+            #     os.mkdir(pathname + f'quasi_random_initial_states_pressure_before_dynamics/pressure={U_pressure_weight:.2f}')
+            # except FileExistsError:
+            #     pass
+            #
+            # filename = pathname + f'/quasi_random_initial_states_pressure_before_dynamics/pressure={U_pressure_weight:.2f}/seed={seed}.pkl'
+            # # Detach tensors and turn them into numpy arrays
+            # new_var_list = []
+            # var_list = [sim_obj.X]
+            #
+            # for var in var_list:
+            #     if torch.is_tensor(var):
+            #         new_var_list.append(var.detach().numpy())
+            #     else:
+            #         new_var_list.append(var)
+            #
+            # # Write to pkl
+            # with open(filename, 'wb') as f:
+            #     pickle.dump(new_var_list, f)
+            #     print(f'Wrote to {filename}')
+
             with torch.no_grad():
-                sim_obj.plot()
-                plt.show()
+               sim_obj.plot()
+               plt.show()
 
         # Just save statistics, no plotting
         else:
