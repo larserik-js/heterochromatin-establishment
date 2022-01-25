@@ -4,7 +4,7 @@ import sys
 # Path to the project folder
 pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 
-statistics_folder_names = ['correlation', 'correlation_times', 'final_state', 'interactions', 'RG', 'Rs',
+statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com', 'final_state', 'interactions', 'Rs',
                            'states', 'states_time_space', 'succesful_recruited_conversions']
 
 def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,

@@ -4,13 +4,14 @@ import numpy as np
 import seaborn as sns
 from formatting import pathname
 
+pressure = 0.5
 initial_state = 'active'
 cenH_sizes = [6,7,8]
 cenH_init_idx = 16
 N = 40
-t_total = 2500000
+t_total = 1000000
 noise = 0.5
-alpha_1 = 0.42 / 5
+alpha_1 = 0.3 / 5
 alpha_2 = 0.5 / 5
 beta = 0.004
 
@@ -18,11 +19,11 @@ beta = 0.004
 def plot_silent_times(initial_state, cenH_sizes, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta):
     ## Histogram parameters
     n_bins = 20
-    hist_range = np.linspace(0,5e5,n_bins)
+    hist_range = np.linspace(0,t_total,n_bins)
     txt_string = ''
 
     for cenH_size in cenH_sizes:
-        param_string = f'init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_' \
+        param_string = f'pressure={pressure:.2f}_init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_' \
                        + f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_' \
                        + f'alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 
@@ -55,7 +56,7 @@ def plot_silent_times(initial_state, cenH_sizes, cenH_init_idx, N, t_total, nois
 
     plt.xlabel(r'$t$', size=12)
     plt.ylabel('Proportion of non-silent polymers', size=12)
-    plt.title('Heterochromatin establishment', size=14)
+    plt.title(f'Heterochromatin establishment, pressure = {pressure:.2f}, ' + r'$\alpha_1$' + f' = {alpha_1}', size=14)
     plt.yscale('log')
     # Format y axis values to float
     plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.3f}'))
