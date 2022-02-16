@@ -2,7 +2,6 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import copy
 import os
 from numba import njit
 
@@ -48,7 +47,7 @@ def save_data(sim_obj):
     states_filename = 'states/states_' + parameter_string
     states_time_space_filename = 'states_time_space/states_time_space_' + parameter_string
     correlation_times_filename = 'correlation_times/correlation_times_' + parameter_string
-    succesful_recruited_conversions_filename = 'succesful_recruited_conversions/succesful_recruited_conversions_' + parameter_string
+    successful_conversions_filename = 'successful_conversions/successful_conversions_' + parameter_string
 
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
@@ -83,9 +82,9 @@ def save_data(sim_obj):
     pickle_var_list = [sim_obj.correlation_times]
     write_pkl(pickle_var_list, correlation_times_filename)
 
-    # Succesful recruited conversions
-    pickle_var_list = [sim_obj.succesful_recruited_conversions]
-    write_pkl(pickle_var_list, succesful_recruited_conversions_filename)
+    # Succesful conversions
+    pickle_var_list = [sim_obj.successful_recruited_conversions, sim_obj.successful_noisy_conversions]
+    write_pkl(pickle_var_list, successful_conversions_filename)
 
 # Fix seed value for Numba
 @njit
@@ -149,6 +148,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
                 # Plot
                 sim_obj.plot()
                 image_idx += 1
+
+                # Set dpi=60 to get < 50MB data
                 sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
 
         # Save data
@@ -178,7 +179,7 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
                 #     print(f'Wrote to file at seed {sim_obj.seed}')
                 #     break
                 if sim_obj.stable_silent == True:
-                    break
+                    return sim_obj.t
 
         # Just plot final state without saving
         if test_mode:
@@ -213,6 +214,8 @@ def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, 
             save_data(sim_obj)
 
     print(f'Finished simulation with seed = {seed}.')
+
+    return None
 
 ##############################################################################
 ##############################################################################

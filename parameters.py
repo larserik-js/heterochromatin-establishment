@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 import argparse
 
 def get_parser_args():
@@ -7,10 +6,20 @@ def get_parser_args():
     parser = argparse.ArgumentParser()
 
     # Multiprocessing
-    parser.add_argument('--multi',
+    parser.add_argument('--n_processes',
                         type=int,
-                        default=0,
-                        help='Use multiprocessing or not.')
+                        default=1,
+                        help='Total number of processes.')
+
+    parser.add_argument('--pool_size',
+                        type=int,
+                        default=25,
+                        help='The number of workers.')
+
+    parser.add_argument('--multiprocessing_parameter',
+                        type=str,
+                        default='seed',
+                        help='The parameter different in each process when using multiprocessing.')
 
     # Plots initial and final state, as well as statistics
     # Nothing (except possibly an animation) is saved
@@ -26,14 +35,11 @@ def get_parser_args():
                         help='If true, creates an animation.')
 
     # Random seed
-    parser.add_argument('--seed',
+    parser.add_argument('--min_seed',
                         type=int,
                         default=0,
-                        help='Random seed for Pytorch and Numpy.')
-
-    parser.add_argument('--seed_list',
-                        default=np.arange(5),
-                        help='Random seed list for Pytorch and Numpy.')
+                        help='Random seed for Pytorch, Numpy and Numba. '\
+                              'The minimum value if multiple values are used.')
 
     # No. of nucleosomes
     parser.add_argument('--N',
@@ -52,10 +58,6 @@ def get_parser_args():
                         type=float,
                         default=0.5,
                         help='The dynamic noise level. Should be the product of some constant and the parameter l0.')
-
-    parser.add_argument('--noise_list',
-                        default=torch.linspace(0.05, 3.05, 31),
-                        help='List of dynamic noise levels. The values should be a product of some constant and the parameter l0.')
 
     # Time-step size
     parser.add_argument('--dt',
@@ -83,7 +85,7 @@ def get_parser_args():
 
     parser.add_argument('--U_pressure_weight',
                         type=float,
-                        default=1,
+                        default=0.5,
                         help='Scales the strength of the external pressure potential.')
 
     ## State parameters
@@ -138,10 +140,6 @@ def get_parser_args():
                         default=1,
                         help='The constant can be used to scale different parameters.')
 
-    parser.add_argument('--constant_list',
-                        default=[0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1],
-                        help='The constants can be used to scale different parameters.')
-
     ## Recruited conversion probabilities
     # Towards S
     parser.add_argument('--alpha_1',
@@ -169,38 +167,35 @@ def get_parser_args():
     # Gather all arguments in a namespace object
     args = parser.parse_args()
 
-    # Extract all arguments
-    multi = args.multi
-    test_mode = args.test_mode
-    animate = args.animate
-    seed = args.seed
-    seed_list = args.seed_list
-    N = args.N
-    l0 = args.l0
-    noise = args.noise
-    noise_list = args.noise_list
-    dt = args.dt
-    t_total = args.t_total
-    stats_t_interval = args.stats_t_interval
-    U_two_interaction_weight = args.U_two_interaction_weight
-    U_pressure_weight = args.U_pressure_weight
-    allow_state_change = args.allow_state_change
-    initial_state = args.initial_state
-    initial_state_list = args.initial_state_list
-    cell_division = args.cell_division
-    cenH_size = args.cenH_size
-    cenH_init_idx = args.cenH_init_idx
-    write_cenH_data = args.write_cenH_data
-    barriers = args.barriers
-    constant = args.constant
-    constant_list = args.constant_list
-    alpha_1 = args.alpha_1
-    alpha_1_const = args.alpha_1_const
-    alpha_2 = args.alpha_2
-    beta = args.beta
+    return args
 
-    return multi, test_mode, animate, seed, seed_list, N, l0, noise, noise_list, dt, t_total,stats_t_interval, \
-           U_two_interaction_weight, U_pressure_weight, allow_state_change, initial_state, initial_state_list, \
-           cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers, constant, constant_list, alpha_1,\
-           alpha_1_const, alpha_2, beta
+# Extract all parameters
+args =  get_parser_args()
 
+n_processes = args.n_processes
+pool_size = args.pool_size
+multiprocessing_parameter = args.multiprocessing_parameter
+test_mode = args.test_mode
+animate = args.animate
+min_seed = args.min_seed
+N = args.N
+l0 = args.l0
+noise = args.noise
+dt = args.dt
+t_total = args.t_total
+stats_t_interval = args.stats_t_interval
+U_two_interaction_weight = args.U_two_interaction_weight
+U_pressure_weight = args.U_pressure_weight
+allow_state_change = args.allow_state_change
+initial_state = args.initial_state
+initial_state_list = args.initial_state_list
+cell_division = args.cell_division
+cenH_size = args.cenH_size
+cenH_init_idx = args.cenH_init_idx
+write_cenH_data = args.write_cenH_data
+barriers = args.barriers
+constant = args.constant
+alpha_1 = args.alpha_1
+alpha_1_const = args.alpha_1_const
+alpha_2 = args.alpha_2
+beta = args.beta

@@ -4,10 +4,11 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
-plot_U_pressure_weight = 1
+plot_U_pressure_weight = 0
 plot_stats_interval = 100
 
-plot_cenH_size = 0
+plot_cenH_size = 6
+plot_cenH_sizes = [6,7,8]
 plot_cenH_init_idx = 16
 plot_N = 40
 plot_t_total = 100000
@@ -23,10 +24,10 @@ plot_beta = 0.004
 plot_seed = 3
 
 plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_interval=plot_stats_interval,
-                 plot_cenH_size=plot_cenH_size, plot_cenH_init_idx=plot_cenH_init_idx, plot_cell_division=plot_cell_division,
-                 plot_barriers=plot_barriers, plot_N=plot_N, plot_t_total=plot_t_total, plot_noise=plot_noise,
-                 plot_initial_state=plot_initial_state, plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2,
-                 plot_beta=plot_beta, plot_seed=plot_seed)
+                 plot_cenH_size=plot_cenH_size, plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
+                 plot_cell_division=plot_cell_division, plot_barriers=plot_barriers, plot_N=plot_N,
+                 plot_t_total=plot_t_total, plot_noise=plot_noise, plot_initial_state=plot_initial_state,
+                 plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2, plot_beta=plot_beta, plot_seed=plot_seed)
 
 # Plot final state
 #plot_obj.plot_final_state()
@@ -43,14 +44,14 @@ plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_inter
 #plot_obj.plot_states()
 
 # Plot states in time and space
-#plot_obj.plot_states_time_space()
+plot_obj.plot_states_time_space()
 
 # Plot end-to-end distance R
 #plot_obj.plot_Rs()
 
 #plot_obj.plot_RMS()
 
-plot_obj.plot_dynamics_time()
+#plot_obj.plot_dynamics_time()
 
 #plot_obj.plot_correlation_times()
 
@@ -59,3 +60,5 @@ plot_obj.plot_dynamics_time()
 
 # Plot succesful recruited conversions
 #plot_obj.plot_succesful_recruited_conversions()
+
+#plot_obj.plot_silent_times()

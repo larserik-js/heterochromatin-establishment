@@ -101,14 +101,14 @@ def create_animation_directory(folder_name):
     try:
         os.mkdir(folder_name)
     except FileExistsError:
-        while True:
-            user_input = input('Directory already exists. Overwrite files (y/n)? ')
-            if user_input == 'y':
-                break
-            elif user_input == 'n':
-                print('Ended the simulation.')
-                sys.exit()
-            else:
-                print('Invalid answer.')
+        # while True:
+        #     user_input = input('Directory already exists. Overwrite files (y/n)? ')
+        #     if user_input == 'y':
+        #         break
+        #     elif user_input == 'n':
+        #         print('Ended the simulation.')
+        #         sys.exit()
+        #     else:
+        #         print('Invalid answer.')
         pass
     return None

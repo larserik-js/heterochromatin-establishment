@@ -144,17 +144,44 @@ def update_correlation_times(sim_obj):
 def _gather_statistics(sim_obj):
     # Write cenH data
     if sim_obj.write_cenH_data:
-        if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N and sim_obj.stable_silent == False:
-            data_file = open(pathname + f'data/statistics/stable_silent_times_pressure={sim_obj.U_pressure_weight:.2f}_'\
-                             + f'init_state={sim_obj.initial_state}_cenH={sim_obj.cenH_size}_'\
-                             + f'cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_t_total={sim_obj.t_total}_'\
-                             + f'noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}_'\
-                             + f'beta={sim_obj.beta:.5f}.txt', 'a')
+        # If the polymer collapses to silent, write the time at which this occurs to a .txt file
+        if sim_obj.stable_silent == False:
+            if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N:
+                data_file = open(pathname + f'data/statistics/stable_silent_times/stable_silent_times_pressure='\
+                                 + f'{sim_obj.U_pressure_weight:.2f}_'\
+                                 + f'init_state={sim_obj.initial_state}_cenH={sim_obj.cenH_size}_'\
+                                 + f'cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_t_total={sim_obj.t_total}_'\
+                                 + f'noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}_'\
+                                 + f'beta={sim_obj.beta:.5f}.txt', 'a')
 
-            data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
-            data_file.close()
-            print(f'Wrote to file at seed {sim_obj.seed}')
-            sim_obj.stable_silent = True
+                data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
+                data_file.close()
+                print(f'Wrote to file at seed {sim_obj.seed}')
+
+                # Set the system state to silent. This will trigger the simulation to finish in 'run.py'
+                sim_obj.stable_silent = True
+
+            # If the simulation finishes without a polymer collapse, write 'NaN' to the .txt file
+            elif sim_obj.t == sim_obj.t_total - 1:
+                data_file = open(pathname + f'data/statistics/stable_silent_times/stable_silent_times_pressure=' \
+                                 + f'{sim_obj.U_pressure_weight:.2f}_' \
+                                 + f'init_state={sim_obj.initial_state}_cenH={sim_obj.cenH_size}_' \
+                                 + f'cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_t_total={sim_obj.t_total}_' \
+                                 + f'noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}_' \
+                                 + f'beta={sim_obj.beta:.5f}.txt', 'a')
+
+                data_file.write('NaN' + ',' + str(sim_obj.seed) + '\n')
+                data_file.close()
+                print(f'Wrote to file at seed {sim_obj.seed}')
+
+            # Continue the simulation
+            else:
+                pass
+
+        # If stable_silent == True, the simulation will exit before this step, through 'run.py'
+        else:
+            pass
+
 
     # Do not gather any statistics if cenH data is to be written
     # This is because the different simulations will have different length,

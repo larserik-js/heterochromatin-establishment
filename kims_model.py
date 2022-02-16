@@ -8,7 +8,8 @@ r = np.random
 n_states = 3
 n_particles = 60
 t_total = 40000
-alpha = 0.58
+#alpha = 0.58
+alpha=0.59
 
 beta = 1 / 3
 F = alpha/(1-alpha)
@@ -99,7 +100,9 @@ def run(n_states, n_particles, t_total, alpha, beta, scatter_s):
         # ax.plot(ts, statistics[1], lw=scatter_s, label=state_names[1])
         # ax.plot(ts, statistics[2], lw=scatter_s, label=state_names[2])
 
-        ax.set_title(f'F = {F}')
+        ax.set_title(f'F = {F:.3f}')
+        ax.set_xlabel(r'$t$', size=14)
+        ax.set_ylabel(r'$N$', size=14)
         ax.legend(loc='best')
         plt.show()
 

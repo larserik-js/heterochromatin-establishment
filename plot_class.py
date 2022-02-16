@@ -8,8 +8,10 @@ from glob import glob
 import seaborn as sns
 import sys
 import re
-
+from numba import njit
+import pandas as pd
 from torch.multiprocessing import Pool, cpu_count
+from timeit import default_timer as DT
 
 # from mayavi import mlab
 # from mayavi.mlab import *
@@ -17,12 +19,13 @@ from torch.multiprocessing import Pool, cpu_count
 from formatting import pathname, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size, plot_cenH_init_idx, plot_cell_division, plot_barriers,
+    def __init__(self, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size, plot_cenH_sizes, plot_cenH_init_idx, plot_cell_division, plot_barriers,
                  plot_N, plot_t_total, plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
 
         self.U_pressure_weight = plot_U_pressure_weight
         self.stats_interval = plot_stats_interval
         self.cenH_size = plot_cenH_size
+        self.cenH_sizes = plot_cenH_sizes
         self.cenH_init_idx = plot_cenH_init_idx
         self.cell_division = plot_cell_division
         self.barriers = plot_barriers
@@ -240,27 +243,40 @@ class Plots:
 
     def plot_states_time_space(self):
         open_filename = self.create_full_filename('data/statistics/states_time_space/states_time_space_', '.pkl')
+        conversions_filename = self.create_full_filename('data/statistics/successful_conversions/successful_conversions_', '.pkl')
 
         files = glob(open_filename)
-        print(open_filename)
-
+        conversion_files = glob(conversions_filename)
         n_files = len(files)
+        n_conversion_files = len(conversion_files)
 
-        if n_files == 0:
+        if n_files == 0 or n_conversion_files == 0:
             print('No files to plot.')
             return
 
         fig,ax = plt.subplots(figsize=(12,6))
 
         for i in range(n_files):
-
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
-        internal_stats_interval = 10
+            with open(conversion_files[i], 'rb') as f_c:
+                recruited_conversions, noisy_conversions = pickle.load(f_c)
+
+        recruited_conversions = np.concatenate([recruited_conversions.sum(axis=1), np.array([recruited_conversions.sum()])])
+        noisy_conversions = np.concatenate([noisy_conversions, np.array([noisy_conversions.sum()])])
+
+        df_array = np.block([[recruited_conversions], [noisy_conversions]])
+
+        # Show conversion data
+        df = pd.DataFrame(df_array, index=['Recruited conversions / t', 'Noisy conversions / t'],
+                                    columns=['S to U', 'U to A', 'A to U', 'U to S', 'Total'])
+        print(df)
+        # Plot
+        internal_stats_interval = 2
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
-        ax.imshow(states_time_space[:4000:internal_stats_interval].T, cmap=cmap)
+        ax.imshow(states_time_space[::internal_stats_interval].T, cmap=cmap)
         self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * internal_stats_interval}', ylabel='Nucleosome no.')
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
@@ -337,6 +353,37 @@ class Plots:
         ax.set_title('RMS, ' + r'$t_{total}$' + f' = {self.t_total}', size=16)
         plt.show()
 
+
+    # Vectors time correlation
+    @staticmethod
+    @njit
+    def _calculate_correlations(correlations, dist_vecs_to_com, n_taus):
+        i_tot, j_tot, k_tot = dist_vecs_to_com.shape[0], dist_vecs_to_com.shape[1], dist_vecs_to_com.shape[2]
+        # Compute denominator
+
+        denominator = 0
+
+        for i in range(i_tot):
+            for j in range(j_tot):
+                for k in range(k_tot):
+                    denominator += dist_vecs_to_com[i,j,k] ** 2
+
+        denominator /= n_taus
+        print('here')
+
+        # Compute numerator
+        for tau in range(n_taus):
+            numerator = 0
+            for i in range(n_taus - tau):
+                for j in range(j_tot):
+                    for k in range(k_tot):
+                        numerator += dist_vecs_to_com[tau+i,j,k] * dist_vecs_to_com[i,j,k]
+
+            numerator /= (n_taus - tau)
+            correlations[tau] = numerator / denominator
+
+        return correlations
+
     def plot_dynamics_time(self):
         open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
 
@@ -357,11 +404,13 @@ class Plots:
             n_taus = dist_vecs_to_com.shape[0]
             correlations = np.empty(n_taus)
 
-            # Vectors time correlation
+            denominator = (dist_vecs_to_com ** 2).sum() / n_taus
+
             for i in range(n_taus):
                 numerator = (dist_vecs_to_com[:(n_taus - i)] * dist_vecs_to_com[i:]).sum() / (n_taus - i)
-                denominator = (dist_vecs_to_com**2).sum() / n_taus
                 correlations[i] = numerator / denominator
+
+            #correlations = self._calculate_correlations(correlations, dist_vecs_to_com, n_taus)
 
             taus = np.arange(n_taus) * stats_t_interval
 
@@ -465,4 +514,44 @@ class Plots:
 
         fig.tight_layout()
         plt.show()
+
+    def plot_silent_times(self):
+        # Plot
+        fig, ax = plt.subplots(figsize=(8, 6))
+        txt_string = ''
+
+        for cenH_size in self.cenH_sizes:
+            param_string = f'pressure={self.U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_'\
+                           + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
+                           + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}'\
+                           + f'_beta={self.beta:.5f}.txt'
+
+            # First time where 90% of the polymer is silent
+            silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_' + param_string,
+                                      skiprows=2, usecols=0, delimiter=',')
+            # No. of data points
+            n_data = len(silent_times)
+
+            # Keep only the finite values
+            ts = silent_times[~np.isnan(silent_times)]
+            k = len(ts)
+
+            # Estimate
+            tau_estmate = ts.mean() + (n_data/k-1) * self.t_total
+
+            t_axis = np.linspace(0,10*self.t_total, 1000)
+            ax.plot(t_axis, np.exp(-t_axis/tau_estmate), label=f'cenH={cenH_size}')
+
+            # Add info to the text string
+            txt_string += f'cenH size = {cenH_size}: tau estimate = {tau_estmate:.3g}' + '\n'
+
+        # Create plot text
+        plt.text(2.5e5, 0.05, txt_string, c='r', size=8)
+
+        ax.set_yscale('log')
+        ax.legend(loc='best')
+        plt.show()
+
+
+
 
