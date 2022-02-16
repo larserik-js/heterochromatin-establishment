@@ -58,7 +58,6 @@ class Simulation:
         self.cenH_size = cenH_size
         self.cenH_init_idx = cenH_init_idx
         self.cenH_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
-
         self.write_cenH_data = write_cenH_data
 
         # Include barriers
@@ -191,9 +190,9 @@ class Simulation:
 
         self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
 
-        # Succesful recruited conversions
-        self.succesful_recruited_conversions = torch.zeros(size=(4,self.N))
-        self.succesful_noisy_conversions = torch.zeros(size=(4,))
+        # Successful recruited conversions
+        self.successful_recruited_conversions = torch.zeros(size=(4,self.N))
+        self.successful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
         self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
@@ -578,19 +577,19 @@ class Simulation:
                                         self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
                                         self.cenH_indices.numpy())
 
-        # Update the number of succesful recruited conversions
+        # Update the number of successful recruited conversions
         # S to U
         if recruited_conversion_pair == (0,2):
-            self.succesful_recruited_conversions[0,recruited_conversion_dist] += 1
+            self.successful_recruited_conversions[0,recruited_conversion_dist] += 1
         # U to A
         elif recruited_conversion_pair == (1,2):
-            self.succesful_recruited_conversions[1,recruited_conversion_dist] += 1
+            self.successful_recruited_conversions[1,recruited_conversion_dist] += 1
         # A to U
         elif recruited_conversion_pair == (2,0):
-            self.succesful_recruited_conversions[2,recruited_conversion_dist] += 1
+            self.successful_recruited_conversions[2,recruited_conversion_dist] += 1
         # U to S
         elif recruited_conversion_pair == (1,0):
-            self.succesful_recruited_conversions[3,recruited_conversion_dist] += 1
+            self.successful_recruited_conversions[3,recruited_conversion_dist] += 1
         # No recruited conversion
         elif recruited_conversion_pair == None:
             pass
@@ -600,10 +599,10 @@ class Simulation:
         # Update the number of noisy conversions
         if noisy_conversion_idx == None:
             pass
-        elif type(noisy_conversion_idx) == 'int' and noisy_conversion_idx <= 3:
-            self.succesful_noisy_conversions[noisy_conversion_idx] += 1
+        elif noisy_conversion_idx <= 3:
+            self.successful_noisy_conversions[noisy_conversion_idx] += 1
         else:
-            raise AssertionError("Invalid noisy conversion index in function 'change_states'!")
+            raise AssertionError(f"Invalid noisy conversion index: {noisy_conversion_idx}, type {type(noisy_conversion_idx)} in function 'change_states'!")
 
         # Change from Numpy array to Torch tensor
         states_torch = torch.from_numpy(states_numpy)
