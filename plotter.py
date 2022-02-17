@@ -4,10 +4,10 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
-plot_U_pressure_weight = 0
+plot_U_pressure_weight = 0.0
 plot_stats_interval = 100
 
-plot_cenH_size = 6
+plot_cenH_size = 0
 plot_cenH_sizes = [6,7,8]
 plot_cenH_init_idx = 16
 plot_N = 40
@@ -44,7 +44,7 @@ plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_inter
 #plot_obj.plot_states()
 
 # Plot states in time and space
-plot_obj.plot_states_time_space()
+#plot_obj.plot_states_time_space()
 
 # Plot end-to-end distance R
 #plot_obj.plot_Rs()
@@ -58,7 +58,7 @@ plot_obj.plot_states_time_space()
 # Plot end-to-end perpendicular times
 #plot_obj.plot_end_to_end_times()
 
-# Plot succesful recruited conversions
-#plot_obj.plot_succesful_recruited_conversions()
+# Plot successful recruited conversions
+#plot_obj.plot_successful_recruited_conversions()
 
-#plot_obj.plot_silent_times()
+plot_obj.plot_fraction_ON_cells()

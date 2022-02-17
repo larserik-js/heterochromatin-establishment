@@ -8,7 +8,7 @@ statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com
                            'states', 'states_time_space', 'successful_conversions', 'stable_silent_times']
 
 def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
-                          alpha_2, beta, seed):
+                          alpha_2, beta, seed, exclude_seed=False):
 
     param_string = f'pressure={U_pressure_weight:.2f}_init_state={initial_state}_'
 
@@ -18,10 +18,27 @@ def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_i
         param_string += 'barriers_'
 
     param_string += f'cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_noise={noise:.4f}'\
-                    + f'_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}_seed={seed}'
+                    + f'_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}'
+
+    if exclude_seed == False:
+        param_string += f'_seed = {seed}'
+    else:
+        pass
 
     return param_string
 
+def edit_stable_silent_times_file(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers,
+                                    N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
+
+    write_name = pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+    write_name += create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                      cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta,
+                                      seed, exclude_seed=True) + '.txt'
+
+    # Append to the file
+    data_file = open(write_name, action)
+    data_file.write(line_str + '\n')
+    data_file.close()
 
 def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
     param_string = ''

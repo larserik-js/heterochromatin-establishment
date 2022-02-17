@@ -8,7 +8,7 @@ from functools import partial
 
 ## Own scripts
 import run
-from formatting import pathname, create_directories
+from formatting import pathname, create_directories, create_param_string, edit_stable_silent_times_file
 
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, test_mode, animate, min_seed, N, l0, noise, dt,\
@@ -48,34 +48,16 @@ def main(n_processes=n_processes, N=N, l0=l0, noise=noise, dt=dt, t_total=t_tota
              allow_state_change=allow_state_change, initial_state=initial_state, cell_division=cell_division,
              cenH_size=cenH_size, cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers):
 
+
     # Create necessary directories
     create_directories()
 
     # Get detailed error messages
     torch.autograd.set_detect_anomaly(False)
 
-    # Run the script
-    total_time = 0
-
     # Start the timer
     print(f'Simulation started.')
     initial_time = timer()
-
-    if n_processes > 1:
-        torch.set_num_threads(1)
-
-        if not test_mode:
-
-            # Creates the file for cenH statistics
-            if (cenH_size > 0) and write_cenH_data:
-                write_name = pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
-                write_name += f'pressure={U_pressure_weight:.2f}_init_state={initial_state}_cenH={cenH_size}_'\
-                            + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_noise={noise:.4f}_'\
-                            + f'alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
-                data_file = open(write_name, 'w')
-                data_file.write(f't_total={t_total}' + '\n')
-                data_file.write('t,seed' + '\n')
-                data_file.close()
 
     # Parameter arrays for parallel processes
     # Seed list
@@ -86,34 +68,77 @@ def main(n_processes=n_processes, N=N, l0=l0, noise=noise, dt=dt, t_total=t_tota
         parameter_list = np.linspace(25, 50, n_processes) * 0.02 * 0.1 * alpha_1_const
     # U_pressure_weight list
     elif multiprocessing_parameter == 'U_pressure_weight':
-        parameter_list = np.arange(n_processes) * U_pressure_weight
+        parameter_list = np.linspace(0,1,n_processes)
     # constant list
     elif multiprocessing_parameter == 'constant':
         parameter_list = constant * np.logspace(start=-2, stop=0, num=n_processes)
     else:
-        parameter_list = None
         raise AssertionError('Invalid multiprocessing parameter given.')
 
-    # Create pool for multiprocessing
-    pool = Pool(pool_size)
+    # Multiprocessing
+    if n_processes > 1:
+        torch.set_num_threads(1)
 
-    # Run simulation(s)
-    #res = list(pool.map(curied_run(), parameter_list, chunksize=1))
-    res = list(pool.map(partial(curied_run,
-                                multiprocessing_parameter=multiprocessing_parameter,
-                                N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
-                                U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight,
-                                alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval,
-                                min_seed=min_seed, test_mode=test_mode, animate=animate, allow_state_change=allow_state_change,
-                                initial_state=initial_state, cell_division=cell_division, cenH_size=cenH_size,
-                                cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers),
-                                parameter_list, chunksize=1))
+        # Make the file for cenH statistics
+        if not test_mode:
+            if (cenH_size > 0) and write_cenH_data:
+                # Write the file, and the first two lines
+                line_str = f't_total={t_total}' + '\n' + 'silent_t,half_silent_t,n_patches,seed'
+                edit_stable_silent_times_file(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                         cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, min_seed,
+                                         line_str, action='w')
 
-    # Print time elapsed
-    final_time = timer()-initial_time
-    print(f'Simulation finished at {final_time:.2f} s, {datetime.now()}')
+            # Write pressure and RMS values
+            write_name = pathname + 'data/statistics/pressure_RMS_'
+            write_name += f'init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_'\
+                          f't_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'\
+                          f'beta={beta:.5f}_seed={min_seed}' + '.txt'
+
+            # Append to the file
+            line_str = 'U_pressure_weight,RMS'
+            data_file = open(write_name, 'w')
+            data_file.write(line_str + '\n')
+            data_file.close()
+
+        # Do not write cenH data in test mode
+        else:
+            pass
+
+        # Create pool for multiprocessing
+        pool = Pool(pool_size)
+
+        res = list(pool.map(partial(curied_run, multiprocessing_parameter=multiprocessing_parameter, N=N, l0=l0,
+                                    noise=noise, dt=dt, t_total=t_total,
+                                    U_two_interaction_weight=U_two_interaction_weight,
+                                    U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
+                                    stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
+                                    animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+                                    cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
+                                    write_cenH_data=write_cenH_data, barriers=barriers),
+                                    parameter_list, chunksize=1))
+
+    # Run a single process without multiprocessing
+    elif n_processes == 1:
+        res = list(map(partial(curied_run, multiprocessing_parameter=multiprocessing_parameter, N=N, l0=l0,
+                                    noise=noise, dt=dt, t_total=t_total,
+                                    U_two_interaction_weight=U_two_interaction_weight,
+                                    U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
+                                    stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
+                                    animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+                                    cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
+                                    write_cenH_data=write_cenH_data, barriers=barriers),
+                                    parameter_list))
+
+        # Print time elapsed
+        final_time = timer()-initial_time
+        print(f'Simulation finished at {final_time:.2f} s, {datetime.now()}')
+
+    else:
+        raise AssertionError("n_processes set to 0. Choose a higher value.")
 
     return res
+
+
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':

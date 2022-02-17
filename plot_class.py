@@ -63,11 +63,12 @@ class Plots:
         plt.tight_layout()
         return None
 
+    # State at the end of the simulation
     def plot_final_state(self):
-        open_filename = self.create_full_filename('statistics/final_state/final_state_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/final_state/final_state_', '.pkl')
 
         with open(open_filename, 'rb') as f:
-            x_plot, y_plot, z_plot, states, state_colors, state_names, plot_dim = pickle.load(f)
+            x_plot, y_plot, z_plot, states = pickle.load(f)
 
         # Center of mass
         com = np.array([x_plot.sum(), y_plot.sum(), z_plot.sum()]) / len(x_plot)
@@ -97,6 +98,7 @@ class Plots:
         self.format_plot(ax, xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$', legend_loc='upper left')
         plt.show()
 
+    # Number of interactions and interaction lifetimes as a function of index difference
     def plot_interactions(self):
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
@@ -121,6 +123,7 @@ class Plots:
         ax[1].set_yscale('log')
 
         plt.show()
+
 
     def plot_heatmap(self):
         polymer_types = ['classic', 'non-classic']
@@ -340,7 +343,8 @@ class Plots:
             for i in range(n_files):
                 # Get the pressure value
                 search_result = re.search('pressure=(.*)_init_state', files[i])
-                pressures.append(float(search_result.group(1)))
+                pressure_val = float(search_result.group(1))
+                pressures.append(pressure_val)
 
                 with open(files[i], 'rb') as f:
                     dist_vecs_to_com = pickle.load(f)[0]
@@ -469,9 +473,9 @@ class Plots:
         plt.show()
         return data_array
 
-    def plot_succesful_recruited_conversions(self):
-        open_filename = self.create_full_filename('data/statistics/succesful_recruited_conversions/'\
-                                                    + 'succesful_recruited_conversions_', '.pkl')
+    def plot_successful_recruited_conversions(self):
+        open_filename = self.create_full_filename('data/statistics/successful_recruited_conversions/'\
+                                                    + 'successful_recruited_conversions_', '.pkl')
         files = glob(open_filename)
         print(open_filename)
 
@@ -485,37 +489,37 @@ class Plots:
 
         for i in range(n_files):
             with open(files[i], 'rb') as f:
-                succesful_recruited_conversions = pickle.load(f)[0]
+                successful_recruited_conversions = pickle.load(f)[0]
 
-        max_frequency = succesful_recruited_conversions.max() + 1
+        max_frequency = successful_recruited_conversions.max() + 1
 
         # S to U
-        ax[0,0].bar(np.arange(self.N), succesful_recruited_conversions[0])
+        ax[0,0].bar(np.arange(self.N), successful_recruited_conversions[0])
         ax[0,0].set_title('S to U', size=14)
         ax[0,0].set_ylabel('Frequency', size=12)
         ax[0,0].set(ylim=(0,max_frequency))
         # U to A
-        ax[0,1].bar(np.arange(self.N), succesful_recruited_conversions[1])
+        ax[0,1].bar(np.arange(self.N), successful_recruited_conversions[1])
         ax[0,1].set_title('U to A', size=14)
         ax[0,1].set(ylim=(0,max_frequency))
         # A to U
-        ax[1,0].bar(np.arange(self.N), succesful_recruited_conversions[2])
+        ax[1,0].bar(np.arange(self.N), successful_recruited_conversions[2])
         ax[1,0].set_title('A to U', size=14)
         ax[1,0].set_xlabel('Index difference', size=12)
         ax[1,0].set_ylabel('Frequency', size=12)
         ax[1,0].set(ylim=(0,max_frequency))
         # U to S
-        ax[1,1].bar(np.arange(self.N), succesful_recruited_conversions[3])
+        ax[1,1].bar(np.arange(self.N), successful_recruited_conversions[3])
         ax[1,1].set_title('U to S', size=14)
         ax[1,1].set_xlabel('Index difference', size=12)
         ax[1,1].set(ylim=(0,max_frequency))
 
-        fig.suptitle('Succesful recruited conversions', size=16)
+        fig.suptitle('successful recruited conversions', size=16)
 
         fig.tight_layout()
         plt.show()
 
-    def plot_silent_times(self):
+    def plot_fraction_ON_cells(self):
         # Plot
         fig, ax = plt.subplots(figsize=(8, 6))
         txt_string = ''
@@ -527,8 +531,11 @@ class Plots:
                            + f'_beta={self.beta:.5f}.txt'
 
             # First time where 90% of the polymer is silent
-            silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_' + param_string,
-                                      skiprows=2, usecols=0, delimiter=',')
+            try:
+                silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+                                          + param_string, skiprows=2, usecols=0, delimiter=',')
+            except:
+                continue
             # No. of data points
             n_data = len(silent_times)
 
@@ -537,13 +544,18 @@ class Plots:
             k = len(ts)
 
             # Estimate
-            tau_estmate = ts.mean() + (n_data/k-1) * self.t_total
+            tau_estimate = ts.mean() + (n_data/k-1) * self.t_total
+            # The error
+            second_derivative = k / tau_estimate ** 2 - 2 * ts.sum() / tau_estimate ** 3 - 2 * (n_data - k)\
+                                * self.t_total / tau_estimate ** 2
+            tau_estimate_error = np.sqrt(-1 / second_derivative)
 
-            t_axis = np.linspace(0,10*self.t_total, 1000)
-            ax.plot(t_axis, np.exp(-t_axis/tau_estmate), label=f'cenH={cenH_size}')
+            # Plot the fraction of 'ON' cells
+            t_axis = np.linspace(0,5*self.t_total, 1000)
+            ax.plot(t_axis, np.exp(-t_axis/tau_estimate), label=f'cenH={cenH_size}')
 
             # Add info to the text string
-            txt_string += f'cenH size = {cenH_size}: tau estimate = {tau_estmate:.3g}' + '\n'
+            txt_string += f'cenH size = {cenH_size}: tau estimate = {tau_estimate:.3g} +/- {tau_estimate_error:.3g}' + '\n'
 
         # Create plot text
         plt.text(2.5e5, 0.05, txt_string, c='r', size=8)
@@ -552,6 +564,61 @@ class Plots:
         ax.legend(loc='best')
         plt.show()
 
+    def plot_establishment_times_patches(self):
+        # Plot
+        fig, ax = plt.subplots(2,1, figsize=(12, 6))
+
+        # The values to check for
+        # Only values from data will eventually be used
+        RMS_vals = np.linspace(1,1,10)
+
+        for cenH_size in self.cenH_sizes:
+            # Values will only be appended to the lists if data exist
+            RMS_list = []
+            est_time_list = []
+            est_time_std_list = []
+            n_patches_list = []
+            n_patches_std_list = []
+
+            for RMS_val in RMS_vals:
+                # GET PRESSURE VALUE HERE
+                # RMS_val -> U_pressure_weight
+
+                param_string = f'pressure={self.U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_' \
+                               + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
+                               + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}' \
+                               + f'_beta={self.beta:.5f}.txt'
+
+                # Get data
+                try:
+                    data = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+                                              + param_string, skiprows=2, usecols=[0,1,2], delimiter=',')
+                except:
+                    continue
+
+                silent_times = data[:,0]
+                half_silent_times = data[:, 1]
+                n_patches = data[:,2]
+
+                # Picks out the finite data
+                not_NaNs = ~np.isnan(silent_times)
+
+                # ESTABLISHMENT TIMES
+                # Keep only finite values
+                establishment_times = silent_times[not_NaNs] - half_silent_times[not_NaNs]
+
+                est_time_list.append(establishment_times.mean())
+                est_time_std_list.append(establishment_times.std(ddof=1))
+
+                # N_PATCHES
+                n_patches = ~np.isnan(n_patches)
+                n_patches_list.append(n_patches.mean())
+                n_patches_std_list.append(n_patches.std(ddof=1))
+
+                #
+                RMS_list.append(RMS_val)
+
+            # Plot
 
 
 

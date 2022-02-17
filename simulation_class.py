@@ -184,8 +184,13 @@ class Simulation:
         self.completed_lifetimes = torch.zeros_like(self.running_lifetimes, dtype=torch.float)
         self.average_lifetimes = torch.zeros(size=(self.N,), dtype=torch.float)
 
-        # Counts the number of particles in the different states
+        # The time when half the system is in an overall silent state
+        self.half_silent_time = None
+        # Number of silent state patches at the time half the system is in an overall silent state
+        self.n_silent_patches = None
+        # System in overall silent state
         self.stable_silent = False
+        # Counts the number of particles in the different states
         self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / stats_t_interval)))
 
         self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
@@ -789,6 +794,25 @@ class Simulation:
 
                 # Updates interaction types based on states
                 self.update_interaction_types()
+
+        # Write pressure and RMS values
+        if self.t == self.t_total - 1:
+            write_name = pathname + 'data/statistics/pressure_RMS_'
+            write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
+                          f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
+                          f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'
+
+            # Append to the file
+            shape_0 = self.dist_vecs_to_com.shape[0]
+            # RMS for different time steps
+            RMS = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
+
+            # This mean is a time average from t_half to the end of the simulation
+            mean_RMS = torch.mean(RMS)
+            line_str = f'{self.U_pressure_weight},{mean_RMS:.4f}'
+            data_file = open(write_name, 'a')
+            data_file.write(line_str + '\n')
+            data_file.close()
 
     # Clears the figure object and plots the current polymer
     def plot(self):
