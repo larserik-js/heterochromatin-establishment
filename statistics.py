@@ -1,8 +1,10 @@
 import torch
 import numpy as np
+from scipy import ndimage
+from copy import deepcopy
 from numba import njit
 import matplotlib.pyplot as plt
-from formatting import pathname
+from formatting import edit_stable_silent_times_file
 
 # Calculate radius of gyration
 def update_dist_vecs_to_com(sim_obj):
@@ -144,18 +146,21 @@ def update_correlation_times(sim_obj):
 def _gather_statistics(sim_obj):
     # Write cenH data
     if sim_obj.write_cenH_data:
+        # When half the polymer reaches the silent state
+        if torch.sum(sim_obj.states == 0) >= 0.5*sim_obj.N and sim_obj.half_silent_time is None:
+            sim_obj.half_silent_time = deepcopy(sim_obj.t)
+            _, sim_obj.n_silent_patches = ndimage.label(sim_obj.states == 0)
+
         # If the polymer collapses to silent, write the time at which this occurs to a .txt file
         if sim_obj.stable_silent == False:
             if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N:
-                data_file = open(pathname + f'data/statistics/stable_silent_times/stable_silent_times_pressure='\
-                                 + f'{sim_obj.U_pressure_weight:.2f}_'\
-                                 + f'init_state={sim_obj.initial_state}_cenH={sim_obj.cenH_size}_'\
-                                 + f'cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_t_total={sim_obj.t_total}_'\
-                                 + f'noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}_'\
-                                 + f'beta={sim_obj.beta:.5f}.txt', 'a')
+                line_str = f'{sim_obj.t},{sim_obj.half_silent_time},{sim_obj.n_silent_patches},{sim_obj.seed}'
 
-                data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
-                data_file.close()
+                edit_stable_silent_times_file(sim_obj.U_pressure_weight, sim_obj.initial_state, sim_obj.cenH_size,
+                                              sim_obj.cenH_init_idx, sim_obj.cell_division, sim_obj.barriers, sim_obj.N,
+                                              sim_obj.t_total, sim_obj.noise, sim_obj.alpha_1, sim_obj.alpha_2,
+                                              sim_obj.beta, sim_obj.seed, line_str)
+
                 print(f'Wrote to file at seed {sim_obj.seed}')
 
                 # Set the system state to silent. This will trigger the simulation to finish in 'run.py'
@@ -163,15 +168,14 @@ def _gather_statistics(sim_obj):
 
             # If the simulation finishes without a polymer collapse, write 'NaN' to the .txt file
             elif sim_obj.t == sim_obj.t_total - 1:
-                data_file = open(pathname + f'data/statistics/stable_silent_times/stable_silent_times_pressure=' \
-                                 + f'{sim_obj.U_pressure_weight:.2f}_' \
-                                 + f'init_state={sim_obj.initial_state}_cenH={sim_obj.cenH_size}_' \
-                                 + f'cenH_init_idx={sim_obj.cenH_init_idx}_N={sim_obj.N}_t_total={sim_obj.t_total}_' \
-                                 + f'noise={sim_obj.noise:.4f}_alpha_1={sim_obj.alpha_1:.5f}_alpha_2={sim_obj.alpha_2:.5f}_' \
-                                 + f'beta={sim_obj.beta:.5f}.txt', 'a')
+                line_str = f'NaN,NaN,NaN,{sim_obj.seed}'
 
-                data_file.write('NaN' + ',' + str(sim_obj.seed) + '\n')
-                data_file.close()
+                edit_stable_silent_times_file(sim_obj.U_pressure_weight, sim_obj.initial_state, sim_obj.cenH_size,
+                                              sim_obj.cenH_init_idx,
+                                              sim_obj.cell_division, sim_obj.barriers, sim_obj.N, sim_obj.t_total,
+                                              sim_obj.noise, sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta,
+                                              sim_obj.seed, line_str)
+
                 print(f'Wrote to file at seed {sim_obj.seed}')
 
             # Continue the simulation
