@@ -6,7 +6,7 @@ from scipy import optimize
 r = np.random
 
 class Estimator:
-    def __init__(self, TAU_TRUE, T_MAX, N_SAMPLES, N_RUNS):
+    def __init__(self, TAU_TRUE=2, T_MAX=5, N_SAMPLES=100, N_RUNS=10):
         self.TAU_TRUE = TAU_TRUE
         self.T_MAX = T_MAX
         # Number of samples
@@ -14,10 +14,22 @@ class Estimator:
         # Number of runs
         self.N_RUNS = N_RUNS
 
-    def estimate(self, print_stats=False):
-        # All sampled data
-        data = r.exponential(scale=self.TAU_TRUE, size=self.N_SAMPLES)
-        Is = (data < self.T_MAX)
+    def estimate(self, data=None, print_stats=False):
+        # If no input data, samples data randomly
+        if data is None:
+            # All sampled data
+            data = r.exponential(scale=self.TAU_TRUE, size=self.N_SAMPLES)
+
+            Is = (data < self.T_MAX)
+
+        # Experimental data given as argument
+        else:
+            data = np.array(data)
+            print(data)
+            #Is = ~np.isnan(data)
+            Is = data != None
+            print(Is)
+            pass
 
         # No data below T_MAX
         if Is.sum() == 0:
@@ -157,7 +169,6 @@ def plot_taus():
 
     for i in range(n_plots):
         TAU_TRUE = i+5
-        taus = np.zeros(len(Ns))
         taus_empirical = np.zeros(len(Ns))
         taus_estimates = np.zeros(len(Ns))
 
@@ -182,22 +193,18 @@ def plot_taus():
 
                 taus_estimates[ni] += tau_estimate
 
-            taus[ni] /= runs
             taus_empirical[ni] /= runs
             taus_estimates[ni] /= runs
             errors_raw[ni] = np.sqrt(errors_raw[ni] / runs)
             errors_corrected[ni] = np.sqrt(errors_corrected[ni] / runs)
 
-        #print(taus[:10])
-        #print(taus_empirical[:10])
-
         ax[i].plot(Ns, taus_estimates, label='Raw estimate')
-        ax[i].plot(Ns, taus, label='Estimator')
         ax[i].plot(Ns, errors_raw, label='Raw Error')
         ax[i].plot(Ns, errors_corrected, label='Corrected Error')
         ax[i].plot(Ns, taus_empirical, ls='--', label='Empirical estimator')
         ax[i].plot(Ns, TAU_TRUE + Ns * 0, label=r'$\tau_{true}$')
-        txt = f'Mean estimate = {taus.mean():.3f} +/- {taus.std(ddof=1) / np.sqrt(len(taus)):.3f}'
+        txt = f'Mean estimate = {taus_estimates.mean():.3f} '\
+             + f'+/- {taus_estimates.std(ddof=1) / np.sqrt(len(taus_estimates)):.3f}'
         ax[i].text(N_SAMPLES_MAX/5, T_MAX+1, txt, c='r')
         ax[i].set(ylim=(0,T_MAX+3))
         ax[i].set_ylabel(r'$\tau$', size=14)
@@ -208,9 +215,9 @@ def plot_taus():
 if __name__ == '__main__':
     #expectations_vs_analytic(N_SAMPLES_MAX=10, N_RUNS=1000, TAU_TRUE=2, T_MAX=10)
 
-    estimator_obj = Estimator(TAU_TRUE=1, T_MAX=4, N_SAMPLES=1000, N_RUNS=10000)
+    estimator_obj = Estimator(TAU_TRUE=1, T_MAX=4, N_SAMPLES=10000, N_RUNS=100)
     #tau_estimates, _ = estimator_obj.estimate_stats()
     _, tau_estimate, tau_estimate_std, _ = estimator_obj.estimate(print_stats=True)
 
-    #plot_taus()
+    plot_taus()
 

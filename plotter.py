@@ -8,7 +8,7 @@ plot_U_pressure_weight = 0.0
 plot_stats_interval = 100
 
 plot_cenH_size = 0
-plot_cenH_sizes = [6,7,8]
+plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_N = 40
 plot_t_total = 100000
@@ -61,4 +61,6 @@ plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_inter
 # Plot successful recruited conversions
 #plot_obj.plot_successful_recruited_conversions()
 
-plot_obj.plot_fraction_ON_cells()
+#plot_obj.plot_fraction_ON_cells()
+
+#plot_obj.plot_establishment_times_patches()

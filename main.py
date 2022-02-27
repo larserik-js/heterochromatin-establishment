@@ -16,13 +16,13 @@ from parameters import n_processes, pool_size, multiprocessing_parameter, test_m
                        initial_state, initial_state_list, cell_division, cenH_size, cenH_init_idx, write_cenH_data,\
                        barriers, constant, alpha_1, alpha_1_const, alpha_2, beta
 
-
 ##############################################################################
 ##############################################################################
 
 def curied_run(x, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
                 alpha_1, alpha_2, beta, stats_t_interval, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers):
+
 
     if multiprocessing_parameter == 'seed':
         return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
@@ -41,7 +41,7 @@ def curied_run(x, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_in
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
 
-def main(n_processes=n_processes, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
+def main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
              U_two_interaction_weight=U_two_interaction_weight,
              U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
              stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode, animate=animate,
@@ -88,17 +88,17 @@ def main(n_processes=n_processes, N=N, l0=l0, noise=noise, dt=dt, t_total=t_tota
                                          cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, min_seed,
                                          line_str, action='w')
 
-            # Write pressure and RMS values
-            write_name = pathname + 'data/statistics/pressure_RMS_'
-            write_name += f'init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_'\
-                          f't_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'\
-                          f'beta={beta:.5f}_seed={min_seed}' + '.txt'
-
-            # Append to the file
-            line_str = 'U_pressure_weight,RMS'
-            data_file = open(write_name, 'w')
-            data_file.write(line_str + '\n')
-            data_file.close()
+            # # Write pressure and RMS values
+            # write_name = pathname + 'data/statistics/pressure_RMS_'
+            # write_name += f'init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_'\
+            #               f't_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'\
+            #               f'beta={beta:.5f}_seed={min_seed}' + '.txt'
+            #
+            # # Append to the file
+            # line_str = 'U_pressure_weight,RMS'
+            # data_file = open(write_name, 'w')
+            # data_file.write(line_str + '\n')
+            # data_file.close()
 
         # Do not write cenH data in test mode
         else:
@@ -142,10 +142,11 @@ def main(n_processes=n_processes, N=N, l0=l0, noise=noise, dt=dt, t_total=t_tota
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
-    _ = main(N=N, l0=l0, noise=noise, dt=dt, t_total=t_total, U_two_interaction_weight=U_two_interaction_weight,
-             U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
-             stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode, animate=animate,
-             allow_state_change=allow_state_change, initial_state=initial_state, cell_division=cell_division,
-             cenH_size=cenH_size, cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers)
+    _ = main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
+             U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight, alpha_1=alpha_1,
+             alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
+             animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+             cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
+             write_cenH_data=write_cenH_data, barriers=barriers)
 
 

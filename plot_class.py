@@ -324,6 +324,7 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
+    # Plots RMS as a function of pressure
     def plot_RMS(self):
         open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
         # Replace the pressure values with the wildcard * to include all pressure values
@@ -566,25 +567,30 @@ class Plots:
 
     def plot_establishment_times_patches(self):
         # Plot
-        fig, ax = plt.subplots(2,1, figsize=(12, 6))
+        fig, ax = plt.subplots(2,1, figsize=(7, 6))
 
         # The values to check for
         # Only values from data will eventually be used
-        RMS_vals = np.linspace(1,1,10)
+        pressure_vals = np.arange(0,1.1,0.1)
+
+        pressure_RMS_data = np.loadtxt(pathname + 'pressure_RMS.txt', delimiter=',')
 
         for cenH_size in self.cenH_sizes:
             # Values will only be appended to the lists if data exist
             RMS_list = []
+            pressure_list = []
             est_time_list = []
             est_time_std_list = []
             n_patches_list = []
             n_patches_std_list = []
 
-            for RMS_val in RMS_vals:
-                # GET PRESSURE VALUE HERE
-                # RMS_val -> U_pressure_weight
+            for U_pressure_weight in pressure_vals:
 
-                param_string = f'pressure={self.U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_' \
+                # Get corresponding RMS_val
+                val_idx = np.argmin(np.abs(pressure_RMS_data[:,0] - U_pressure_weight))
+                RMS = pressure_RMS_data[val_idx,1]
+
+                param_string = f'pressure={U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_' \
                                + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
                                + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}' \
                                + f'_beta={self.beta:.5f}.txt'
@@ -602,23 +608,35 @@ class Plots:
 
                 # Picks out the finite data
                 not_NaNs = ~np.isnan(silent_times)
+                n_data = not_NaNs.sum() / len(not_NaNs)
 
                 # ESTABLISHMENT TIMES
                 # Keep only finite values
                 establishment_times = silent_times[not_NaNs] - half_silent_times[not_NaNs]
 
                 est_time_list.append(establishment_times.mean())
-                est_time_std_list.append(establishment_times.std(ddof=1))
+                est_time_std_list.append(establishment_times.std(ddof=1) / np.sqrt(n_data))
 
                 # N_PATCHES
-                n_patches = ~np.isnan(n_patches)
+                n_patches = n_patches[not_NaNs]
                 n_patches_list.append(n_patches.mean())
-                n_patches_std_list.append(n_patches.std(ddof=1))
+                n_patches_std_list.append(n_patches.std(ddof=1) / np.sqrt(n_data))
 
                 #
-                RMS_list.append(RMS_val)
+                pressure_list.append(U_pressure_weight)
+                RMS_list.append(RMS)
 
             # Plot
+            ax[0].errorbar(RMS_list, est_time_list, yerr=est_time_std_list, fmt='-o', label=f'cenH = {cenH_size}')
+            ax[1].errorbar(RMS_list, n_patches_list, yerr=n_patches_std_list, fmt='-o', label=f'cenH = {cenH_size}')
 
+        ax[0].set_ylabel('Time from 50% - 90% silent', size=12)
+        ax[1].set_xlabel('RMS', size=12)
+        ax[1].set_ylabel('Mean number of silent islands', size=12)
+
+        ax[0].legend(loc='best')
+        ax[1].legend(loc='best')
+        fig.tight_layout()
+        plt.show()
 
 

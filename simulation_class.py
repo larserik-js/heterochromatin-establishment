@@ -153,10 +153,10 @@ class Simulation:
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         self.init_center_of_mass = torch.sum(self.X, dim=0) / self.N
-        # Distances from each nucleosome to the center of mass
+
         # All distance vectors from the nucleosomes to the center of mass
         self.dist_vecs_to_com = torch.empty(size=(int(self.t_total / stats_t_interval), self.N, 3))
-        self.dist_vecs_to_com[0] = self.center_of_mass - self.X
+        self.dist_vecs_to_com[0] = self.X - self.center_of_mass
         self.init_dist_vecs_to_com = self.dist_vecs_to_com[0]
 
         self.correlation_times = torch.zeros(size=(self.N,))
@@ -223,9 +223,7 @@ class Simulation:
 
 
     def initialize_system(self, init_system_type):
-        # Quasi-random position based on position obtained after 1e6 time-steps of unreactive polymer
-        # Select a random initial polymer
-        # Free polymer
+        # Quasi-random position based on position obtained after 1e6 time-steps of free polymer
         if init_system_type == 'quasi-random-free':
             seed_no = r.randint(100)
             open_filename = pathname + 'quasi_random_initial_states_free/'\
@@ -235,24 +233,26 @@ class Simulation:
                 xs, ys, zs, _ = pickle.load(f)
 
         # With external pressure
+        # Free polymer position after 1e6 time-steps
+        # An additional 1e5 time-steps to let the pressure affect the polymer
         elif init_system_type == 'quasi-random-pressure':
             seed_no = r.randint(100)
+
+            rounded_pressure_weight = np.round(self.U_pressure_weight, decimals=2)
             open_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/'\
-                                     + f'pressure={self.U_pressure_weight:.2f}/seed={seed_no}.pkl'
+                                     + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
-                X = pickle.load(f)[0]
-                xs, ys, zs = X[:,0], X[:,1], X[:,2]
+                X = pickle.load(f)
 
         # Stretched-out chain
         elif init_system_type == 'stretched':
-            xs = np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0
-            ys, zs = np.zeros(self.N), np.zeros(self.N)
+            xs = torch.from_numpy(np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0)
+            ys, zs = torch.from_numpy(np.zeros(self.N)), torch.from_numpy(np.zeros(self.N))
+            # Nucleosome positions
+            X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
         else:
             raise AssertionError("Invalid system type given in function 'initialize_system'!")
-
-        # Nucleosome positions
-        X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         return X
 
@@ -691,7 +691,7 @@ class Simulation:
         if self.cell_division:
             if self.t % self.cell_division_interval == 0 and self.t != 0:
                 # Initialize system in space
-                self.X = self.initialize_system(init_system_type='quasi-random')
+                self.X = self.initialize_system(init_system_type='quasi-random-free')
                 self.X_tilde = self.get_X_tilde()
                 # Change (on average) half the states to unmodified
                 self.states_after_cell_division()
@@ -795,24 +795,24 @@ class Simulation:
                 # Updates interaction types based on states
                 self.update_interaction_types()
 
-        # Write pressure and RMS values
-        if self.t == self.t_total - 1:
-            write_name = pathname + 'data/statistics/pressure_RMS_'
-            write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
-                          f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
-                          f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'
-
-            # Append to the file
-            shape_0 = self.dist_vecs_to_com.shape[0]
-            # RMS for different time steps
-            RMS = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
-
-            # This mean is a time average from t_half to the end of the simulation
-            mean_RMS = torch.mean(RMS)
-            line_str = f'{self.U_pressure_weight},{mean_RMS:.4f}'
-            data_file = open(write_name, 'a')
-            data_file.write(line_str + '\n')
-            data_file.close()
+        # # Write pressure and RMS values
+        # if self.t == self.t_total - 1:
+        #     write_name = pathname + 'data/statistics/pressure_RMS_'
+        #     write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
+        #                   f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
+        #                   f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'
+        #
+        #     # Append to the file
+        #     shape_0 = self.dist_vecs_to_com.shape[0]
+        #     # RMS for different time steps
+        #     RMS = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
+        #
+        #     # This mean is a time average from t_half to the end of the simulation
+        #     mean_RMS = torch.mean(RMS)
+        #     line_str = f'{self.U_pressure_weight},{mean_RMS:.4f}'
+        #     data_file = open(write_name, 'a')
+        #     data_file.write(line_str + '\n')
+        #     data_file.close()
 
     # Clears the figure object and plots the current polymer
     def plot(self):
