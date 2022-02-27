@@ -54,7 +54,15 @@ def save_data(sim_obj):
     pickle_var_list = [x_final, y_final, z_final, sim_obj.states]
     write_pkl(pickle_var_list, fs_filename)
 
-    # Statistics
+    # # Save active polymer with pressure before dynamics
+    # write_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/' \
+    #                 + f'pressure={sim_obj.U_pressure_weight:.2f}/seed={sim_obj.seed}.pkl'
+    # # Write to pkl
+    # with open(write_filename, 'wb') as f:
+    #     pickle.dump(sim_obj.X, f)
+
+
+    # Interactions and lifetimes
     pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
     write_pkl(pickle_var_list, interactions_filename)
 
