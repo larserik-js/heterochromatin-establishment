@@ -12,7 +12,8 @@ from datetime import datetime
 from estimation import Estimator
 
 class Optimizer:
-    def __init__(self, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta):
+    def __init__(self, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, U_pressure_weight,
+                 alpha_2, beta, filename):
         self.n_processes = n_processes
         self.pool_size = pool_size
         self.initial_state = initial_state
@@ -21,52 +22,21 @@ class Optimizer:
         self.N = N
         self.t_total = t_total
         self.noise = noise
-        self.alpha_1 = alpha_1
+        self.U_pressure_weight = U_pressure_weight
         self.alpha_2 = alpha_2
         self.beta = beta
-
-        # self.n_bins = n_bins
-        #
-        # # Proportion of polymer that is not silent
-        # # Corresponds to the number of cells yielding fluorescence
-        # self.n_ON_cells = np.empty(self.n_bins)
+        self.filename = filename
 
         # Slope fraction(s) from the data
         # (cenH = 6) / (cenH = 8)
         self.slope_fraction_6_8 = 0.04891
 
-    # def get_ON_cells_fractions(self):
-    #     # Corresponds to the time of measurement in the (real) experiments
-    #     self.measurement_times = np.linspace(0, self.t_total, self.n_bins+1)
-    #
-    #     # Find number of ON cells at a given measurement time
-    #     for i in range(self.n_bins):
-    #         self.n_ON_cells[i] = (self.silent_times > self.measurement_times[i]).sum()
-
-    # # Fits a line to the data, returns the slope
-    # @staticmethod
-    # def fit_line(bin_centers, hist_values, yerr):
-    #     popt, _ = curve_fit(lambda x, a, b: a*x + b, bin_centers, hist_values, sigma=yerr)
-    #     return popt[0]
-
-
-    def write_best_param_data(self, U_pressure_weight=None, tau_estimate_6=None, tau_estimate_6_error=None,
-                              tau_estimate_8=None, tau_estiamte_8_error=None, f_minimize_val=None, action='w'):
-
-        data_file = open(pathname + f'data/statistics/pressure_values_init_state={self.initial_state}_' \
-                         + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
-                         + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_' \
-                         + f'beta={self.beta:.5f}.txt', action)
-        # Initialize file
-        if action == 'w':
-            data_file.write('U_pressure_weight,tau_estimate(cenH=6),tau_estimate_error(cenH=6),'\
-                            + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val' + '\n')
+    def write_best_param_data(self, alpha_1, tau_estimate_6, tau_estimate_6_error, tau_estimate_8,
+                              tau_estimate_8_error, f_minimize_val):
         # Append to file
-        elif action == 'a':
-            data_file.write(f'{U_pressure_weight},{tau_estimate_6},{tau_estimate_6_error},'\
-                            + f'{tau_estimate_8},{tau_estiamte_8_error},{f_minimize_val}' + '\n')
-        else:
-            raise AssertionError('Invalid action given in function "write_best_param_data"!')
+        data_file = open(self.filename, 'a')
+        data_file.write(f'{self.U_pressure_weight},{alpha_1},{tau_estimate_6},{tau_estimate_6_error},'\
+                            + f'{tau_estimate_8},{tau_estimate_8_error},{f_minimize_val}' + '\n')
 
         data_file.close()
 
@@ -83,22 +53,16 @@ class Optimizer:
 
 
     # The function to be minimized
-    def f_minimize(self, U_pressure_weight):
-        U_pressure_weight = U_pressure_weight[0]
+    def f_minimize(self, alpha_1):
+        alpha_1 = alpha_1[0]
         tau_estimates = []
         tau_estimates_errors = []
 
         for cenH_size in self.cenH_sizes:
             # Run the simulations
-            silent_times_list = main.main(n_processes=self.n_processes, pool_size=self.pool_size, t_total=self.t_total,
-                                          U_pressure_weight=U_pressure_weight, cenH_size=cenH_size, test_mode=False,
-                                          write_cenH_data=True)
-            # # Remove 'None' values
-            # silent_times_list = [time for time in silent_times_list if time is not None]
-            # self.silent_times = np.array(silent_times_list)
-            #
-            # # Transform to ON cells fractions
-            # self.get_ON_cells_fractions()
+            silent_times_list = main.main(n_processes=self.n_processes, pool_size=self.pool_size, set_seed=False,
+                                          t_total=self.t_total, U_pressure_weight=self.U_pressure_weight, alpha_1=alpha_1,
+                                          cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
 
             tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
@@ -123,30 +87,27 @@ class Optimizer:
             f_minimize_val = 99999
 
         # Write data continuously
-        self.write_best_param_data(U_pressure_weight, tau_estimates[0], tau_estimates_errors[0],
-                                   tau_estimates[1], tau_estimates_errors[1], f_minimize_val, action='a')
+        self.write_best_param_data(alpha_1, tau_estimates[0], tau_estimates_errors[0],
+                                   tau_estimates[1], tau_estimates_errors[1], f_minimize_val)
 
         return f_minimize_val
 
     def optimize(self):
-        # Initialize file
-        self.write_best_param_data(action='w')
-
         # Minimize
         res = gp_minimize(self.f_minimize,  # The function to minimize
 
-                          # The bounds on U_pressure_weight
-                          [(0.0, 1.0)],
+                          # The bounds on alpha_1
+                          [(0.05, 0.1)],
 
                           # The acquisition function
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=100,
+                          n_calls=20,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
-                          n_initial_points=2,
+                          n_initial_points=10,
 
                           # The noise level
                           noise="gaussian",
@@ -155,55 +116,9 @@ class Optimizer:
                           random_state=0)
         return res
 
-    def plot_ON_cells_fractions(self):
-        ## Histogram parameters
-        n_bins = 20
-        hist_range = np.linspace(0,t_total,n_bins)
-        txt_string = ''
 
-        # for cenH_size in cenH_sizes:
-        #     param_string = f'pressure={pressure:.2f}_init_state={initial_state}_cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_' \
-        #                    + f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_' \
-        #                    + f'alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
-        #
-        #     # First time where 90% of the polymer is silent
-        #     silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times_' + param_string,
-        #                               skiprows=1, usecols=0, delimiter=',')
-        #
-        #     # No. of data points
-        #     n_data = len(silent_times)
-        #
-        #     #plt.hist(silent_times, bins=30, alpha=0.6, label=f'cenH size = {cenH_size}')
-        #     #sns.displot(data=silent_times, kind='ecdf', x=hist_range)
-        #
-        #     # Proportion of polymer that is not silent
-        #     # Corresponds to the number of cells yielding fluorescence
-        #     n_non_silent = np.empty(n_bins)
-        #
-        #     # Plot cumulative distribution
-        #     for i in range(n_bins):
-        #         n_non_silent[i] = (silent_times > hist_range[i]).sum()
-        #
-        #     # Add info to the text string
-        #     txt_string += f'cenH size = {cenH_size}: Mean = {silent_times.mean():.3g} '\
-        #                   + f'+/- {silent_times.std(ddof=1) / np.sqrt(n_data):.3g}' + '\n'
-        #
-        #     plt.plot(hist_range, n_non_silent / len(silent_times), label=f'cenH size = {cenH_size}')
-
-        # Create plot text
-        plt.text(2.5e5, 0.05, txt_string, c='r', size=8)
-
-        plt.xlabel(r'$t$', size=12)
-        plt.ylabel('Proportion of non-silent polymers', size=12)
-        plt.title(f'Heterochromatin establishment, pressure = {pressure:.2f}, ' + r'$\alpha_1$' + f' = {alpha_1}', size=14)
-        plt.yscale('log')
-        # Format y axis values to float
-        plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.3f}'))
-        plt.legend(loc='best')
-        plt.show()
-
-        return None
-
+#U_pressure_weight_values = np.logspace(start=-6,stop=0,num=100)
+U_pressure_weight_values = [0.01, 0.05]
 n_processes = 100
 pool_size = 25
 #pressure = 0.5
@@ -212,14 +127,32 @@ cenH_init_idx = 16
 N = 40
 t_total = 50000
 noise = 0.5
-alpha_1 = 0.07
 alpha_2 = 0.1
 beta = 0.004
 
-opt_obj = Optimizer(n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta)
-#opt_obj.plot_ON_cells_fractions()
+def make_filename(initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
+    return pathname + f'data/statistics/optimization_init_state={initial_state}_' \
+                     + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_' \
+                     + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_' \
+                     + f'beta={beta:.5f}.txt'
 
-res = opt_obj.optimize()
-print(res)
+def initialize_file(filename):
+    data_file = open(filename, 'w')
 
-print(f'Simulation finished {datetime.now()}')
+    data_file.write('U_pressure_weight,alpha_1,tau_estimate(cenH=6),tau_estimate_error(cenH=6),' \
+                    + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val' + '\n')
+
+    data_file.close()
+
+if __name__ == '__main__':
+    filename = make_filename(initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta)
+    initialize_file(filename)
+
+    for U_pressure_weight in U_pressure_weight_values:
+        opt_obj = Optimizer(n_processes, pool_size, initial_state,
+                            cenH_init_idx, N, t_total, noise, U_pressure_weight, alpha_2, beta, filename)
+
+        res = opt_obj.optimize()
+        print(res)
+
+    print(f'Simulation finished {datetime.now()}')

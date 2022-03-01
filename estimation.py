@@ -47,7 +47,7 @@ class Estimator:
             tau_estimate = TERM_1 + TERM_2
 
             # The error
-            second_derivative = k/tau_estimate**2 - 2 * ts.sum() / tau_estimate**3 - 2*(N-k)*self.T_MAX / tau_estimate**2
+            second_derivative = k/tau_estimate**2 - 2 * ts.sum() / tau_estimate**3 - 2*(N-k)*self.T_MAX / tau_estimate**3
             tau_estimate_error = np.sqrt(-1 / second_derivative)
 
             if print_stats == True:

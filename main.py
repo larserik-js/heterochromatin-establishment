@@ -11,32 +11,32 @@ import run
 from formatting import pathname, create_directories, create_param_string, edit_stable_silent_times_file
 
 # Import all parameters
-from parameters import n_processes, pool_size, multiprocessing_parameter, test_mode, animate, min_seed, N, l0, noise, dt,\
-                       t_total, stats_t_interval, U_two_interaction_weight, U_pressure_weight, allow_state_change,\
-                       initial_state, initial_state_list, cell_division, cenH_size, cenH_init_idx, write_cenH_data,\
-                       barriers, constant, alpha_1, alpha_1_const, alpha_2, beta
+from parameters import n_processes, pool_size, multiprocessing_parameter, test_mode, animate, set_seed, min_seed, N,\
+                       l0, noise, dt, t_total, stats_t_interval, U_two_interaction_weight, U_pressure_weight,\
+                       allow_state_change, initial_state, initial_state_list, cell_division, cenH_size, cenH_init_idx,\
+                       write_cenH_data, barriers, constant, alpha_1, alpha_1_const, alpha_2, beta
 
 ##############################################################################
 ##############################################################################
 
 def curied_run(x, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
-                alpha_1, alpha_2, beta, stats_t_interval, min_seed, test_mode, animate, allow_state_change,
+                alpha_1, alpha_2, beta, stats_t_interval, set_seed, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers):
 
 
     if multiprocessing_parameter == 'seed':
         return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
-                alpha_2, beta, stats_t_interval, x, test_mode, animate, allow_state_change,
+                alpha_2, beta, stats_t_interval, set_seed, x, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
 
     elif multiprocessing_parameter == 'alpha_1':
         return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, x,
-                alpha_2, beta, stats_t_interval, min_seed, test_mode, animate, allow_state_change,
+                alpha_2, beta, stats_t_interval, set_seed, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
 
     elif multiprocessing_parameter == 'U_pressure_weight':
         return run.run(N, l0, noise, dt, t_total, U_two_interaction_weight, x, alpha_1,
-                alpha_2, beta, stats_t_interval, min_seed, test_mode, animate, allow_state_change,
+                alpha_2, beta, stats_t_interval, set_seed, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
@@ -44,9 +44,10 @@ def curied_run(x, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_in
 def main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
              U_two_interaction_weight=U_two_interaction_weight,
              U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
-             stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode, animate=animate,
-             allow_state_change=allow_state_change, initial_state=initial_state, cell_division=cell_division,
-             cenH_size=cenH_size, cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers):
+             stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed, test_mode=test_mode,
+             animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+             cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
+             write_cenH_data=write_cenH_data, barriers=barriers):
 
 
     # Create necessary directories
@@ -111,10 +112,10 @@ def main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, 
                                     noise=noise, dt=dt, t_total=t_total,
                                     U_two_interaction_weight=U_two_interaction_weight,
                                     U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
-                                    stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
-                                    animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
-                                    cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                                    write_cenH_data=write_cenH_data, barriers=barriers),
+                                    stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
+                                    test_mode=test_mode, animate=animate, allow_state_change=allow_state_change,
+                                    initial_state=initial_state, cell_division=cell_division, cenH_size=cenH_size,
+                                    cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers),
                                     parameter_list, chunksize=1))
 
     # Run a single process without multiprocessing
@@ -123,10 +124,10 @@ def main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, 
                                     noise=noise, dt=dt, t_total=t_total,
                                     U_two_interaction_weight=U_two_interaction_weight,
                                     U_pressure_weight=U_pressure_weight, alpha_1=alpha_1, alpha_2=alpha_2, beta=beta,
-                                    stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
-                                    animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
-                                    cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                                    write_cenH_data=write_cenH_data, barriers=barriers),
+                                    stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
+                                    test_mode=test_mode, animate=animate, allow_state_change=allow_state_change,
+                                    initial_state=initial_state, cell_division=cell_division, cenH_size=cenH_size,
+                                    cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data, barriers=barriers),
                                     parameter_list))
 
         # Print time elapsed
@@ -144,8 +145,8 @@ def main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, 
 if __name__ == '__main__':
     _ = main(n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
              U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight, alpha_1=alpha_1,
-             alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, min_seed=min_seed, test_mode=test_mode,
-             animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+             alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
+             test_mode=test_mode, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
              cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
              write_cenH_data=write_cenH_data, barriers=barriers)
 

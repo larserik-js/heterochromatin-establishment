@@ -28,11 +28,17 @@ def get_parser_args():
                         default=1,
                         help='If false, saves data. Else, nothing is saved, except possibly an animation.')
 
-    # # Additionally generates and saves an animation
+    # Additionally generates and saves an animation
     parser.add_argument('--animate',
                         type=int,
                         default=0,
                         help='If true, creates an animation.')
+
+    # Seeding
+    parser.add_argument('--set_seed',
+                        type=int,
+                        default=1,
+                        help='If true, sets random seed for Numpy, Numba, and Torch.')
 
     # Random seed
     parser.add_argument('--min_seed',
@@ -177,6 +183,7 @@ pool_size = args.pool_size
 multiprocessing_parameter = args.multiprocessing_parameter
 test_mode = args.test_mode
 animate = args.animate
+set_seed = args.set_seed
 min_seed = args.min_seed
 N = args.N
 l0 = args.l0

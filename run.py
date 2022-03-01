@@ -104,16 +104,17 @@ def set_numba_seed(seed):
 # from memory_profiler import profile
 # @profile
 def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
+        set_seed, seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
         write_cenH_data, barriers):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with seed = {seed}.')
 
-    # Fix seed values
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    set_numba_seed(seed)
+    # Set seed values
+    if set_seed:
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        set_numba_seed(seed)
 
     # Create simulation object
     sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
