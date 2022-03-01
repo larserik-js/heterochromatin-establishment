@@ -117,7 +117,7 @@ class Optimizer:
         return res
 
 
-U_pressure_weight_values = np.logspace(start=-8,stop=-6,num=3)
+U_pressure_weight_values = np.logspace(start=-5,stop=-3,num=3)
 n_processes = 100
 pool_size = 100
 initial_state = 'active'
