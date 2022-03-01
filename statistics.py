@@ -5,6 +5,9 @@ from copy import deepcopy
 from numba import njit
 import matplotlib.pyplot as plt
 from formatting import edit_stable_silent_times_file
+from typing import TYPE_CHECKING
+# if TYPE_CHECKING:
+#     from simulation_class import Simulation
 
 # Calculate radius of gyration
 def update_dist_vecs_to_com(sim_obj):
