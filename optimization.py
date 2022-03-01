@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import StrMethodFormatter
 import numpy as np
 import seaborn as sns
-from formatting import pathname
+from formatting import pathname, create_directories
 from scipy.optimize import curve_fit
 from skopt import gp_minimize
 import os
@@ -125,7 +125,7 @@ pool_size = 25
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 50000
+t_total = 500
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
@@ -145,6 +145,9 @@ def initialize_file(filename):
     data_file.close()
 
 if __name__ == '__main__':
+    # Make necessary directories
+    create_directories()
+    # Make the .txt file for data
     filename = make_filename(initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta)
     initialize_file(filename)
 
