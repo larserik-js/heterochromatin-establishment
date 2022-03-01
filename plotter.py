@@ -4,6 +4,7 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
+plot_n_processes = 10
 plot_U_pressure_weight = 0.0
 plot_stats_interval = 100
 
@@ -11,7 +12,7 @@ plot_cenH_size = 0
 plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_N = 40
-plot_t_total = 50000
+plot_t_total = 100
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
@@ -23,8 +24,9 @@ plot_alpha_2 = 0.1
 plot_beta = 0.004
 plot_seed = 0
 
-plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_interval=plot_stats_interval,
-                 plot_cenH_size=plot_cenH_size, plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
+plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
+                 plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
+                 plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
                  plot_cell_division=plot_cell_division, plot_barriers=plot_barriers, plot_N=plot_N,
                  plot_t_total=plot_t_total, plot_noise=plot_noise, plot_initial_state=plot_initial_state,
                  plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2, plot_beta=plot_beta, plot_seed=plot_seed)

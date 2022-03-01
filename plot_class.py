@@ -19,9 +19,11 @@ from timeit import default_timer as DT
 from formatting import pathname, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size, plot_cenH_sizes, plot_cenH_init_idx, plot_cell_division, plot_barriers,
-                 plot_N, plot_t_total, plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+    def __init__(self, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size, plot_cenH_sizes,
+                 plot_cenH_init_idx, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise,
+                 plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
 
+        self.n_processes = plot_n_processes
         self.U_pressure_weight = plot_U_pressure_weight
         self.stats_interval = plot_stats_interval
         self.cenH_size = plot_cenH_size
@@ -639,23 +641,49 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
-    # Plots the minimum f_minimize_vals as a function of pressure values, from a .txt document
-    def plot_optimization(self):
-        filename = pathname + f'data/statistics/optimization_init_state={self.initial_state}_'\
-                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
-                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
+    # # Plots the minimum f_minimize_vals as a function of pressure values, from a .txt document
+    # def plot_optimization(self):
+    #     filename = pathname + f'data/statistics/optimization_init_state={self.initial_state}_'\
+    #                       + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
+    #                       + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
+    #
+    #     # Read the data into a Pandas DF
+    #     df = pd.read_csv(filename, usecols=['U_pressure_weight', 'f_minimize_val'])
+    #     # Group the minimum f_minimize_vals by U_pressure_weight
+    #     df = df.groupby('U_pressure_weight')['f_minimize_val'].min()
+    #     # Transform to Numpy arrays
+    #     pressure_vals = df.index.to_numpy()
+    #     f_min_vals = df.to_numpy()
+    #
+    #     fig, ax = plt.subplots(figsize=(8,6))
+    #     ax.scatter(pressure_vals, f_min_vals)
+    #     ax.set_xlabel('U_pressure_weight', size=14)
+    #     ax.set_ylabel('f_minimize_val', size=14)
+    #     plt.show()
 
-        # Read the data into a Pandas DF
-        df = pd.read_csv(filename, usecols=['U_pressure_weight', 'f_minimize_val'])
-        # Group the minimum f_minimize_vals by U_pressure_weight
-        df = df.groupby('U_pressure_weight')['f_minimize_val'].min()
-        # Transform to Numpy arrays
-        pressure_vals = df.index.to_numpy()
-        f_min_vals = df.to_numpy()
+    def plot_optimization(self):
+        # Finds all .txt files with different pressure values
+        filenames = glob(pathname + 'data/statistics/optimization/optimization_U_pressure_weight=*'\
+                         + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
+                         + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
+                         + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
+
+        # Sort filenames by pressure values
+        filenames = sorted(filenames)
+
+        # This number might differ, depending on available files
+        n_files = len(filenames)
+
+        pressure_vals = np.empty(n_files)
+        f_min_vals = np.empty(n_files)
 
         fig, ax = plt.subplots(figsize=(8,6))
-        ax.scatter(pressure_vals, f_min_vals)
-        ax.set_xlabel('U_pressure_weight', size=14)
-        ax.set_ylabel('f_minimize_val', size=14)
-        plt.show()
 
+        for k in range(n_files):
+            with open(filenames[k], 'rb') as f:
+                data = np.loadtxt(f, delimiter=',', skiprows=1, usecols=[0,-1])
+                pressure_vals[k] = data[0,0]
+                f_min_vals[k] = data[:,1].min()
+
+        ax.scatter(pressure_vals, f_min_vals)
+        plt.show()
