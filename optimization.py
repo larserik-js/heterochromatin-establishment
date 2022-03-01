@@ -97,13 +97,13 @@ class Optimizer:
         res = gp_minimize(self.f_minimize,  # The function to minimize
 
                           # The bounds on alpha_1
-                          [(0.05, 0.1)],
+                          [(0.01, 0.2)],
 
                           # The acquisition function
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=20,
+                          n_calls=10,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
@@ -117,11 +117,10 @@ class Optimizer:
         return res
 
 
-#U_pressure_weight_values = np.logspace(start=-6,stop=0,num=100)
-U_pressure_weight_values = [0.01, 0.05]
+#U_pressure_weight_values = np.logspace(start=-8,stop=-6,num=3)
+U_pressure_weight_values = [0.02]
 n_processes = 10
 pool_size = 10
-#pressure = 0.5
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
@@ -131,7 +130,7 @@ alpha_2 = 0.1
 beta = 0.004
 
 def make_filename(U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
-    return pathname + f'data/statistics/optimization/optimization_U_pressure_weight={U_pressure_weight:.2f}_'\
+    return pathname + f'data/statistics/optimization/optimization_U_pressure_weight={U_pressure_weight:.2e}_'\
                     + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
                     + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 
