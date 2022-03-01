@@ -5,7 +5,8 @@ import sys
 pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 
 statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com', 'final_state', 'interactions', 'Rs',
-                           'states', 'states_time_space', 'successful_conversions', 'stable_silent_times']
+                           'states', 'states_time_space', 'successful_conversions', 'stable_silent_times',
+                           'optimization']
 
 def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
                           alpha_2, beta, seed, exclude_seed=False):

@@ -119,22 +119,21 @@ class Optimizer:
 
 #U_pressure_weight_values = np.logspace(start=-6,stop=0,num=100)
 U_pressure_weight_values = [0.01, 0.05]
-n_processes = 100
-pool_size = 25
+n_processes = 10
+pool_size = 10
 #pressure = 0.5
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 500
+t_total = 100
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
 
-def make_filename(initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
-    return pathname + f'data/statistics/optimization_init_state={initial_state}_' \
-                     + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_' \
-                     + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_' \
-                     + f'beta={beta:.5f}.txt'
+def make_filename(U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
+    return pathname + f'data/statistics/optimization/optimization_U_pressure_weight={U_pressure_weight:.2f}_'\
+                    + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
+                    + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 
 def initialize_file(filename):
     data_file = open(filename, 'w')
@@ -147,11 +146,14 @@ def initialize_file(filename):
 if __name__ == '__main__':
     # Make necessary directories
     create_directories()
-    # Make the .txt file for data
-    filename = make_filename(initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta)
-    initialize_file(filename)
 
+    # Iterate
     for U_pressure_weight in U_pressure_weight_values:
+        # Make the .txt file for data
+        filename = make_filename(U_pressure_weight, n_processes, initial_state,
+                                 cenH_init_idx, N, t_total, noise, alpha_2, beta)
+        initialize_file(filename)
+
         opt_obj = Optimizer(n_processes, pool_size, initial_state,
                             cenH_init_idx, N, t_total, noise, U_pressure_weight, alpha_2, beta, filename)
 
