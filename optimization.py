@@ -103,7 +103,7 @@ class Optimizer:
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=10,
+                          n_calls=100,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
@@ -117,14 +117,13 @@ class Optimizer:
         return res
 
 
-#U_pressure_weight_values = np.logspace(start=-8,stop=-6,num=3)
-U_pressure_weight_values = [0.02]
-n_processes = 10
-pool_size = 10
+U_pressure_weight_values = np.logspace(start=-8,stop=-6,num=3)
+n_processes = 100
+pool_size = 100
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 100
+t_total = 50000
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
