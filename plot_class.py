@@ -639,4 +639,23 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
+    # Plots the minimum f_minimize_vals as a function of pressure values, from a .txt document
+    def plot_optimization(self):
+        filename = pathname + f'data/statistics/optimization_init_state={self.initial_state}_'\
+                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
+                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
+
+        # Read the data into a Pandas DF
+        df = pd.read_csv(filename, usecols=['U_pressure_weight', 'f_minimize_val'])
+        # Group the minimum f_minimize_vals by U_pressure_weight
+        df = df.groupby('U_pressure_weight')['f_minimize_val'].min()
+        # Transform to Numpy arrays
+        pressure_vals = df.index.to_numpy()
+        f_min_vals = df.to_numpy()
+
+        fig, ax = plt.subplots(figsize=(8,6))
+        ax.scatter(pressure_vals, f_min_vals)
+        ax.set_xlabel('U_pressure_weight', size=14)
+        ax.set_ylabel('f_minimize_val', size=14)
+        plt.show()
 

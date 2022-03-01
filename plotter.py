@@ -11,7 +11,7 @@ plot_cenH_size = 0
 plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_N = 40
-plot_t_total = 100000
+plot_t_total = 50000
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
@@ -21,7 +21,7 @@ dt = 0.02
 plot_alpha_1 = 0.07
 plot_alpha_2 = 0.1
 plot_beta = 0.004
-plot_seed = 3
+plot_seed = 0
 
 plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_interval=plot_stats_interval,
                  plot_cenH_size=plot_cenH_size, plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
@@ -64,3 +64,5 @@ plot_obj = Plots(plot_U_pressure_weight=plot_U_pressure_weight, plot_stats_inter
 #plot_obj.plot_fraction_ON_cells()
 
 #plot_obj.plot_establishment_times_patches()
+
+plot_obj.plot_optimization()
