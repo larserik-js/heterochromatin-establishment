@@ -4,7 +4,7 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
-plot_n_processes = 10
+plot_n_processes = 100
 plot_U_pressure_weight = 0.0
 plot_stats_interval = 100
 
