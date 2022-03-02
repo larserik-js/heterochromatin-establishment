@@ -5,14 +5,17 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-from formatting import pathname, create_param_string, create_plot_title
+from formatting import get_project_folder, create_param_string, create_plot_title
 import pickle
 r = np.random
 
 class Simulation:
-    def __init__(self, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                 stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
-                 write_cenH_data, barriers):
+    def __init__(self, pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
+                 alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
+                 cenH_init_idx, write_cenH_data, barriers):
+
+        # Project folder
+        self.pathname = pathname
 
         ## Parameters
         # No. of nucleosomes
@@ -226,7 +229,7 @@ class Simulation:
         # Quasi-random position based on position obtained after 1e6 time-steps of free polymer
         if init_system_type == 'quasi-random-free':
             seed_no = r.randint(100)
-            open_filename = pathname + 'quasi_random_initial_states_free/'\
+            open_filename = self.pathname + 'quasi_random_initial_states_free/'\
                                      + f'final_state_N=40_t_total=1000000_noise=0.500_seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
@@ -239,7 +242,7 @@ class Simulation:
             seed_no = r.randint(100)
 
             rounded_pressure_weight = np.round(self.U_pressure_weight, decimals=2)
-            open_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/'\
+            open_filename = self.pathname + 'quasi_random_initial_states_pressure_before_dynamics/'\
                                      + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
@@ -797,7 +800,7 @@ class Simulation:
 
         # # Write pressure and RMS values
         # if self.t == self.t_total - 1:
-        #     write_name = pathname + 'data/statistics/pressure_RMS_'
+        #     write_name = self.pathname + 'data/statistics/pressure_RMS_'
         #     write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
         #                   f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
         #                   f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'

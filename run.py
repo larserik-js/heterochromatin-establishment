@@ -13,13 +13,13 @@ from matplotlib.animation import FuncAnimation
 from simulation_class import Simulation
 
 # Pathname
-from formatting import pathname, create_param_string
+from formatting import get_project_folder, create_param_string
 
 # External animation file
 from animation_class import Animation, create_animation_directory
 
 # Takes a list of torch tensors, pickles them
-def write_pkl(var_list, filename):
+def write_pkl(var_list, pathname, filename):
     filename = pathname + 'data/statistics/' + filename + '.pkl'
 
     # Detach tensors and turn them into numpy arrays
@@ -34,7 +34,7 @@ def write_pkl(var_list, filename):
     with open(filename, 'wb') as f:
         pickle.dump(new_var_list, f)
 
-def save_data(sim_obj):
+def save_data(sim_obj, pathname):
     ## Save final state and statistics
     # Filenames
     parameter_string = sim_obj.params_filename
@@ -52,7 +52,7 @@ def save_data(sim_obj):
     # Final state
     x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
     pickle_var_list = [x_final, y_final, z_final, sim_obj.states]
-    write_pkl(pickle_var_list, fs_filename)
+    write_pkl(pickle_var_list, pathname, fs_filename)
 
     # # Save active polymer with pressure before dynamics
     # write_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/' \
@@ -64,35 +64,35 @@ def save_data(sim_obj):
 
     # Interactions and lifetimes
     pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
-    write_pkl(pickle_var_list, interactions_filename)
+    write_pkl(pickle_var_list, pathname, interactions_filename)
 
     # End-to-end distance
     pickle_var_list = [sim_obj.Rs]
-    write_pkl(pickle_var_list, Rs_filename)
+    write_pkl(pickle_var_list, pathname, Rs_filename)
 
     # Distance vectors to center of mass
     pickle_var_list = [sim_obj.dist_vecs_to_com]
-    write_pkl(pickle_var_list, dist_vecs_to_com_filename)
+    write_pkl(pickle_var_list, pathname, dist_vecs_to_com_filename)
 
     # Correlation
     pickle_var_list = [sim_obj.correlation_sums]
-    write_pkl(pickle_var_list, correlation_filename)
+    write_pkl(pickle_var_list, pathname, correlation_filename)
 
     # States
     pickle_var_list = [sim_obj.state_statistics]
-    write_pkl(pickle_var_list, states_filename)
+    write_pkl(pickle_var_list, pathname, states_filename)
 
     # States in time and space
     pickle_var_list = [sim_obj.states_time_space]
-    write_pkl(pickle_var_list, states_time_space_filename)
+    write_pkl(pickle_var_list, pathname, states_time_space_filename)
 
     # Correlation times
     pickle_var_list = [sim_obj.correlation_times]
-    write_pkl(pickle_var_list, correlation_times_filename)
+    write_pkl(pickle_var_list, pathname, correlation_times_filename)
 
     # Succesful conversions
     pickle_var_list = [sim_obj.successful_recruited_conversions, sim_obj.successful_noisy_conversions]
-    write_pkl(pickle_var_list, successful_conversions_filename)
+    write_pkl(pickle_var_list, pathname, successful_conversions_filename)
 
 # Fix seed value for Numba
 @njit
@@ -110,11 +110,8 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
     # torch.set_num_threads(1)
     print(f'Started simulation with seed = {seed}.')
 
-    # If run on cell, save files in different folder from project folder
-    if run_on_cell:
-        pathname += '../../../nbicmplx/cell/zfj803/'
-    else:
-        pass
+    # Project folder
+    pathname = get_project_folder(run_on_cell)
 
     # Set seed values
     if set_seed:
@@ -123,9 +120,9 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
         set_numba_seed(seed)
 
     # Create simulation object
-    sim_obj = Simulation(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta,
-                         stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
-                         cenH_init_idx, write_cenH_data, barriers)
+    sim_obj = Simulation(pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
+                         alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division,
+                         cenH_size, cenH_init_idx, write_cenH_data, barriers)
 
     # Simulation loop
     if animate:
@@ -168,7 +165,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                 sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
 
         # Save data
-        save_data(sim_obj)
+        save_data(sim_obj, pathname)
 
     # No animation
     else:
@@ -226,7 +223,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
         # Just save statistics, no plotting
         else:
             # Save data
-            save_data(sim_obj)
+            save_data(sim_obj, pathname)
 
     print(f'Finished simulation with seed = {seed}.')
 

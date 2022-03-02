@@ -3,12 +3,13 @@
 # The .txt document is located in the 'masters_thesis' folder, and is called 'pressure_RMS.txt'.
 # These values can be plotted against each other (bottom of script).
 
-from formatting import pathname
+from formatting import get_project_folder
 import numpy as np
 import torch
 import pickle
 import matplotlib.pyplot as plt
 
+pathname = get_project_folder()
 folder_name = pathname + 'quasi_random_initial_states_pressure_before_dynamics/'
 write_name = pathname + 'pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)

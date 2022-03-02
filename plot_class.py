@@ -16,12 +16,15 @@ from timeit import default_timer as DT
 # from mayavi import mlab
 # from mayavi.mlab import *
 
-from formatting import pathname, create_param_string, create_plot_title
+from formatting import get_project_folder, create_param_string, create_plot_title
 
 class Plots:
     def __init__(self, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size, plot_cenH_sizes,
                  plot_cenH_init_idx, plot_cell_division, plot_barriers, plot_N, plot_t_total, plot_noise,
                  plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+
+        # Project folder
+        self.pathname = get_project_folder()
 
         self.n_processes = plot_n_processes
         self.U_pressure_weight = plot_U_pressure_weight
@@ -43,7 +46,6 @@ class Plots:
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
-        self.pathname = pathname
         self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size, self.cenH_init_idx,
                                                     self.cell_division, self.barriers, self.N, self.t_total, self.noise,
                                                     self.alpha_1, self.alpha_2, self.beta, self.seed)
@@ -53,7 +55,7 @@ class Plots:
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
     def create_full_filename(self, specific_filename, format):
-        return pathname + specific_filename + self.param_filename + format
+        return self.pathname + specific_filename + self.param_filename + format
 
     def format_plot(self, ax, xlabel=',', ylabel=',', zlabel=None, legend_loc='best'):
         ax.set_xlabel(xlabel, size=12)
@@ -456,7 +458,7 @@ class Plots:
         plt.show()
 
     def plot_end_to_end_times(self):
-        open_filename = pathname + f'statistics/end_to_end_perpendicular_times_N={self.N}_t_total={self.t_total}' \
+        open_filename = self.pathname + f'statistics/end_to_end_perpendicular_times_N={self.N}_t_total={self.t_total}' \
                                  + f'_noise={self.noise:.4f}' + '.txt'
 
         data_array = np.loadtxt(open_filename, skiprows=1, usecols=0, delimiter=',')
@@ -535,7 +537,7 @@ class Plots:
 
             # First time where 90% of the polymer is silent
             try:
-                silent_times = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+                silent_times = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
                                           + param_string, skiprows=2, usecols=0, delimiter=',')
             except:
                 continue
@@ -575,7 +577,7 @@ class Plots:
         # Only values from data will eventually be used
         pressure_vals = np.arange(0,1.1,0.1)
 
-        pressure_RMS_data = np.loadtxt(pathname + 'pressure_RMS.txt', delimiter=',')
+        pressure_RMS_data = np.loadtxt(self.pathname + 'pressure_RMS.txt', delimiter=',')
 
         for cenH_size in self.cenH_sizes:
             # Values will only be appended to the lists if data exist
@@ -599,7 +601,7 @@ class Plots:
 
                 # Get data
                 try:
-                    data = np.loadtxt(pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+                    data = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
                                               + param_string, skiprows=2, usecols=[0,1,2], delimiter=',')
                 except:
                     continue
@@ -643,7 +645,7 @@ class Plots:
 
     # # Plots the minimum f_minimize_vals as a function of pressure values, from a .txt document
     # def plot_optimization(self):
-    #     filename = pathname + f'data/statistics/optimization_init_state={self.initial_state}_'\
+    #     filename = self.pathname + f'data/statistics/optimization_init_state={self.initial_state}_'\
     #                       + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
     #                       + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
     #
@@ -663,7 +665,7 @@ class Plots:
 
     def plot_optimization(self):
         # Finds all .txt files with different pressure values
-        filenames = glob(pathname + 'data/statistics/optimization/optimization_U_pressure_weight=*'\
+        filenames = glob(self.pathname + 'data/statistics/optimization/optimization_U_pressure_weight=*'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
