@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 from glob import glob
 import pickle
 from numba import njit
-from formatting import pathname
+from formatting import get_project_folder
+pathname = get_project_folder()
 
 def plot_fractions():
     # Create figure

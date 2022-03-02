@@ -1,13 +1,15 @@
 import numpy as np
-from formatting import pathname, create_directories
+from formatting import get_project_folder, create_directories
 from skopt import gp_minimize
 import main
 from datetime import datetime
 from estimation import Estimator
 
 class Optimizer:
-    def __init__(self, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, U_pressure_weight,
-                 alpha_2, beta, filename):
+    def __init__(self, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise,
+                 U_pressure_weight, alpha_2, beta, filename):
+
+        self.run_on_cell = run_on_cell
         self.n_processes = n_processes
         self.pool_size = pool_size
         self.initial_state = initial_state
@@ -54,9 +56,10 @@ class Optimizer:
 
         for cenH_size in self.cenH_sizes:
             # Run the simulations
-            silent_times_list = main.main(run_on_cell=True, n_processes=self.n_processes, pool_size=self.pool_size,
-                                          set_seed=False, t_total=self.t_total, U_pressure_weight=self.U_pressure_weight,
-                                          alpha_1=alpha_1, cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
+            silent_times_list = main.main(run_on_cell=self.run_on_cell, n_processes=self.n_processes,
+                                          pool_size=self.pool_size, set_seed=False, t_total=self.t_total,
+                                          U_pressure_weight=self.U_pressure_weight, alpha_1=alpha_1,
+                                          cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
 
             tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
@@ -112,6 +115,7 @@ class Optimizer:
 
 
 U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
+U_pressure_weight_values = [0.03]
 n_processes = 10
 pool_size = 10
 initial_state = 'active'
@@ -121,8 +125,11 @@ t_total = 500
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
+run_on_cell = False
 
-def make_filename(U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
+def make_filename(pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2,
+                  beta):
+
     return pathname + f'data/statistics/optimization/optimization_U_pressure_weight={U_pressure_weight:.2e}_'\
                     + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
                     + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
@@ -137,16 +144,17 @@ def initialize_file(filename):
 
 if __name__ == '__main__':
     # Make necessary directories
-    create_directories(run_on_cell=True)
+    pathname = get_project_folder(run_on_cell)
+    create_directories(pathname)
 
     # Iterate
     for U_pressure_weight in U_pressure_weight_values:
         # Make the .txt file for data
-        filename = make_filename(U_pressure_weight, n_processes, initial_state,
+        filename = make_filename(pathname, U_pressure_weight, n_processes, initial_state,
                                  cenH_init_idx, N, t_total, noise, alpha_2, beta)
         initialize_file(filename)
 
-        opt_obj = Optimizer(n_processes, pool_size, initial_state,
+        opt_obj = Optimizer(run_on_cell, n_processes, pool_size, initial_state,
                             cenH_init_idx, N, t_total, noise, U_pressure_weight, alpha_2, beta, filename)
 
         res = opt_obj.optimize()

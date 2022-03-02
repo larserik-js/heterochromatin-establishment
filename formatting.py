@@ -1,12 +1,22 @@
 import os
 import sys
 
-# Path to the project folder
-pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
+# # Path to the project folder
+# pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 
 statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com', 'final_state', 'interactions', 'Rs',
                            'states', 'states_time_space', 'successful_conversions', 'stable_silent_times',
                            'optimization']
+
+# Path to the project folder
+def get_project_folder(run_on_cell=False):
+    pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
+
+    if run_on_cell:
+        pathname += '../../../nbicmplx/cell/zfj803/'
+    else:
+        pass
+    return pathname
 
 def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
                           alpha_2, beta, seed, exclude_seed=False):
@@ -30,6 +40,8 @@ def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_i
 
 def edit_stable_silent_times_file(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers,
                                     N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
+
+    pathname = get_project_folder()
 
     write_name = pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
     write_name += create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
@@ -55,13 +67,7 @@ def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, 
 
     return param_string
 
-def create_directories(run_on_cell):
-    # If run on cell, save files in different folder from project folder
-    if run_on_cell:
-        pathname = pathname + '../../../nbicmplx/cell/zfj803/'
-    else:
-        pass
-
+def create_directories(pathname):
     try:
         os.mkdir(pathname + 'data')
     except FileExistsError:

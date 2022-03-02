@@ -8,7 +8,7 @@ from functools import partial
 
 ## Own scripts
 import run
-from formatting import pathname, create_directories, create_param_string, edit_stable_silent_times_file
+from formatting import get_project_folder, create_directories, create_param_string, edit_stable_silent_times_file
 
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, test_mode, animate, set_seed, min_seed, N,\
@@ -49,9 +49,10 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
              cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
              write_cenH_data=write_cenH_data, barriers=barriers):
 
+    pathname = get_project_folder(run_on_cell)
 
     # Create necessary directories
-    create_directories(run_on_cell)
+    create_directories(pathname)
 
     # Get detailed error messages
     torch.autograd.set_detect_anomaly(False)
