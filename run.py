@@ -39,8 +39,8 @@ def save_data(sim_obj):
     # Filenames
     parameter_string = sim_obj.params_filename
 
-    fs_filename =  'final_state/final_state_' + parameter_string
-    interactions_filename =  'interactions/interactions_' + parameter_string
+    fs_filename = 'final_state/final_state_' + parameter_string
+    interactions_filename = 'interactions/interactions_' + parameter_string
     Rs_filename = 'Rs/Rs_' + parameter_string
     dist_vecs_to_com_filename = 'dist_vecs_to_com/dist_vecs_to_com_' + parameter_string
     correlation_filename = 'correlation/correlation_' + parameter_string
@@ -103,12 +103,18 @@ def set_numba_seed(seed):
 # Runs the script
 # from memory_profiler import profile
 # @profile
-def run(N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval,
-        set_seed, seed, test_mode, animate, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
-        write_cenH_data, barriers):
+def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2,
+        beta, stats_t_interval, set_seed, seed, test_mode, animate, allow_state_change, initial_state, cell_division,
+        cenH_size, cenH_init_idx, write_cenH_data, barriers):
 
     # torch.set_num_threads(1)
     print(f'Started simulation with seed = {seed}.')
+
+    # If run on cell, save files in different folder from project folder
+    if run_on_cell:
+        pathname += '../../../nbicmplx/cell/zfj803/'
+    else:
+        pass
 
     # Set seed values
     if set_seed:
