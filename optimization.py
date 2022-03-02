@@ -1,13 +1,7 @@
-import matplotlib.pyplot as plt
-from matplotlib.ticker import StrMethodFormatter
 import numpy as np
-import seaborn as sns
 from formatting import pathname, create_directories
-from scipy.optimize import curve_fit
 from skopt import gp_minimize
-import os
 import main
-from math import isfinite
 from datetime import datetime
 from estimation import Estimator
 
@@ -60,9 +54,9 @@ class Optimizer:
 
         for cenH_size in self.cenH_sizes:
             # Run the simulations
-            silent_times_list = main.main(n_processes=self.n_processes, pool_size=self.pool_size, set_seed=False,
-                                          t_total=self.t_total, U_pressure_weight=self.U_pressure_weight, alpha_1=alpha_1,
-                                          cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
+            silent_times_list = main.main(run_on_cell=True, n_processes=self.n_processes, pool_size=self.pool_size,
+                                          set_seed=False, t_total=self.t_total, U_pressure_weight=self.U_pressure_weight,
+                                          alpha_1=alpha_1, cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
 
             tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
@@ -103,11 +97,11 @@ class Optimizer:
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=100,
+                          n_calls=10,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
-                          n_initial_points=10,
+                          n_initial_points=2,
 
                           # The noise level
                           noise="gaussian",
@@ -118,12 +112,12 @@ class Optimizer:
 
 
 U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
-n_processes = 100
-pool_size = 100
+n_processes = 10
+pool_size = 10
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 50000
+t_total = 500
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
@@ -143,7 +137,7 @@ def initialize_file(filename):
 
 if __name__ == '__main__':
     # Make necessary directories
-    create_directories()
+    create_directories(run_on_cell=True)
 
     # Iterate
     for U_pressure_weight in U_pressure_weight_values:

@@ -55,7 +55,13 @@ def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, 
 
     return param_string
 
-def create_directories():
+def create_directories(run_on_cell):
+    # If run on cell, save files in different folder from project folder
+    if run_on_cell:
+        pathname += '../../../nbicmplx/cell/zfj803/'
+    else:
+        pass
+
     try:
         os.mkdir(pathname + 'data')
     except FileExistsError:
