@@ -4,6 +4,7 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
+run_on_cell = False
 plot_n_processes = 25
 plot_U_pressure_weight = 0.01
 plot_stats_interval = 100
@@ -24,7 +25,7 @@ plot_alpha_2 = 0.1
 plot_beta = 0.004
 plot_seed = 0
 
-plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
+plot_obj = Plots(run_on_cell=run_on_cell, plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
                  plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
                  plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
                  plot_cell_division=plot_cell_division, plot_barriers=plot_barriers, plot_N=plot_N,
