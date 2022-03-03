@@ -6,12 +6,11 @@ from matplotlib import colors, patches
 import numpy as np
 from glob import glob
 import seaborn as sns
-import sys
 import re
 from numba import njit
 import pandas as pd
-from torch.multiprocessing import Pool, cpu_count
-from timeit import default_timer as DT
+from scipy import optimize
+from skopt import plots, load
 
 # from mayavi import mlab
 # from mayavi.mlab import *
@@ -46,11 +45,13 @@ class Plots:
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
-        self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size, self.cenH_init_idx,
-                                                    self.cell_division, self.barriers, self.N, self.t_total, self.noise,
-                                                    self.alpha_1, self.alpha_2, self.beta, self.seed)
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers, self.N, self.t_total,
-                                            self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
+                                                  self.cenH_init_idx, self.cell_division, self.barriers, self.N,
+                                                  self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                  self.seed)
+        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                            self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
@@ -688,4 +689,22 @@ class Plots:
                 f_min_vals[k] = data[:,1].min()
 
         ax.scatter(pressure_vals, f_min_vals)
+        plt.show()
+
+    def plot_res(self):
+        open_filename = self.pathname + f'data/statistics/optimization/res_U_pressure_weight={self.U_pressure_weight:.2e}_'\
+                         + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
+                         + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
+                         + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl'
+
+        # Load file (using Skopt function)
+        res = load(open_filename)
+
+        plots.plot_gaussian_process(res)
+
+        loss_func = lambda x0: res['models'][-1].predict(np.asarray(x0).reshape(-1, 1))
+
+        min_fun_res = optimize.minimize_scalar(loss_func, bounds=(0, 1), method='bounded').x
+        true_x0 = res['space'].inverse_transform(min_fun_res.reshape(1, 1))
+        print('SURROGATE MINIMUM =', true_x0)
         plt.show()

@@ -1,6 +1,6 @@
 import numpy as np
 from formatting import get_project_folder, create_directories
-from skopt import gp_minimize
+from skopt import gp_minimize, dump
 import main
 from datetime import datetime
 from estimation import Estimator
@@ -100,7 +100,7 @@ class Optimizer:
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=10,
+                          n_calls=3,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
@@ -111,17 +111,18 @@ class Optimizer:
 
                           # The random seed
                           random_state=0)
+
         return res
 
 
-U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
-U_pressure_weight_values = [0.03]
-n_processes = 10
-pool_size = 10
+#U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
+U_pressure_weight_values = [0.01]
+n_processes = 25
+pool_size = 25
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 500
+t_total = 100
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
@@ -142,6 +143,15 @@ def initialize_file(filename):
 
     data_file.close()
 
+def pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
+                   alpha_2, beta):
+    filename = pathname + f'data/statistics/optimization/res_U_pressure_weight={U_pressure_weight:.2e}_' \
+                        + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_' \
+                        + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.pkl'
+
+    # Write to pkl (using Skopt function)
+    dump(res, filename, store_objective=False)
+
 if __name__ == '__main__':
     # Make necessary directories
     pathname = get_project_folder(run_on_cell)
@@ -158,6 +168,10 @@ if __name__ == '__main__':
                             cenH_init_idx, N, t_total, noise, U_pressure_weight, alpha_2, beta, filename)
 
         res = opt_obj.optimize()
+
+        pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
+                   alpha_2, beta)
+
         print(res)
 
     print(f'Simulation finished {datetime.now()}')
