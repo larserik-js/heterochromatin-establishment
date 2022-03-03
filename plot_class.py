@@ -21,7 +21,7 @@ class Plots:
     def __init__(self, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size,
                  plot_cenH_sizes, plot_cenH_init_idx, plot_cell_division, plot_barriers, plot_N, plot_t_total,
                  plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
-
+    
         # Project folder
         self.pathname = get_project_folder()
 
