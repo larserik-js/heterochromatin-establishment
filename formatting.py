@@ -8,7 +8,7 @@ statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com
                            'states', 'states_time_space', 'successful_conversions', 'stable_silent_times',
                            'optimization']
 
-# Path to the project folder
+# Path to folder to save files
 def get_project_folder(run_on_cell=False):
     pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 
