@@ -81,7 +81,7 @@ class Optimizer:
         else:
             tau_estimates[0], tau_estimates[1] = 'NaN', 'NaN'
             tau_estimates_errors[0], tau_estimates_errors[1] = 'NaN', 'NaN'
-            f_minimize_val = 99999
+            f_minimize_val = 0.1 / alpha_1
 
         # Write data continuously
         self.write_best_param_data(alpha_1, tau_estimates[0], tau_estimates_errors[0],
@@ -100,11 +100,11 @@ class Optimizer:
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=3,
+                          n_calls=50,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
-                          n_initial_points=2,
+                          n_initial_points=5,
 
                           # The noise level
                           noise="gaussian",
@@ -122,7 +122,7 @@ pool_size = 25
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 100
+t_total = 30000
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004

@@ -700,11 +700,15 @@ class Plots:
         # Load file (using Skopt function)
         res = load(open_filename)
 
+        print('Best found =', res.x)
+
         plots.plot_gaussian_process(res)
 
         loss_func = lambda x0: res['models'][-1].predict(np.asarray(x0).reshape(-1, 1))
 
-        min_fun_res = optimize.minimize_scalar(loss_func, bounds=(0, 1), method='bounded').x
+        # min_fun_res = optimize.minimize_scalar(loss_func, bounds=(0, 1), method='bounded').x
+        min_fun_res = optimize.brute(loss_func, [(0, 1)], Ns=300, disp=True)
+
         true_x0 = res['space'].inverse_transform(min_fun_res.reshape(1, 1))
         print('SURROGATE MINIMUM =', true_x0)
         plt.show()
