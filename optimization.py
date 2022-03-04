@@ -1,6 +1,6 @@
 import numpy as np
 from formatting import get_project_folder, create_directories
-from skopt import gp_minimize, dump
+from skopt import forest_minimize, dump
 import main
 from datetime import datetime
 from estimation import Estimator
@@ -91,23 +91,20 @@ class Optimizer:
 
     def optimize(self):
         # Minimize
-        res = gp_minimize(self.f_minimize,  # The function to minimize
+        res = forest_minimize(self.f_minimize,  # The function to minimize
 
                           # The bounds on alpha_1
-                          [(0.01, 0.2)],
+                          dimensions=[(0.01, 0.2)],
 
                           # The acquisition function
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=50,
+                          n_calls=10,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
-                          n_initial_points=5,
-
-                          # The noise level
-                          noise="gaussian",
+                          n_initial_points=2,
 
                           # The random seed
                           random_state=0)
@@ -116,13 +113,13 @@ class Optimizer:
 
 
 #U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
-U_pressure_weight_values = [0.01]
+U_pressure_weight_values = [0.0001]
 n_processes = 25
 pool_size = 25
 initial_state = 'active'
 cenH_init_idx = 16
 N = 40
-t_total = 30000
+t_total = 20000
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
