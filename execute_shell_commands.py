@@ -18,6 +18,8 @@ beta = 0.004
 #beta = 0.1
 min_seed = 0
 
+
+
 for pressure in pressure_list:
     print(f'pressure: {pressure:.2f}, cenH: {cenH_size}, cenH indices: {cenH_init_idx},...,{cenH_init_idx + cenH_size - 1}'
             + f', alpha_1: {alpha_1:.4f}, alpha_2: {alpha_2:.4f}, beta: {beta:.4f}, seed: {min_seed}')
