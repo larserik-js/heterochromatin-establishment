@@ -15,16 +15,16 @@ def plot_fractions():
     state_colors = ['b', 'g', 'y', 'orange', 'r']
     markers = ['.', 'o', 's', '*', '+']
 
-    dt = 0.02
-    t_total = 2000000
+    DT = 0.02
+    T_TOTAL = 2000000
 
     # Different cenH lengths
     for i in range(len(cenH_lengths)):
         alpha_1_constants = [1, 5, 1]
         alpha_2_constants = [1, 5, 1]
-        alpha_1_list = np.linspace(25, 50, 101) * dt * 0.1
+        alpha_1_list = np.linspace(25, 50, 101) * DT * 0.1
         beta_constants = [1, 1, 5]
-        alpha_2 = 0.1 * dt * 50
+        alpha_2 = 0.1 * DT * 50
         beta = 0.004
 
         # Different parameter scales
@@ -44,7 +44,7 @@ def plot_fractions():
                     alpha_1 = alpha_1_list[l]
                     # Filename to open
                     open_filename = pathname + f'statistics/julesimulationer/states_time_space_init_state={initial_states[k]}_' \
-                                    + f'cenH={cenH_lengths[i]}_N=40_t_total={t_total}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
+                                    + f'cenH={cenH_lengths[i]}_N=40_t_total={T_TOTAL}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
                                     + f'alpha_2={alpha_2:.5f}_beta={beta:.5f}_seed=0.pkl'
 
                     # File object
@@ -92,16 +92,16 @@ def plot_fractions_std():
     initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
     state_colors = ['b', 'g', 'y', 'orange', 'r']
 
-    dt = 0.02
-    t_total = 2000000
+    DT = 0.02
+    T_TOTAL = 2000000
 
     # Different cenH lengths
     for i in range(len(cenH_lengths)):
         alpha_1_constants = [1, 5, 1]
         alpha_2_constants = [1, 5, 1]
-        alpha_1_list = np.linspace(25, 50, 101) * dt * 0.1
+        alpha_1_list = np.linspace(25, 50, 101) * DT * 0.1
         beta_constants = [1, 1, 5]
-        alpha_2 = 0.1 * dt * 50
+        alpha_2 = 0.1 * DT * 50
         beta = 0.004
 
         # Different parameter scales
@@ -117,7 +117,7 @@ def plot_fractions_std():
                     alpha_1 = alpha_1_list[l]
                     # Filename to open
                     open_filename = pathname + f'statistics/julesimulationer/states_time_space_init_state={initial_states[k]}_' \
-                                    + f'cenH={cenH_lengths[i]}_N=40_t_total={t_total}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
+                                    + f'cenH={cenH_lengths[i]}_N=40_t_total={T_TOTAL}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
                                     + f'alpha_2={alpha_2:.5f}_beta={beta:.5f}_seed=0.pkl'
 
                     # File object
@@ -177,16 +177,16 @@ def plot_decay_times():
 
     linestyles = ['-', '--']
 
-    dt = 0.02
-    t_total = 2000000
+    DT = 0.02
+    T_TOTAL = 2000000
 
     # Different cenH lengths
     for i in range(len(cenH_lengths)):
         alpha_1_constants = [1, 5, 1]
         alpha_2_constants = [1, 5, 1]
-        alpha_1_list = np.linspace(25, 50, 101) * dt * 0.1
+        alpha_1_list = np.linspace(25, 50, 101) * DT * 0.1
         beta_constants = [1, 1, 5]
-        alpha_2 = 0.1 * dt * 50
+        alpha_2 = 0.1 * DT * 50
         beta = 0.004
 
         # Different parameter scales
@@ -212,7 +212,7 @@ def plot_decay_times():
                         alpha_1 = alpha_1_list[m]
                         # Filename to open
                         open_filename = pathname + f'statistics/julesimulationer/states_time_space_init_state={initial_states[k]}_' \
-                                        + f'cenH={cenH_lengths[i]}_N=40_t_total={t_total}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
+                                        + f'cenH={cenH_lengths[i]}_N=40_t_total={T_TOTAL}_noise=0.5000_alpha_1={alpha_1:.5f}_' \
                                         + f'alpha_2={alpha_2:.5f}_beta={beta:.5f}_seed=0.pkl'
 
                         # File object

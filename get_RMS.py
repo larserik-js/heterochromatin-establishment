@@ -15,42 +15,42 @@ write_name = pathname + 'pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)
 
 
-def get_RMS(X):
+def get_rms(X):
     N = X.shape[0]
 
     # Center-of-mass
-    COM = torch.sum(X, dim=0) / N
+    center_of_mass = torch.sum(X, dim=0) / N
 
     # All distance vectors from the nucleosomes to the center of mass
-    dist_vecs_to_com = X - COM
+    dist_vecs_to_com = X - center_of_mass
 
     # Distances from the nucleosomes to the center of mass
     dist_to_com = torch.norm(dist_vecs_to_com, dim=1)
 
     # RMS
-    RMS = torch.sqrt(torch.mean(torch.square(dist_to_com)))
+    rms = torch.sqrt(torch.mean(torch.square(dist_to_com)))
 
-    return RMS
+    return rms
 
 def write_file():
     for i, pressure in enumerate(pressure_vals):
 
-        RMS = 0
-        n_files = 100
-        for seed in np.arange(n_files):
+        rms = 0
+        N_FILES = 100
+        for seed in np.arange(N_FILES):
             file_name = folder_name + f'pressure={pressure:.2f}/seed={seed}.pkl'
 
             ## Open file
             with open(file_name, 'rb') as f:
                 X = pickle.load(f)
 
-            RMS += get_RMS(X)
+            rms += get_rms(X)
 
         # Get the ensemble mean
-        mean_RMS = RMS/n_files
+        mean_rms = rms/N_FILES
 
         # Append to the .txt file
-        line_str = f'{pressure},{mean_RMS}' + '\n'
+        line_str = f'{pressure},{mean_rms}' + '\n'
 
         if i == 0:
             data_file = open(write_name, 'w')

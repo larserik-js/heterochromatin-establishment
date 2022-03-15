@@ -107,7 +107,7 @@ class Plots:
     def plot_interactions(self):
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
-        alpha = 0.5
+        TRANSPARENCY = 0.5
         open_filename = self.create_full_filename('data/statistics/interactions/interactions_', '.pkl')
 
         # Finds all .pkl files for N = N
@@ -117,7 +117,7 @@ class Plots:
             with open(files[0], 'rb') as f:
                 N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
                 ax[0].plot(np.arange(N), average_lifetimes, label='Average lifetimes')
-                ax[1].bar(np.arange(N), interaction_idx_difference, alpha=alpha, label='Interaction length')
+                ax[1].bar(np.arange(N), interaction_idx_difference, alpha=TRANSPARENCY, label='Interaction length')
 
         # Set plot title
         self.format_plot(ax[0], ylabel='Average lifetimes')
@@ -241,10 +241,10 @@ class Plots:
 
             ts = torch.arange(len(state_statistics[0])) * (self.t_total / len(state_statistics[0]))
 
-            lw = 0.2
+            LINEWIDTH = 0.2
 
             for j in range(len(self.state_names)):
-                ax.plot(ts, state_statistics[j], lw=lw, c=self.state_colors[j], label=self.state_names[j])
+                ax.plot(ts, state_statistics[j], lw=LINEWIDTH, c=self.state_colors[j], label=self.state_names[j])
 
         self.format_plot(ax, xlabel='Time-step', ylabel='No. of nucleosomes')
         plt.show()
@@ -280,12 +280,12 @@ class Plots:
                                     columns=['S to U', 'U to A', 'A to U', 'U to S', 'Total'])
         print(df)
         # Plot
-        internal_stats_interval = 2
+        INTERNAL_STATS_INTERVAL = 2
 
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
-        ax.imshow(states_time_space[::internal_stats_interval].T, cmap=cmap)
-        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * internal_stats_interval}', ylabel='Nucleosome no.')
+        ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
+        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * INTERNAL_STATS_INTERVAL}', ylabel='Nucleosome no.')
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
         plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2, borderaxespad=0.)
@@ -304,7 +304,7 @@ class Plots:
             return
 
         fig,ax = plt.subplots(2, figsize=(8,6))
-        s = 0.5
+        SCATTER_S = 0.5
 
         self.format_plot(ax[0])
 
@@ -316,7 +316,7 @@ class Plots:
                 interval = int(self.t_total/n_R)
                 ts = interval*np.arange(n_R)
 
-            ax[0].scatter(ts, Rs, s=s, label='End-to-end distance')
+            ax[0].scatter(ts, Rs, s=SCATTER_S, label='End-to-end distance')
             # When to start taking stats
             stats_idx = int(n_R/2)
 

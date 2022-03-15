@@ -5,30 +5,30 @@ from timeit import default_timer as DT
 
 r = np.random
 
-n_states = 3
-n_particles = 60
+N_STATES = 3
+N_PARTICLES = 60
 t_total = 40000
 #alpha = 0.58
 alpha=0.59
 
 beta = 1 / 3
 F = alpha/(1-alpha)
-scatter_s = 0.1
+SCATTER_S = 0.1
 
 state_names = {0: 'M', 1: 'U', 2: 'A'}
 
-def f(n_states, n_particles, t_total, alpha, beta):
+def f(N_STATES, N_PARTICLES, t_total, alpha, beta):
     t_initial = DT()
 
-    #states = r.randint(n_states, size=n_particles)
-    states = np.zeros(n_particles, dtype=int)
+    #states = r.randint(N_STATES, size=N_PARTICLES)
+    states = np.zeros(N_PARTICLES, dtype=int)
     states[20:40] = 1
     states[40:] = 2
     print(states)
     ts = np.arange(t_total)
     statistics = np.empty((3, t_total))
 
-    statistics = numba_f(states, n_particles, t_total, alpha, beta, statistics)
+    statistics = numba_f(states, N_PARTICLES, t_total, alpha, beta, statistics)
 
     print(f'Time elapsed: {DT() - t_initial:.2f} s')
 
@@ -36,14 +36,14 @@ def f(n_states, n_particles, t_total, alpha, beta):
 
 
 @njit
-def numba_f(states, n_particles, t_total, alpha, beta, statistics):
+def numba_f(states, N_PARTICLES, t_total, alpha, beta, statistics):
     for t in range(t_total):
         if t % (t_total / 10) == 0:
             print(t)
-        for i in range(n_particles):
+        for i in range(N_PARTICLES):
 
             # Particle on which to attempt a change
-            n1_index = r.randint(n_particles)
+            n1_index = r.randint(N_PARTICLES)
 
             # Recruited conversion
             rand_alpha = r.rand()
@@ -53,7 +53,7 @@ def numba_f(states, n_particles, t_total, alpha, beta, statistics):
                 # Other particle
                 # Ensure that it is a different particle
                 while True:
-                    n2_index = r.randint(n_particles)
+                    n2_index = r.randint(N_PARTICLES)
                     if n2_index != n1_index:
                         break
 
@@ -91,14 +91,14 @@ def numba_f(states, n_particles, t_total, alpha, beta, statistics):
     return statistics
 
 
-def run(n_states, n_particles, t_total, alpha, beta, scatter_s):
-        ts, statistics = f(n_states, n_particles, t_total, alpha, beta)
+def run(N_STATES, N_PARTICLES, t_total, alpha, beta, SCATTER_S):
+        ts, statistics = f(N_STATES, N_PARTICLES, t_total, alpha, beta)
 
         fig,ax = plt.subplots(figsize=(8,6))
 
-        ax.plot(ts, statistics[0], lw=scatter_s, label=state_names[0])
-        # ax.plot(ts, statistics[1], lw=scatter_s, label=state_names[1])
-        # ax.plot(ts, statistics[2], lw=scatter_s, label=state_names[2])
+        ax.plot(ts, statistics[0], lw=SCATTER_S, label=state_names[0])
+        # ax.plot(ts, statistics[1], lw=SCATTER_S, label=state_names[1])
+        # ax.plot(ts, statistics[2], lw=SCATTER_S, label=state_names[2])
 
         ax.set_title(f'F = {F:.3f}')
         ax.set_xlabel(r'$t$', size=14)
@@ -106,4 +106,4 @@ def run(n_states, n_particles, t_total, alpha, beta, scatter_s):
         ax.legend(loc='best')
         plt.show()
 
-run(n_states, n_particles, t_total, alpha, beta, scatter_s)
+run(N_STATES, N_PARTICLES, t_total, alpha, beta, SCATTER_S)

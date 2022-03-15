@@ -109,7 +109,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
         cenH_size, cenH_init_idx, write_cenH_data, barriers):
 
     # Number of failed simulation attempts
-    N_FAILED_SIMULATIONS = 0
+    n_failed_simulations = 0
 
     while True:
         # Runs simulation
@@ -145,8 +145,8 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
 
                 # Iterate
                 # Ensures that a total of 500 images will be created
-                n_images = 500
-                iterations_per_image = int(t_total / n_images)
+                N_IMAGES = 500
+                iterations_per_image = int(t_total / N_IMAGES)
 
                 # Filename formatting
                 image_idx = 0
@@ -235,7 +235,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             print(f'Finished simulation with seed = {seed}.')
 
         except Exception as e:
-            N_FAILED_SIMULATIONS += 1
+            n_failed_simulations += 1
             message = f'Simulation failed: {e}. Restarting in 10 s.'
             print(message)
             time.sleep(10)
@@ -246,7 +246,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
 
         # Limits the total number of failed simulations
         finally:
-            if N_FAILED_SIMULATIONS >= 100:
+            if n_failed_simulations >= 100:
                 break
 
     return None

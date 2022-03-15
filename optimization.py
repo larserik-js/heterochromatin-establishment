@@ -25,7 +25,7 @@ class Optimizer:
 
         # Slope fraction(s) from the data
         # (cenH = 6) / (cenH = 8)
-        self.slope_fraction_6_8 = 0.04891
+        self.SLOPE_FRACTION_6_8 = 0.04891
 
     def write_best_param_data(self, alpha_1, tau_estimate_6, tau_estimate_6_error, tau_estimate_8,
                               tau_estimate_8_error, f_minimize_val):
@@ -66,14 +66,15 @@ class Optimizer:
             tau_estimates_errors.append(tau_estimate_error)
 
         # Divide to get actual slope fractions
-        if tau_estimates[0] != None and tau_estimates[1] != None:
+        if tau_estimates[0] is not None and tau_estimates[1] is not None:
             slope_cenH_6 = -1/tau_estimates[0]
             slope_cenH_8 = -1/tau_estimates[1]
 
-
+            # Calculate the fraction of the two slopes
             slope_fraction_data = slope_cenH_6 / slope_cenH_8
 
-            f_minimize_val = np.abs(self.slope_fraction_6_8 - slope_fraction_data)**2
+            # The value to be minimized
+            f_minimize_val = np.abs(self.SLOPE_FRACTION_6_8 - slope_fraction_data)**2
 
         else:
             tau_estimates[0], tau_estimates[1] = 'NaN', 'NaN'
