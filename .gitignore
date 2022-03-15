@@ -19,5 +19,3 @@ data/
 # should NOT be excluded as they contain compiler settings and other important
 # information for Eclipse / Flash Builder.
 
-# Misc. Python scripts
-sasdsa.py
