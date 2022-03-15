@@ -66,15 +66,12 @@ class Optimizer:
             tau_estimates_errors.append(tau_estimate_error)
 
         # Divide to get actual slope fractions
-        if tau_estimates[0] != None and tau_estimates != None:
+        if tau_estimates[0] != None and tau_estimates[1] != None:
             slope_cenH_6 = -1/tau_estimates[0]
             slope_cenH_8 = -1/tau_estimates[1]
 
 
-            if slope_cenH_8 != 0:
-                slope_fraction_data = slope_cenH_6 / slope_cenH_8
-            else:
-                raise AssertionError("Slope of value 0 found.")
+            slope_fraction_data = slope_cenH_6 / slope_cenH_8
 
             f_minimize_val = np.abs(self.slope_fraction_6_8 - slope_fraction_data)**2
 
