@@ -6,21 +6,21 @@ from scipy import optimize
 r = np.random
 
 class Estimator:
-    def __init__(self, TAU_TRUE=2, T_MAX=5, N_SAMPLES=100, N_RUNS=10):
-        self.TAU_TRUE = TAU_TRUE
-        self.T_MAX = T_MAX
+    def __init__(self, tau_true=2, t_max=5, n_samples=100, n_runs=10):
+        self.tau_true = tau_true
+        self.t_max = t_max
         # Number of samples
-        self.N_SAMPLES = N_SAMPLES
+        self.n_samples = n_samples
         # Number of runs
-        self.N_RUNS = N_RUNS
+        self.n_runs = n_runs
 
     def estimate(self, data=None, print_stats=False):
         # If no input data, samples data randomly
         if data is None:
             # All sampled data
-            data = r.exponential(scale=self.TAU_TRUE, size=self.N_SAMPLES)
+            data = r.exponential(scale=self.tau_true, size=self.n_samples)
 
-            Is = (data < self.T_MAX)
+            Is = (data < self.t_max)
 
         # Experimental data given as argument
         else:
@@ -31,7 +31,7 @@ class Estimator:
             print(Is)
             pass
 
-        # No data below T_MAX
+        # No data below t_max
         if Is.sum() == 0:
             return None, None, None, None
         else:
@@ -41,27 +41,27 @@ class Estimator:
             N = len(data)
 
             # Terms for the estimate of tau
-            TERM_1 = ts.mean()
-            TERM_2 = (N / k - 1) * self.T_MAX
+            term_1 = ts.mean()
+            term_2 = (N / k - 1) * self.t_max
 
-            tau_estimate = TERM_1 + TERM_2
+            tau_estimate = term_1 + term_2
 
             # The error
-            second_derivative = k/tau_estimate**2 - 2 * ts.sum() / tau_estimate**3 - 2*(N-k)*self.T_MAX / tau_estimate**3
+            second_derivative = k/tau_estimate**2 - 2 * ts.sum() / tau_estimate**3 - 2*(N-k)*self.t_max / tau_estimate**3
             tau_estimate_error = np.sqrt(-1 / second_derivative)
 
             if print_stats == True:
                 print(f'Estimated tau: {tau_estimate:.4f} +/- {tau_estimate_error:.4f}')
 
-            return ts, tau_estimate, tau_estimate_error, TERM_1
+            return ts, tau_estimate, tau_estimate_error, term_1
 
     def print_stats(self, tau_estimates):
         print(f'Mean = {tau_estimates.mean():.4f} +/- {tau_estimates.std(ddof=1)/np.sqrt(len(tau_estimates)):.4f}')
 
     def estimate_stats(self, print_stats=True):
-        tau_estimates = np.empty(self.N_RUNS)
+        tau_estimates = np.empty(self.n_runs)
 
-        for i in range(self.N_RUNS):
+        for i in range(self.n_runs):
             _, tau_estimates[i], _, _ = self.estimate()
 
         if print_stats==True:
@@ -71,7 +71,7 @@ class Estimator:
 
 
     def plot_estimate_by_cutoff(self):
-        t_max_array = np.linspace(1, self.TAU_TRUE + 20, self.N_RUNS)
+        t_max_array = np.linspace(1, self.tau_true + 20, self.n_runs)
 
         tau_estimates_1 = self.estimate_stats()
     
@@ -83,64 +83,63 @@ class Estimator:
         fig,ax = plt.subplots(figsize=(10,6))
         ts, tau_estimate_1, _, _ = self.estimate()
         hist_values, bin_edges, _ = plt.hist(ts, bins=int(np.sqrt(len(ts))))
-        ax.vlines(self.TAU_TRUE, 0, 1.1 * hist_values.max(), colors='g', linestyles='--', label='True mean')
+        ax.vlines(self.tau_true, 0, 1.1 * hist_values.max(), colors='g', linestyles='--', label='True mean')
         ax.vlines(tau_estimate_1, 0, 1.1 * hist_values.max(), colors='b', linestyles='solid', label='Estimate (1)')
-        ax.vlines(self.T_MAX, 0, 1.1 * hist_values.max(), colors='r', linestyles='solid', label=r'$t_{max}$')
+        ax.vlines(self.t_max, 0, 1.1 * hist_values.max(), colors='r', linestyles='solid', label=r'$t_{max}$')
         ax.legend()
         plt.show()
 
     def t_mean_below_k(self):
-        return self.TAU_TRUE - self.T_MAX / (np.exp(self.T_MAX/self.TAU_TRUE) - 1)
+        return self.tau_true - self.t_max / (np.exp(self.t_max/self.tau_true) - 1)
 
     # @staticmethod
     # @np.vectorize(excluded={0, 1})
     # def py_hyper(a,b,z):
     #     return float(mpmath.hyper(a,b,z))
 
-    # The integral of the continuous distribution below T_MAX
+    # The integral of the continuous distribution below t_max
     @staticmethod
-    def p(T_MAX, TAU):
-        return 1 - np.exp(-T_MAX/TAU)
+    def p(t_max, TAU):
+        return 1 - np.exp(-t_max/TAU)
 
     def hypergeometric(self, p):
         #p = p[0]
-        mpmath_func = mpmath.hyper([1, 1, 1 - self.N_SAMPLES], [2, 2], p / (p - 1))
+        mpmath_func = mpmath.hyper([1, 1, 1 - self.n_samples], [2, 2], p / (p - 1))
         return float(mpmath_func)
 
     # The analytical result of the average tau estimate with known tau_true
     def average_tau_estimate(self):
-        p = self.p(self.T_MAX, self.TAU_TRUE)
+        p = self.p(self.t_max, self.tau_true)
         h = self.hypergeometric(p)
-        return self.t_mean_below_k() + (self.N_SAMPLES**2 * p * (1-p)**(self.N_SAMPLES-1) * h - 1) * self.T_MAX
+        return self.t_mean_below_k() + (self.n_samples**2 * p * (1-p)**(self.n_samples-1) * h - 1) * self.t_max
 
     # Computes the parameter tau given an estimate for tau
     def tau_given_estimate(self, tau_estimate):
-        func = lambda tau: tau - (
-                                  1/(np.exp(self.T_MAX/tau) - 1)\
-                                  - self.N_SAMPLES**2 * self.p(self.T_MAX, tau)\
-                                                      * (1-self.p(self.T_MAX, tau))**(self.N_SAMPLES-1)\
-                                                      * self.hypergeometric(self.p(self.T_MAX, tau)) + 1)\
-                                  * self.T_MAX - tau_estimate
+        func = lambda tau: tau - (1/(np.exp(self.t_max/tau) - 1)\
+                                  - self.n_samples**2 * self.p(self.t_max, tau)\
+                                                      * (1-self.p(self.t_max, tau))**(self.n_samples-1)\
+                                                      * self.hypergeometric(self.p(self.t_max, tau)) + 1)\
+                                  * self.t_max - tau_estimate
 
         try:
-            res = optimize.newton(func, self.TAU_TRUE)
+            res = optimize.newton(func, self.tau_true)
         except RuntimeError:
-            return self.TAU_TRUE
+            return self.tau_true
 
         return res
 
-def expectations_vs_analytic(N_SAMPLES_MAX, N_RUNS, TAU_TRUE, T_MAX):
-    Ns = np.arange(1,N_SAMPLES_MAX)
+def expectations_vs_analytic(n_samples_max, n_runs, tau_true, t_max):
+    Ns = np.arange(1,n_samples_max)
     expectation_means = np.empty(len(Ns))
     analytic_mean = np.empty(len(Ns))
     
     for i in range(len(Ns)):
         if i % 10 == 0:
-            print(f'{i} / {N_SAMPLES_MAX}')
-        estimator_obj = Estimator(TAU_TRUE=TAU_TRUE, T_MAX=T_MAX, N_SAMPLES=Ns[i], N_RUNS=N_RUNS)
-        expectations = np.empty(N_RUNS)
+            print(f'{i} / {n_samples_max}')
+        estimator_obj = Estimator(tau_true=tau_true, t_max=t_max, n_samples=Ns[i], n_runs=n_runs)
+        expectations = np.empty(n_runs)
 
-        for j in range(N_RUNS):
+        for j in range(n_runs):
             _, _, _, expectations[j] = estimator_obj.estimate()
 
         expectation_means[i] = expectations.mean()
@@ -150,25 +149,25 @@ def expectations_vs_analytic(N_SAMPLES_MAX, N_RUNS, TAU_TRUE, T_MAX):
     plt.plot(Ns, analytic_mean, label='Analytic')
     plt.xlabel(r'$N$')
     plt.ylabel('Mean values')
-    plt.title(r'$t_{max}$' + f' = {T_MAX}, ' + r'$\tau_{true}$' + f' = {TAU_TRUE}')
+    plt.title(r'$t_{max}$' + f' = {t_max}, ' + r'$\tau_{true}$' + f' = {tau_true}')
     plt.legend(loc='best')
     plt.show()
 
-def solve_empirical(tau_estimate, N, T_MAX):
-    func = lambda tau: tau * N / (N - np.pi*np.exp(-T_MAX/tau)) - tau_estimate
+def solve_empirical(tau_estimate, N, t_max):
+    func = lambda tau: tau * N / (N - np.pi*np.exp(-t_max/tau)) - tau_estimate
     res = optimize.fsolve(func, tau_estimate)
     return res[0]
 
 def plot_taus():
     n_plots = 4
     fig, ax = plt.subplots(n_plots,1, figsize=(8,18))
-    N_SAMPLES_MIN = 5
-    N_SAMPLES_MAX = 100
-    Ns = np.arange(N_SAMPLES_MIN,N_SAMPLES_MAX, 1)
-    T_MAX = 10
+    n_samples_min = 5
+    n_samples_max = 100
+    Ns = np.arange(n_samples_min,n_samples_max, 1)
+    t_max = 10
 
     for i in range(n_plots):
-        TAU_TRUE = i+5
+        tau_true = i+5
         taus_empirical = np.zeros(len(Ns))
         taus_estimates = np.zeros(len(Ns))
 
@@ -176,7 +175,7 @@ def plot_taus():
         errors_corrected = np.zeros(len(Ns))
 
         for ni, N in tqdm.tqdm(list(enumerate(Ns))):
-            estimator_obj = Estimator(TAU_TRUE=TAU_TRUE, T_MAX=T_MAX, N_SAMPLES=N, N_RUNS=None)
+            estimator_obj = Estimator(tau_true=tau_true, t_max=t_max, n_samples=N, n_runs=None)
             runs = 150
             for _ in range(runs):
                 _, tau_estimate, _, _ = estimator_obj.estimate()
@@ -185,11 +184,11 @@ def plot_taus():
                     continue
 
                 # taus[ni] += estimator_obj.tau_given_estimate(tau_estimate)
-                tau_corrected = solve_empirical(tau_estimate, N, T_MAX)
+                tau_corrected = solve_empirical(tau_estimate, N, t_max)
                 taus_empirical[ni] += tau_corrected
 
-                errors_raw[ni] += (TAU_TRUE - tau_estimate) ** 2
-                errors_corrected[ni] += (TAU_TRUE - tau_corrected) ** 2
+                errors_raw[ni] += (tau_true - tau_estimate) ** 2
+                errors_corrected[ni] += (tau_true - tau_corrected) ** 2
 
                 taus_estimates[ni] += tau_estimate
 
@@ -202,20 +201,20 @@ def plot_taus():
         ax[i].plot(Ns, errors_raw, label='Raw Error')
         ax[i].plot(Ns, errors_corrected, label='Corrected Error')
         ax[i].plot(Ns, taus_empirical, ls='--', label='Empirical estimator')
-        ax[i].plot(Ns, TAU_TRUE + Ns * 0, label=r'$\tau_{true}$')
+        ax[i].plot(Ns, tau_true + Ns * 0, label=r'$\tau_{true}$')
         txt = f'Mean estimate = {taus_estimates.mean():.3f} '\
              + f'+/- {taus_estimates.std(ddof=1) / np.sqrt(len(taus_estimates)):.3f}'
-        ax[i].text(N_SAMPLES_MAX/5, T_MAX+1, txt, c='r')
-        ax[i].set(ylim=(0,T_MAX+3))
+        ax[i].text(n_samples_max/5, t_max+1, txt, c='r')
+        ax[i].set(ylim=(0,t_max+3))
         ax[i].set_ylabel(r'$\tau$', size=14)
         ax[i].legend(loc='upper right')
     ax[n_plots-1].set_xlabel(r'$N$', size=14)
     plt.show()
 
 if __name__ == '__main__':
-    #expectations_vs_analytic(N_SAMPLES_MAX=10, N_RUNS=1000, TAU_TRUE=2, T_MAX=10)
+    #expectations_vs_analytic(n_samples_max=10, n_runs=1000, tau_true=2, t_max=10)
 
-    estimator_obj = Estimator(TAU_TRUE=1, T_MAX=4, N_SAMPLES=10000, N_RUNS=100)
+    estimator_obj = Estimator(tau_true=1, t_max=4, n_samples=10000, n_runs=100)
     #tau_estimates, _ = estimator_obj.estimate_stats()
     _, tau_estimate, tau_estimate_std, _ = estimator_obj.estimate(print_stats=True)
 

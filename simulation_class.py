@@ -55,7 +55,7 @@ class Simulation:
 
         # Include cell divisions
         self.cell_division = cell_division
-        self.cell_division_interval = 2000000
+        self.CELL_DIVISION_INTERVAL = 2000000
 
         # Include cenH region
         self.cenH_size = cenH_size
@@ -99,7 +99,7 @@ class Simulation:
         self.thetas = self.get_theta_zeros()
 
         # No. of allowed interactions in non-classic model
-        self.n_allowed_interactions = 2
+        self.N_ALLOWED_INTERACTIONS = 2
 
         # Mask to extract upper triangle
         self.mask_upper = torch.zeros(size=(self.N,self.N), dtype=torch.bool)
@@ -146,8 +146,8 @@ class Simulation:
         self.l_interacting = 4 * self.r0
 
         # Regulate the potential function
-        # b is the value which ensures that r0 is a local extremum for U_interaction
-        self.b = np.real(-2 / lambertw(-2 * np.exp(-2)))
+        # B is the value which ensures that r0 is a local extremum for U_interaction
+        self.B = np.real(-2 / lambertw(-2 * np.exp(-2)))
 
         # Cutoff distances for the potentials for the three different states
         self.potential_cutoff = 1*self.l0
@@ -206,9 +206,8 @@ class Simulation:
         self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
                                             self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
-        self.nucleosome_s = 5
-        # Chain scatter marker size
-        self.chain_s = 1
+        self.NUCLEOSOME_S = 5
+
         # Colors of scatter plot markers
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['Silent', 'Unmodified', 'Active']
@@ -324,7 +323,7 @@ class Simulation:
         # Indices for checking for possible interactions
         j_idx, i_idx = np.meshgrid(np.arange(self.N), np.arange(self.N))
         interaction_mask_two = self._mask_calculator(norms_all, state_two_interaction, i_idx, j_idx,
-                                                     self.n_allowed_interactions)
+                                                     self.N_ALLOWED_INTERACTIONS)
 
         # Change from Numpy array to Torch tensor
         interaction_mask_two = torch.from_numpy(interaction_mask_two)
@@ -336,7 +335,7 @@ class Simulation:
 
     @staticmethod
     @njit
-    def _mask_calculator(norms_all, state_two_interaction, i_idx, j_idx, n_allowed_interactions):
+    def _mask_calculator(norms_all, state_two_interaction, i_idx, j_idx, N_ALLOWED_INTERACTIONS):
         # Total number of nucleosomes
         N = len(norms_all)
 
@@ -377,7 +376,7 @@ class Simulation:
                 continue
 
             # Two-interaction state nucleosomes can only interact with max. 2 other nucleosomes
-            if n_interactions[i] >= n_allowed_interactions or n_interactions[j] >= n_allowed_interactions:
+            if n_interactions[i] >= N_ALLOWED_INTERACTIONS or n_interactions[j] >= N_ALLOWED_INTERACTIONS:
                 continue
 
             # Create interaction
@@ -390,10 +389,10 @@ class Simulation:
             n_interactions[j] += 1
 
             # For stopping criterion
-            if has_not_counted[i] and n_interactions[i] == n_allowed_interactions:
+            if has_not_counted[i] and n_interactions[i] == N_ALLOWED_INTERACTIONS:
                 total_2_interactions += 1
                 has_not_counted[i] = False
-            if has_not_counted[j] and n_interactions[j] == n_allowed_interactions:
+            if has_not_counted[j] and n_interactions[j] == N_ALLOWED_INTERACTIONS:
                 total_2_interactions += 1
                 has_not_counted[j] = False
 
@@ -432,7 +431,7 @@ class Simulation:
         mask_all_cutoff = (self.wide_diag_zeros_bool & (self.norms_all < self.potential_cutoff)).double()
 
         U_interaction = torch.exp(-2 * self.norms_all / self.r0) * mask_all_cutoff
-        U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.b * self.r0)) * mask_two_cutoff
+        U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
 
         return self.U_two_interaction_weight * torch.sum(U_interaction)
 
@@ -696,7 +695,7 @@ class Simulation:
     # The update step
     def update(self):
         if self.cell_division:
-            if self.t % self.cell_division_interval == 0 and self.t != 0:
+            if self.t % self.CELL_DIVISION_INTERVAL == 0 and self.t != 0:
                 # Initialize system in space
                 self.X = self.initialize_system(init_system_type='quasi-random-free')
                 self.X_tilde = self.get_X_tilde()
@@ -739,11 +738,12 @@ class Simulation:
                     #self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
                     #self.X += self.noise * torch.randn_like(self.X) * (1 - self.t/self.t_total)
                     #self.X += self.noise * torch.randn_like(self.X)
-                    Du = 1
-                    eta = 1
+                    DIFFUSION_CONSTANT = 1
+                    VISCOSITY = 1
 
                     self.thetas[indexation] += self.noise * torch.empty_like(self.thetas[indexation]).\
-                        normal_(mean=0, std=np.sqrt(2 * Du / eta * self.dt)) / (self.rot_radius[indexation][:,None] + 1e-10)
+                        normal_(mean=0, std=np.sqrt(2 * DIFFUSION_CONSTANT / VISCOSITY * self.dt))\
+                                / (self.rot_radius[indexation][:,None] + 1e-10)
 
                     # Update positions and vectors
                     self.X = self.get_X_theta()
@@ -756,10 +756,13 @@ class Simulation:
                     self.X[indexation] -= self.X.grad[indexation] * self.dt
 
                     # Add noise
-                    Du = 1
-                    eta = 1
+                    DIFFUSION_CONSTANT = 1
+                    VISCOSITY = 1
 
-                    self.X[indexation] += self.noise * torch.empty_like(self.X[indexation]).normal_(mean=0, std=np.sqrt(2 * Du / eta * self.dt))
+                    self.X[indexation] += self.noise * torch.empty_like(self.X[indexation])\
+                                                           .normal_(mean=0, std=np.sqrt(2 * DIFFUSION_CONSTANT\
+                                                                                        / VISCOSITY * self.dt)
+                                                                    )
 
                     # Adjust distances from endpoints to their neighbors back to l0
                     endpoint_d_vecs = self.X[indexation] - self.X[[1,-2]]
@@ -812,11 +815,11 @@ class Simulation:
         #     # Append to the file
         #     shape_0 = self.dist_vecs_to_com.shape[0]
         #     # RMS for different time steps
-        #     RMS = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
+        #     rms = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
         #
         #     # This mean is a time average from t_half to the end of the simulation
-        #     mean_RMS = torch.mean(RMS)
-        #     line_str = f'{self.U_pressure_weight},{mean_RMS:.4f}'
+        #     mean_rms = torch.mean(rms)
+        #     line_str = f'{self.U_pressure_weight},{mean_rms:.4f}'
         #     data_file = open(write_name, 'a')
         #     data_file.write(line_str + '\n')
         #     data_file.close()
@@ -846,7 +849,7 @@ class Simulation:
             y_plot = Y[self.states_booleans[i]]
             z_plot = Z[self.states_booleans[i]]
 
-            self.ax.scatter(x_plot, y_plot, z_plot, s=self.nucleosome_s, c=self.state_colors[i],
+            self.ax.scatter(x_plot, y_plot, z_plot, s=self.NUCLEOSOME_S, c=self.state_colors[i],
                                  label=self.state_names[i])
 
         # Set plot dimensions
