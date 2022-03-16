@@ -42,7 +42,7 @@ class Optimizer:
         # This is valid for a normalized distribution, which means that
         # the actual value only makes sense when we are using slope fractions
         #return len(self.n_ON_cells) / self.n_ON_cells.sum()
-        estimator_obj = Estimator(T_MAX=self.t_total)
+        estimator_obj = Estimator(t_max=self.t_total)
         _, tau_estimate, tau_estimate_error, _ = estimator_obj.estimate(data)
 
         return tau_estimate, tau_estimate_error

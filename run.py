@@ -246,7 +246,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
 
         # Limits the total number of failed simulations
         finally:
-            if n_failed_simulations >= 100:
+            if n_failed_simulations >= 10000:
                 break
 
     return None
