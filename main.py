@@ -1,4 +1,4 @@
-## External packages
+# External libraries
 from timeit import default_timer as timer
 import torch
 from torch.multiprocessing import Pool
@@ -6,15 +6,19 @@ import numpy as np
 from datetime import datetime
 from functools import partial
 
-## Own scripts
+# Own modules
 import run
+from pressure_rms import get_pressure
 from formatting import get_project_folder, create_directories, create_param_string, edit_stable_silent_times_file
 
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, test_mode, animate, set_seed, min_seed, N,\
-                       l0, noise, dt, t_total, stats_t_interval, U_two_interaction_weight, U_pressure_weight,\
+                       l0, noise, dt, t_total, stats_t_interval, rms, U_two_interaction_weight,\
                        allow_state_change, initial_state, initial_state_list, cell_division, cenH_size, cenH_init_idx,\
                        write_cenH_data, barriers, constant, alpha_1, alpha_1_const, alpha_2, beta
+
+# Get U_pressure_weight value from rms
+U_pressure_weight = get_pressure.get_pressure(rms)
 
 ##############################################################################
 ##############################################################################
@@ -34,7 +38,7 @@ def curied_run(x, run_on_cell, multiprocessing_parameter, N, l0, noise, dt, t_to
                 alpha_2, beta, stats_t_interval, set_seed, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
 
-    elif multiprocessing_parameter == 'U_pressure_weight':
+    elif multiprocessing_parameter == 'rms':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, x, alpha_1,
                 alpha_2, beta, stats_t_interval, set_seed, min_seed, test_mode, animate, allow_state_change,
                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
@@ -69,7 +73,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
     elif multiprocessing_parameter == 'alpha_1':
         parameter_list = np.linspace(25, 50, n_processes) * 0.02 * 0.1 * alpha_1_const
     # U_pressure_weight list
-    elif multiprocessing_parameter == 'U_pressure_weight':
+    elif multiprocessing_parameter == 'rms':
         parameter_list = np.linspace(0,1,n_processes)
     # constant list
     elif multiprocessing_parameter == 'constant':
