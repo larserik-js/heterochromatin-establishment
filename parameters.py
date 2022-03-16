@@ -19,7 +19,8 @@ def get_parser_args():
     parser.add_argument('--multiprocessing_parameter',
                         type=str,
                         default='seed',
-                        help='The parameter different in each process when using multiprocessing.')
+                        help='The parameter different in each process when using multiprocessing. '\
+                             + 'The possibilities are: "seed", "alpha_1", "RNS", and "constant".')
 
     # Plots initial and final state, as well as statistics
     # Nothing (except possibly an animation) is saved
@@ -83,16 +84,18 @@ def get_parser_args():
                         default=100,
                         help='The time-step interval at which to collect values for statistics.')
 
-    # Potential weights
+    # Potential weight
     parser.add_argument('--U_two_interaction_weight',
                         type=float,
                         default=50,
                         help='Scales the strength of the two-interaction potential.')
 
-    parser.add_argument('--U_pressure_weight',
+    # rms
+    parser.add_argument('--rms',
                         type=float,
-                        default=0.5,
-                        help='Scales the strength of the external pressure potential.')
+                        default=1.0,
+                        help='The root-mean-square of the distances of the nucleosomes to the center-of-mass. '\
+                             + ' This value translates directly into a U_pressure_weight value.')
 
     ## State parameters
     # Allow states to change
@@ -191,8 +194,8 @@ noise = args.noise
 dt = args.dt
 t_total = args.t_total
 stats_t_interval = args.stats_t_interval
+rms = args.rms
 U_two_interaction_weight = args.U_two_interaction_weight
-U_pressure_weight = args.U_pressure_weight
 allow_state_change = args.allow_state_change
 initial_state = args.initial_state
 initial_state_list = args.initial_state_list

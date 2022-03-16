@@ -5,6 +5,9 @@ import main
 from datetime import datetime
 from estimation import Estimator
 
+# Own modules
+from pressure_rms import get_pressure
+
 class Optimizer:
     def __init__(self, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise,
                  U_pressure_weight, alpha_2, beta, filename):
@@ -98,7 +101,7 @@ class Optimizer:
                           acq_func="EI",
 
                           # The number of evaluations of f
-                          n_calls=10,
+                          n_calls=5,
 
                           # Number of evaluations of func with random points
                           # before approximating it with base_estimator.
@@ -110,8 +113,7 @@ class Optimizer:
         return res
 
 
-#U_pressure_weight_values = np.logspace(start=-2,stop=0,num=3)
-U_pressure_weight_values = [0.0001]
+rms_values = [2]
 n_processes = 25
 pool_size = 25
 initial_state = 'active'
@@ -153,7 +155,10 @@ if __name__ == '__main__':
     create_directories(pathname)
 
     # Iterate
-    for U_pressure_weight in U_pressure_weight_values:
+    for rms in rms_values:
+        # Get U_pressure_weight value from rms
+        U_pressure_weight = get_pressure.get_pressure(rms)
+
         # Make the .txt file for data
         filename = make_filename(pathname, U_pressure_weight, n_processes, initial_state,
                                  cenH_init_idx, N, t_total, noise, alpha_2, beta)
