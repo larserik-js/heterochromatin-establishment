@@ -1,4 +1,9 @@
+# Standard libraries
 import os
+import sys
+
+# Own modules
+import misc_functions
 
 dt = 0.02
 cenH_sizes = [6,7,8]
@@ -6,8 +11,8 @@ cenH_size = 8
 cenH_init_idx = 16
 initial_state = 'active'
 
-# Bounds on rms_values: (1.677, inf)
-rms_values = [1.677]
+# Bounds on rms_values: (1.677, 4.130)
+rms_values = [4]
 t_total = 10000
 
 alpha_1 = 0.07
@@ -15,6 +20,13 @@ alpha_2 = 0.1
 beta = 0.004
 min_seed = 0
 
+
+# Check if input RMS values are valid
+if misc_functions.rms_vals_within_bounds(rms_values) == False:
+    print('One or more RMS values outside of bounds. Enter valid values.')
+    sys.exit()
+
+# Execute commands
 for rms in rms_values:
     print(f'rms: {rms:.2f}, cenH: {cenH_size}, '
             + f'cenH indices: {cenH_init_idx},...,{cenH_init_idx + cenH_size - 1}, alpha_1: {alpha_1:.4f}, '
