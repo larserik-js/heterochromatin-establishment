@@ -4,9 +4,11 @@ from skopt import forest_minimize, dump
 import main
 from datetime import datetime
 from estimation import Estimator
+import sys
 
 # Own modules
 from pressure_rms import get_pressure
+import misc_functions
 
 class Optimizer:
     def __init__(self, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise,
@@ -156,6 +158,11 @@ if __name__ == '__main__':
 
     # Iterate
     for rms in rms_values:
+        # Check if input RMS values are valid
+        if misc_functions.rms_vals_within_bounds(rms_values) == False:
+            print('One or more RMS values outside of bounds. Enter valid values.')
+            sys.exit()
+
         # Get U_pressure_weight value from rms
         U_pressure_weight = get_pressure.get_pressure(rms)
 
