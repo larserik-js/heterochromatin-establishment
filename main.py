@@ -14,8 +14,8 @@ from formatting import get_project_folder, make_output_directories, edit_stable_
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed, N,l0, noise, dt,\
                        t_total, stats_t_interval, rms, U_two_interaction_weight, allow_state_change, initial_state,\
-                       initial_state_list, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers,\
-                       constant, alpha_1, alpha_1_const, alpha_2, beta
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers,constant, alpha_1,\
+                       alpha_1_const, alpha_2, beta
 
 # Get U_pressure_weight value from rms
 U_pressure_weight = get_pressure.get_pressure(rms)

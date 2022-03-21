@@ -103,11 +103,6 @@ def get_parser_args():
                         default='active',
                         help='The initial nucleosome state.')
 
-    # List of initial state types
-    parser.add_argument('--initial_state_list',
-                        default=['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent'],
-                        help='Five different initial states.')
-
     # Allow cell division
     parser.add_argument('--cell_division',
                         type=int,
@@ -190,7 +185,6 @@ rms = args.rms
 U_two_interaction_weight = args.U_two_interaction_weight
 allow_state_change = args.allow_state_change
 initial_state = args.initial_state
-initial_state_list = args.initial_state_list
 cell_division = args.cell_division
 cenH_size = args.cenH_size
 cenH_init_idx = args.cenH_init_idx
