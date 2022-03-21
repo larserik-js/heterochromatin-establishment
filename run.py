@@ -6,10 +6,6 @@ import os
 from numba import njit
 import time
 
-# Animation packages
-import matplotlib.animation as animation
-from matplotlib.animation import FuncAnimation
-
 # Simulation class
 from simulation_class import Simulation
 
@@ -17,7 +13,7 @@ from simulation_class import Simulation
 from formatting import get_project_folder, create_param_string
 
 # External animation file
-from animation_class import Animation, create_animation_directory
+from animation_class import create_animation_directory
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, pathname, filename):
@@ -36,64 +32,43 @@ def write_pkl(var_list, pathname, filename):
         pickle.dump(new_var_list, f)
 
 def save_data(sim_obj, pathname):
-    ## Save final state and statistics
-    # Filenames
     parameter_string = sim_obj.params_filename
 
-    fs_filename = 'final_state/final_state_' + parameter_string
-    interactions_filename = 'interactions/interactions_' + parameter_string
-    Rs_filename = 'Rs/Rs_' + parameter_string
-    dist_vecs_to_com_filename = 'dist_vecs_to_com/dist_vecs_to_com_' + parameter_string
-    correlation_filename = 'correlation/correlation_' + parameter_string
-    states_filename = 'states/states_' + parameter_string
-    states_time_space_filename = 'states_time_space/states_time_space_' + parameter_string
-    correlation_times_filename = 'correlation_times/correlation_times_' + parameter_string
-    successful_conversions_filename = 'successful_conversions/successful_conversions_' + parameter_string
+    # Keys: directory name in which to save files
+    # Values: list of variables to pickle and save in aforementioned directories
+    directories_and_variables = {
+        # Correlation
+        'correlation': [sim_obj.correlation_sums],
 
-    # Final state
-    x_final, y_final, z_final = sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2]
-    pickle_var_list = [x_final, y_final, z_final, sim_obj.states]
-    write_pkl(pickle_var_list, pathname, fs_filename)
+        # Correlation times
+        'correlation_times': [sim_obj.correlation_times],
 
-    # # Save active polymer with pressure before dynamics
-    # write_filename = pathname + 'quasi_random_initial_states_pressure_before_dynamics/' \
-    #                 + f'pressure={sim_obj.U_pressure_weight:.2f}/seed={sim_obj.seed}.pkl'
-    # # Write to pkl
-    # with open(write_filename, 'wb') as f:
-    #     pickle.dump(sim_obj.X, f)
+        # Distance vectors to center of mass
+        'dist_vecs_to_com': [sim_obj.dist_vecs_to_com],
 
+        # Final state
+        'final_state': [sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2], sim_obj.states],
 
-    # Interactions and lifetimes
-    pickle_var_list = [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes]
-    write_pkl(pickle_var_list, pathname, interactions_filename)
+        # Interactions and lifetimes
+        'interactions': [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes],
 
-    # End-to-end distance
-    pickle_var_list = [sim_obj.Rs]
-    write_pkl(pickle_var_list, pathname, Rs_filename)
+        # End-to-end distance
+        'Rs': [sim_obj.Rs],
 
-    # Distance vectors to center of mass
-    pickle_var_list = [sim_obj.dist_vecs_to_com]
-    write_pkl(pickle_var_list, pathname, dist_vecs_to_com_filename)
+        # States
+        'states': [sim_obj.state_statistics],
 
-    # Correlation
-    pickle_var_list = [sim_obj.correlation_sums]
-    write_pkl(pickle_var_list, pathname, correlation_filename)
+        # States in time and space
+        'states_time_space': [sim_obj.states_time_space],
 
-    # States
-    pickle_var_list = [sim_obj.state_statistics]
-    write_pkl(pickle_var_list, pathname, states_filename)
+        # Succesful conversions
+        'successful_conversions': [sim_obj.successful_recruited_conversions, sim_obj.successful_noisy_conversions]
+    }
 
-    # States in time and space
-    pickle_var_list = [sim_obj.states_time_space]
-    write_pkl(pickle_var_list, pathname, states_time_space_filename)
+    # Pickle and save data
+    for dir_name, var_list in directories_and_variables.items():
+        write_pkl(var_list, pathname, dir_name + '/' + parameter_string)
 
-    # Correlation times
-    pickle_var_list = [sim_obj.correlation_times]
-    write_pkl(pickle_var_list, pathname, correlation_times_filename)
-
-    # Succesful conversions
-    pickle_var_list = [sim_obj.successful_recruited_conversions, sim_obj.successful_noisy_conversions]
-    write_pkl(pickle_var_list, pathname, successful_conversions_filename)
 
 # Fix seed value for Numba
 @njit
@@ -246,7 +221,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
 
         # Limits the total number of failed simulations
         finally:
-            if n_failed_simulations >= 10000:
+            if n_failed_simulations >= 0:
                 break
 
     return None

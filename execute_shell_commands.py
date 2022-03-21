@@ -13,7 +13,7 @@ initial_state = 'active'
 
 # Bounds on rms_values: (1.677, 4.130)
 rms_values = [4]
-t_total = 10000
+t_total = 1000
 
 alpha_1 = 0.07
 alpha_2 = 0.1

@@ -4,15 +4,15 @@ from plot_class import Plots
 plot_cell_division = False
 plot_barriers = False
 
-plot_n_processes = 25
-plot_U_pressure_weight = 0.0001
+plot_n_processes = 100
+plot_U_pressure_weight = 1e-8
 plot_stats_interval = 100
 
 plot_cenH_size = 0
 plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_N = 40
-plot_t_total = 20000
+plot_t_total = 50000
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']

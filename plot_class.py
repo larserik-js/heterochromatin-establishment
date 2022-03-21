@@ -70,7 +70,7 @@ class Plots:
 
     # State at the end of the simulation
     def plot_final_state(self):
-        open_filename = self.create_full_filename('data/statistics/final_state/final_state_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/final_state/', '.pkl')
 
         with open(open_filename, 'rb') as f:
             x_plot, y_plot, z_plot, states = pickle.load(f)
@@ -108,7 +108,7 @@ class Plots:
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
         TRANSPARENCY = 0.5
-        open_filename = self.create_full_filename('data/statistics/interactions/interactions_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/interactions/', '.pkl')
 
         # Finds all .pkl files for N = N
         files = glob(open_filename)
@@ -141,7 +141,7 @@ class Plots:
 
             # Finds all .pkl files for N = N
             files = glob('/home/lars/Documents/masters_thesis/statistics/' + polymer_types[j]
-                         + '_statistics_N=' + str(N) + f'_t_total={t_total}_noise=' + '*.pkl')
+                         + '_N=' + str(N) + f'_t_total={t_total}_noise=' + '*.pkl')
 
             # Sort filenames by noise level
             files = sorted(files)
@@ -205,7 +205,7 @@ class Plots:
         for i in range(len(polymer_types)):
             # Finds all .pkl files for N = N
             files = glob('/home/lars/Documents/masters_thesis/statistics/correlation/' + polymer_types[i]
-                         + f'_correlation_N=100_t_total={t_total}_noise={noise:.2f}.pkl')
+                         + f'_N=100_t_total={t_total}_noise={noise:.2f}.pkl')
 
             if len(files) > 0:
                 with open(files[0], 'rb') as f:
@@ -221,7 +221,7 @@ class Plots:
         plt.show()
 
     def plot_states(self):
-        open_filename = self.create_full_filename('statistics/states/states_', '.pkl')
+        open_filename = self.create_full_filename('statistics/states/', '.pkl')
 
         files = glob(open_filename)
         print(open_filename)
@@ -250,8 +250,8 @@ class Plots:
         plt.show()
 
     def plot_states_time_space(self):
-        open_filename = self.create_full_filename('data/statistics/states_time_space/states_time_space_', '.pkl')
-        conversions_filename = self.create_full_filename('data/statistics/successful_conversions/successful_conversions_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/states_time_space/', '.pkl')
+        conversions_filename = self.create_full_filename('data/statistics/successful_conversions/', '.pkl')
 
         files = glob(open_filename)
         conversion_files = glob(conversions_filename)
@@ -270,10 +270,15 @@ class Plots:
             with open(conversion_files[i], 'rb') as f_c:
                 recruited_conversions, noisy_conversions = pickle.load(f_c)
 
-        recruited_conversions = np.concatenate([recruited_conversions.sum(axis=1), np.array([recruited_conversions.sum()])])
+        recruited_conversions = np.concatenate([recruited_conversions.sum(axis=1),
+                                                np.array([recruited_conversions.sum()])
+                                                ])
+
         noisy_conversions = np.concatenate([noisy_conversions, np.array([noisy_conversions.sum()])])
 
-        df_array = np.block([[recruited_conversions], [noisy_conversions]])
+        df_array = np.block([[recruited_conversions],
+                             [noisy_conversions]
+                             ])
 
         # Show conversion data
         df = pd.DataFrame(df_array, index=['Recruited conversions / t', 'Noisy conversions / t'],
@@ -285,7 +290,9 @@ class Plots:
         labels = [patches.Patch(color=self.state_colors[i], label=self.state_names[i]) for i in range(len(self.state_colors))]
         cmap = colors.ListedColormap(self.state_colors)
         ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
-        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * INTERNAL_STATS_INTERVAL}', ylabel='Nucleosome no.')
+        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * INTERNAL_STATS_INTERVAL}',
+                         ylabel='Nucleosome no.')
+
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Nucleosome no.', size=12)
         plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2, borderaxespad=0.)
@@ -293,7 +300,7 @@ class Plots:
         plt.show()
 
     def plot_Rs(self):
-        open_filename = self.create_full_filename('statistics/Rs/Rs_', '.pkl')
+        open_filename = self.create_full_filename('statistics/Rs/', '.pkl')
 
         files = glob(open_filename)
 
@@ -331,7 +338,7 @@ class Plots:
 
     # Plots RMS as a function of pressure
     def plot_RMS(self):
-        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/', '.pkl')
         # Replace the pressure values with the wildcard * to include all pressure values
         open_filename = open_filename.replace(f'pressure={self.U_pressure_weight:.2f}', 'pressure=*')
 
@@ -395,7 +402,7 @@ class Plots:
         return correlations
 
     def plot_dynamics_time(self):
-        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/dist_vecs_to_com_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/dist_vecs_to_com/', '.pkl')
 
         files = glob(open_filename)
         n_files = len(files)
@@ -438,7 +445,7 @@ class Plots:
 
 
     def plot_correlation_times(self):
-        open_filename = self.create_full_filename('data/statistics/correlation_times/correlation_times_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/correlation_times/', '.pkl')
         files = glob(open_filename)
 
         n_files = len(files)
@@ -480,8 +487,7 @@ class Plots:
         return data_array
 
     def plot_successful_recruited_conversions(self):
-        open_filename = self.create_full_filename('data/statistics/successful_recruited_conversions/'\
-                                                    + 'successful_recruited_conversions_', '.pkl')
+        open_filename = self.create_full_filename('data/statistics/successful_recruited_conversions/', '.pkl')
         files = glob(open_filename)
         print(open_filename)
 
@@ -538,7 +544,7 @@ class Plots:
 
             # First time where 90% of the polymer is silent
             try:
-                silent_times = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+                silent_times = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/'
                                           + param_string, skiprows=2, usecols=0, delimiter=',')
             except:
                 continue
@@ -602,8 +608,8 @@ class Plots:
 
                 # Get data
                 try:
-                    data = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
-                                              + param_string, skiprows=2, usecols=[0,1,2], delimiter=',')
+                    data = np.loadtxt(self.pathname + 'data/statistics/stable_silent_times/'
+                                      + param_string, skiprows=2, usecols=[0,1,2], delimiter=',')
                 except:
                     continue
 
@@ -666,7 +672,7 @@ class Plots:
 
     def plot_optimization(self):
         # Finds all .txt files with different pressure values
-        filenames = glob(self.pathname + 'data/statistics/optimization/optimization_U_pressure_weight=*'\
+        filenames = glob(self.pathname + 'data/statistics/optimization/U_pressure_weight=*'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
@@ -692,7 +698,8 @@ class Plots:
         plt.show()
 
     def plot_res(self):
-        open_filename = self.pathname + f'data/statistics/optimization/res_U_pressure_weight={self.U_pressure_weight:.2e}_'\
+        open_filename = self.pathname + f'data/statistics/optimization/'\
+                         + f'res_U_pressure_weight={self.U_pressure_weight:.2e}_'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl'

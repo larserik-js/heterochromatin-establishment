@@ -130,7 +130,7 @@ run_on_cell = False
 def make_filename(pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2,
                   beta):
 
-    return pathname + f'data/statistics/optimization/optimization_U_pressure_weight={U_pressure_weight:.2e}_'\
+    return pathname + f'data/statistics/optimization/U_pressure_weight={U_pressure_weight:.2e}_'\
                     + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
                     + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 

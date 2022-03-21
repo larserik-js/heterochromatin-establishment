@@ -41,7 +41,7 @@ def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_i
 def edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division,
                                   barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
 
-    write_name = pathname + 'data/statistics/stable_silent_times/stable_silent_times_'
+    write_name = pathname + 'data/statistics/stable_silent_times/'
     write_name += create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
                                       cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta,
                                       seed, exclude_seed=True) + '.txt'
