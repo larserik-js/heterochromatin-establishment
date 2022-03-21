@@ -80,7 +80,7 @@ def set_numba_seed(seed):
 # from memory_profiler import profile
 # @profile
 def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2,
-        beta, stats_t_interval, set_seed, seed, test_mode, animate, allow_state_change, initial_state, cell_division,
+        beta, stats_t_interval, set_seed, seed, animate, allow_state_change, initial_state, cell_division,
         cenH_size, cenH_init_idx, write_cenH_data, barriers):
 
     # Number of failed simulation attempts
@@ -109,14 +109,10 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             # Simulation loop
             if animate:
                 # Create destination folder for the individual images
-                if test_mode:
-                    animation_folder = pathname + 'data/animations/test/'
-                    create_animation_directory(animation_folder)
-                else:
-                    param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                                       cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed)
-                    animation_folder = pathname + 'data/animations/' + param_string + '/'
-                    create_animation_directory(animation_folder)
+                param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                                   cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed)
+                animation_folder = pathname + 'data/animations/' + param_string + '/'
+                create_animation_directory(animation_folder)
 
                 # Iterate
                 # Ensures that a total of 500 images will be created
@@ -163,49 +159,16 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                     # Increment no. of time-steps
                     sim_obj.t += 1
 
-                    if not test_mode:
-                        # if sim_obj.end_to_end_vec_dot <= 0:
-                        #     data_file = open(f'/home/lars/Documents/masters_thesis/statistics/end_to_end_perpendicular_times_N={N}'
-                        #                      + f'_t_total={t_total}_noise={noise:.4f}' f'_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}'
-                        #                      + f'_beta={beta:.5f}.txt', 'a')
-                        #     data_file.write(str(sim_obj.t) + ',' + str(sim_obj.seed) + '\n')
-                        #     data_file.close()
-                        #     print(f'Wrote to file at seed {sim_obj.seed}')
-                        #     break
-                        if sim_obj.stable_silent == True:
-                            return sim_obj.t
+                    # Ends simulation if > 90% of the polymer is silent
+                    if write_cenH_data and sim_obj.stable_silent:
+                        return sim_obj.t
 
-                # Just plot final state without saving
-                if test_mode:
-                    # try:
-                    #     os.mkdir(pathname + f'quasi_random_initial_states_pressure_before_dynamics/pressure={U_pressure_weight:.2f}')
-                    # except FileExistsError:
-                    #     pass
-                    #
-                    # filename = pathname + f'/quasi_random_initial_states_pressure_before_dynamics/pressure={U_pressure_weight:.2f}/seed={seed}.pkl'
-                    # # Detach tensors and turn them into numpy arrays
-                    # new_var_list = []
-                    # var_list = [sim_obj.X]
-                    #
-                    # for var in var_list:
-                    #     if torch.is_tensor(var):
-                    #         new_var_list.append(var.detach().numpy())
-                    #     else:
-                    #         new_var_list.append(var)
-                    #
-                    # # Write to pkl
-                    # with open(filename, 'wb') as f:
-                    #     pickle.dump(new_var_list, f)
-                    #     print(f'Wrote to {filename}')
+                    # If not, continue simulation
+                    else:
+                        pass
 
-                    with torch.no_grad():
-                       sim_obj.plot()
-                       plt.show()
-
-                # Just save statistics, no plotting
-                else:
-                    # Save data
-                    save_data(sim_obj, pathname)
+                # Save data
+                save_data(sim_obj, pathname)
 
             print(f'Finished simulation with seed = {seed}.')
 

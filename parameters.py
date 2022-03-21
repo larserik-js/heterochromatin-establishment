@@ -22,13 +22,6 @@ def get_parser_args():
                         help='The parameter different in each process when using multiprocessing. '\
                              + 'The possibilities are: "seed", "alpha_1", "RNS", and "constant".')
 
-    # Plots initial and final state, as well as statistics
-    # Nothing (except possibly an animation) is saved
-    parser.add_argument('--test_mode',
-                        type=int,
-                        default=1,
-                        help='If false, saves data. Else, nothing is saved, except possibly an animation.')
-
     # Additionally generates and saves an animation
     parser.add_argument('--animate',
                         type=int,
@@ -184,7 +177,6 @@ args =  get_parser_args()
 n_processes = args.n_processes
 pool_size = args.pool_size
 multiprocessing_parameter = args.multiprocessing_parameter
-test_mode = args.test_mode
 animate = args.animate
 set_seed = args.set_seed
 min_seed = args.min_seed

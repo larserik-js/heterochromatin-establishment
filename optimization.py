@@ -64,7 +64,7 @@ class Optimizer:
             silent_times_list = main.main(run_on_cell=self.run_on_cell, n_processes=self.n_processes,
                                           pool_size=self.pool_size, set_seed=False, t_total=self.t_total,
                                           U_pressure_weight=self.U_pressure_weight, alpha_1=alpha_1,
-                                          cenH_size=cenH_size, test_mode=False, write_cenH_data=True)
+                                          cenH_size=cenH_size, write_cenH_data=True)
 
             tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
