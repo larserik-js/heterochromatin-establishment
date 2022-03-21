@@ -9,7 +9,7 @@ from functools import partial
 # Own modules
 import run
 from pressure_rms import get_pressure
-from formatting import get_project_folder, make_output_directories, create_param_string, edit_stable_silent_times_file
+from formatting import get_project_folder, make_output_directories, edit_stable_silent_times_file
 
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed, N,l0, noise, dt,\
@@ -145,7 +145,6 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
         raise AssertionError("n_processes set to 0. Choose a higher value.")
 
     return res
-
 
 
 ## RUN THE SCRIPT

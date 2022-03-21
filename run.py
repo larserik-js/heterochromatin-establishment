@@ -1,6 +1,5 @@
 import pickle
 import numpy as np
-import matplotlib.pyplot as plt
 import torch
 import os
 from numba import njit
@@ -83,7 +82,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
     # Number of failed simulation attempts
     n_failed_simulations = 0
 
-    while True:
+    while n_failed_simulations <= 10000:
         # Runs simulation
         try:
             # torch.set_num_threads(1)
@@ -99,41 +98,46 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                 set_numba_seed(seed)
 
             # Create simulation object
-            sim_obj = Simulation(pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
-                                 alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division,
-                                 cenH_size, cenH_init_idx, write_cenH_data, barriers)
+            sim_obj = Simulation(pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
+                                 alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
+                                 cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
+
+            # Folder for saving animation images
+            param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                               cell_division, barriers, N, t_total, noise, alpha_1, alpha_2,
+                                               beta, seed)
+
+            animation_folder = pathname + 'data/animations/' + param_string + '/'
+
+            # Ensures that a total of 500 images will be created
+            N_IMAGES = 500
+            iterations_per_image = int(t_total / N_IMAGES)
+
+            # Index for image filename
+            image_idx = 0
+
+            # Make folder for the individual images
+            if animate:
+                make_directory(animation_folder)
+            else:
+                pass
 
             # Simulation loop
-            if animate:
-                # Create destination folder for the individual images
-                param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                                   cell_division, barriers, N, t_total, noise, alpha_1, alpha_2,
-                                                   beta, seed)
+            for t in range(t_total):
+                # Print progress
+                if (t + 1) % (t_total / 10) == 0:
+                    print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
 
-                animation_folder = pathname + 'data/animations/' + param_string + '/'
-                make_directory(animation_folder)
+                # Update
+                sim_obj.update()
 
-                # Ensures that a total of 500 images will be created
-                N_IMAGES = 500
-                iterations_per_image = int(t_total / N_IMAGES)
+                # Increment no. of time-steps
+                sim_obj.t += 1
 
-                # Filename formatting
-                image_idx = 0
-                
-                # Iterate
-                for t in range(t_total):
-                    # Print progress
-                    if (t + 1) % (t_total / 10) == 0:
-                        print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
-
-                    # Update
-                    sim_obj.update()
-
-                    # Increment no. of time-steps
-                    sim_obj.t += 1
-
+                # Save image for animation
+                if animate:
                     # Save figure
-                    if t%iterations_per_image == 0:
+                    if t % iterations_per_image == 0:
                         # Plot
                         sim_obj.plot()
                         image_idx += 1
@@ -141,23 +145,12 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                         # Set dpi=60 to get < 50MB data
                         sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
 
-                # Save data
-                save_data(sim_obj, pathname)
+                    # No image saved
+                    else:
+                        pass
 
-            # No animation
-            else:
-                # Iterate
-                for t in range(t_total):
-                    # Print progress
-                    if (t + 1) % (t_total / 10) == 0:
-                        print(f'{os.getpid()} : Time-step: {t + 1} / {t_total}')
-
-                    # Update
-                    sim_obj.update()
-
-                    # Increment no. of time-steps
-                    sim_obj.t += 1
-
+                # Write cenH data only if no animation
+                else:
                     # Ends simulation if > 90% of the polymer is silent
                     if write_cenH_data and sim_obj.stable_silent:
                         return sim_obj.t
@@ -166,8 +159,8 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                     else:
                         pass
 
-                # Save data
-                save_data(sim_obj, pathname)
+            # Save data
+            save_data(sim_obj, pathname)
 
             print(f'Finished simulation with seed = {seed}.')
 
@@ -177,14 +170,9 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             print(message)
             time.sleep(10)
 
-        # If no exception occurred, break the 'while True' loop
+        # If no exception occurred, break the while-loop
         else:
             break
-
-        # Limits the total number of failed simulations
-        finally:
-            if n_failed_simulations >= 0:
-                break
 
     return None
 

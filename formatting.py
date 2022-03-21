@@ -79,4 +79,4 @@ def make_output_directories(pathname):
     make_directory(pathname + 'data/animations')
 
     for folder_name in statistics_folder_names:
-        make_directory(pathname + 'data/statistics' + folder_name)
+        make_directory(pathname + 'data/statistics/' + folder_name)
