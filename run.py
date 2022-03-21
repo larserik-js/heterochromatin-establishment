@@ -77,7 +77,7 @@ def set_numba_seed(seed):
 # @profile
 def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2,
         beta, stats_t_interval, set_seed, seed, animate, allow_state_change, initial_state, cell_division,
-        cenH_size, cenH_init_idx, write_cenH_data):
+        cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
 
     # Number of failed simulation attempts
     n_failed_simulations = 0
@@ -100,7 +100,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             # Create simulation object
             sim_obj = Simulation(pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
                                  alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
-                                 cell_division, cenH_size, cenH_init_idx, write_cenH_data)
+                                 cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
             param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,

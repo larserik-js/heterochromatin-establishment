@@ -14,8 +14,8 @@ from formatting import get_project_folder, make_output_directories, edit_stable_
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed, N,l0, noise, dt,\
                        t_total, stats_t_interval, rms, U_two_interaction_weight, allow_state_change, initial_state,\
-                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, constant, alpha_1, alpha_1_const,\
-                       alpha_2, beta
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx, constant, alpha_1,\
+                       alpha_1_const, alpha_2, beta
 
 # Get U_pressure_weight value from rms
 U_pressure_weight = get_pressure.get_pressure(rms)
@@ -25,23 +25,24 @@ U_pressure_weight = get_pressure.get_pressure(rms)
 
 def curied_run(x, run_on_cell, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_interaction_weight,
                U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, set_seed, min_seed, animate,
-               allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data):
+               allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data,
+               ATF1_idx):
 
 
     if multiprocessing_parameter == 'seed':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
-                alpha_2, beta, stats_t_interval, set_seed, x, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
+                       alpha_2, beta, stats_t_interval, set_seed, x, animate, allow_state_change, initial_state,
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
     elif multiprocessing_parameter == 'alpha_1':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, x,
-                alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
+                       alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change, initial_state,
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
     elif multiprocessing_parameter == 'rms':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, x, alpha_1,
-                alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
+                       alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change, initial_state,
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
 
@@ -50,7 +51,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
          alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
          min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
          cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-         write_cenH_data=write_cenH_data):
+         write_cenH_data=write_cenH_data, ATF1_idx=ATF1_idx):
 
     pathname = get_project_folder(run_on_cell)
 
@@ -116,7 +117,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
                                     stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
                                     animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
                                     cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                                    write_cenH_data=write_cenH_data
+                                    write_cenH_data=write_cenH_data, ATF1_idx=ATF1_idx
                                     ),
                             parameter_list, chunksize=1
                             )
@@ -131,7 +132,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
                                stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed, animate=animate,
                                allow_state_change=allow_state_change, initial_state=initial_state,
                                cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                               write_cenH_data=write_cenH_data
+                               write_cenH_data=write_cenH_data, ATF1_idx=ATF1_idx
                                ),
                        parameter_list
                        )
@@ -154,6 +155,6 @@ if __name__ == '__main__':
              alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
              min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
              cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-             write_cenH_data=write_cenH_data)
+             write_cenH_data=write_cenH_data, ATF1_idx=ATF1_idx)
 
 

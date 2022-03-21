@@ -12,7 +12,7 @@ r = np.random
 class Simulation:
     def __init__(self, pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
                  alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
-                 cenH_init_idx, write_cenH_data):
+                 cenH_init_idx, write_cenH_data, ATF1_idx):
 
         # Project folder
         self.pathname = pathname
@@ -60,8 +60,17 @@ class Simulation:
         # Include cenH region
         self.cenH_size = cenH_size
         self.cenH_init_idx = cenH_init_idx
-        self.cenH_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
         self.write_cenH_data = write_cenH_data
+
+        # Include ATF1
+        self.ATF1_idx = ATF1_idx
+
+        # Constantly silent nucleosomes
+        # Includes the cenH region and the ATF1
+        self.const_silent_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
+
+        if self.ATF1_idx is not None and self.ATF1_idx not in self.const_silent_indices:
+            self.const_silent_indices = torch.cat((self.const_silent_indices, torch.tensor([self.ATF1_idx])))
 
         ## Initialize system
         self.X = self.initialize_system('quasi-random-pressure')
@@ -288,8 +297,8 @@ class Simulation:
         else:
             raise AssertionError('Invalid initial state given!')
 
-        # Set cenH states to silent
-        states[self.cenH_indices] = 0
+        # Set cenH and ATF1 nucleosomes to silent
+        states[self.const_silent_indices] = 0
 
         return states
 
@@ -297,8 +306,8 @@ class Simulation:
         change_probs = torch.rand(size=(self.N,))
         change_conditions = change_probs >= 0.5
 
-        # If cenH, do not change
-        change_conditions[self.cenH_indices] = 0
+        # If cenH or ATF1, do not change
+        change_conditions[self.const_silent_indices] = 0
 
         # Change selected nucleosomes to unmodified
         self.states[change_conditions] = 1
@@ -462,13 +471,13 @@ class Simulation:
 
     @staticmethod
     @njit
-    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, cenH_indices):
+    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, const_silent_indices):
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
 
         # Does not change the cenH region
-        if (cenH_size > 0) and (n1_index in cenH_indices):
+        if (cenH_size > 0) and (n1_index in const_silent_indices):
             recruited_conversion_pair = None
             recruited_conversion_dist = None
             pass
@@ -527,7 +536,7 @@ class Simulation:
         n1_index = r.randint(N)
 
         # Does not change the cenH region
-        if (cenH_size > 0) and (n1_index in cenH_indices):
+        if (cenH_size > 0) and (n1_index in const_silent_indices):
             noisy_conversion_idx = None
             pass
 
@@ -583,7 +592,7 @@ class Simulation:
         states_numpy, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx = self._change_states(
                                         self.N, self.states.numpy(), self.norms_all.detach().numpy(),
                                         self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
-                                        self.cenH_indices.numpy())
+                                        self.const_silent_indices.numpy())
 
         # Update the number of successful recruited conversions
         # S to U

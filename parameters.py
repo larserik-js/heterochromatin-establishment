@@ -1,5 +1,18 @@
-import torch
 import argparse
+
+# The function returns an integer, a NoneType object, or raises an error message
+def none_or_int(value):
+    if value == 'None':
+        return None
+    else:
+        try:
+            int_value = int(value)
+        # Raising a TypeError will cause the parser.add_argument function to display a formatted error message
+        except:
+            raise TypeError
+        else:
+            return int_value
+
 
 def get_parser_args():
     # Argparser from command line
@@ -117,13 +130,22 @@ def get_parser_args():
 
     parser.add_argument('--cenH_init_idx',
                         type=int,
-                        default=20,
+                        default=16,
                         help='The index of the first nucleosome of the cenH region.')
 
     parser.add_argument('--write_cenH_data',
                         type=int,
                         default=0,
                         help='Collects data on the spreading of the silent state.')
+
+    # ATF1
+    # The position of a single silent nucleosome
+    parser.add_argument('--ATF1_idx',
+                        type=none_or_int,
+                        default=None,
+                        help='The index of the position of the ATF1 protein. '\
+                             + 'For the purpose of this script it is realized as one constantly silent nucleosome. '\
+                             + 'The default values is "None", which results in no ATF1.')
 
     # Constants
     parser.add_argument('--constant',
@@ -183,6 +205,7 @@ cell_division = args.cell_division
 cenH_size = args.cenH_size
 cenH_init_idx = args.cenH_init_idx
 write_cenH_data = args.write_cenH_data
+ATF1_idx = args.ATF1_idx
 constant = args.constant
 alpha_1 = args.alpha_1
 alpha_1_const = args.alpha_1_const
