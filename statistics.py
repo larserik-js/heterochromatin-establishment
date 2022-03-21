@@ -161,8 +161,8 @@ def _gather_statistics(sim_obj):
 
                 edit_stable_silent_times_file(sim_obj.pathname, sim_obj.U_pressure_weight, sim_obj.initial_state,
                                               sim_obj.cenH_size, sim_obj.cenH_init_idx, sim_obj.cell_division,
-                                              sim_obj.barriers, sim_obj.N, sim_obj.t_total, sim_obj.noise,
-                                              sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
+                                              sim_obj.N, sim_obj.t_total, sim_obj.noise, sim_obj.alpha_1,
+                                              sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
 
                 print(f'Wrote to file at seed {sim_obj.seed}')
 
@@ -175,8 +175,8 @@ def _gather_statistics(sim_obj):
 
                 edit_stable_silent_times_file(sim_obj.pathname, sim_obj.U_pressure_weight, sim_obj.initial_state,
                                               sim_obj.cenH_size, sim_obj.cenH_init_idx, sim_obj.cell_division,
-                                              sim_obj.barriers, sim_obj.N, sim_obj.t_total, sim_obj.noise,
-                                              sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
+                                              sim_obj.N, sim_obj.t_total, sim_obj.noise, sim_obj.alpha_1,
+                                              sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
 
                 print(f'Wrote to file at seed {sim_obj.seed}')
 

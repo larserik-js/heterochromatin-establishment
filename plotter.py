@@ -2,7 +2,6 @@ from plot_class import Plots
 
 # Plot parameters
 plot_cell_division = False
-plot_barriers = False
 
 plot_n_processes = 100
 plot_U_pressure_weight = 1e-8
@@ -12,7 +11,7 @@ plot_cenH_size = 0
 plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_N = 40
-plot_t_total = 50000
+plot_t_total = 20000
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
@@ -27,9 +26,9 @@ plot_seed = 0
 plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
                  plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
                  plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
-                 plot_cell_division=plot_cell_division, plot_barriers=plot_barriers, plot_N=plot_N,
-                 plot_t_total=plot_t_total, plot_noise=plot_noise, plot_initial_state=plot_initial_state,
-                 plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2, plot_beta=plot_beta, plot_seed=plot_seed)
+                 plot_cell_division=plot_cell_division, plot_N=plot_N, plot_t_total=plot_t_total, plot_noise=plot_noise,
+                 plot_initial_state=plot_initial_state, plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2,
+                 plot_beta=plot_beta, plot_seed=plot_seed)
 
 # Plot final state
 #plot_obj.plot_final_state()
@@ -69,4 +68,4 @@ plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_
 
 #plot_obj.plot_optimization()
 
-plot_obj.plot_res()
+#plot_obj.plot_res()

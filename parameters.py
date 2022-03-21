@@ -125,12 +125,6 @@ def get_parser_args():
                         default=0,
                         help='Collects data on the spreading of the silent state.')
 
-    # Include barriers
-    parser.add_argument('--barriers',
-                        type=int,
-                        default=0,
-                        help='Includes system barriers.')
-
     # Constants
     parser.add_argument('--constant',
                         type=float,
@@ -189,7 +183,6 @@ cell_division = args.cell_division
 cenH_size = args.cenH_size
 cenH_init_idx = args.cenH_init_idx
 write_cenH_data = args.write_cenH_data
-barriers = args.barriers
 constant = args.constant
 alpha_1 = args.alpha_1
 alpha_1_const = args.alpha_1_const

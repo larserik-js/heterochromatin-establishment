@@ -14,8 +14,8 @@ from formatting import get_project_folder, make_output_directories, edit_stable_
 # Import all parameters
 from parameters import n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed, N,l0, noise, dt,\
                        t_total, stats_t_interval, rms, U_two_interaction_weight, allow_state_change, initial_state,\
-                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers,constant, alpha_1,\
-                       alpha_1_const, alpha_2, beta
+                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, constant, alpha_1, alpha_1_const,\
+                       alpha_2, beta
 
 # Get U_pressure_weight value from rms
 U_pressure_weight = get_pressure.get_pressure(rms)
@@ -25,32 +25,32 @@ U_pressure_weight = get_pressure.get_pressure(rms)
 
 def curied_run(x, run_on_cell, multiprocessing_parameter, N, l0, noise, dt, t_total, U_two_interaction_weight,
                U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, set_seed, min_seed, animate,
-               allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers):
+               allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data):
 
 
     if multiprocessing_parameter == 'seed':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
                 alpha_2, beta, stats_t_interval, set_seed, x, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
+                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
 
     elif multiprocessing_parameter == 'alpha_1':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, x,
                 alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
+                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
 
     elif multiprocessing_parameter == 'rms':
         return run.run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, x, alpha_1,
                 alpha_2, beta, stats_t_interval, set_seed, min_seed, animate, allow_state_change,
-                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, barriers)
+                initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data)
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
 
-def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt, t_total=t_total,
-         U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight, alpha_1=alpha_1,
-         alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
-         animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
-         cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx, write_cenH_data=write_cenH_data,
-         barriers=barriers):
+def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt,
+         t_total=t_total, U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight,
+         alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
+         min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
+         cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
+         write_cenH_data=write_cenH_data):
 
     pathname = get_project_folder(run_on_cell)
 
@@ -89,8 +89,8 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
             # Write the file, and the first two lines
             line_str = f't_total={t_total}' + '\n' + 'silent_t,half_silent_t,n_patches,seed'
             edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                     cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, min_seed,
-                                     line_str, action='w')
+                                          cell_division, N, t_total, noise, alpha_1, alpha_2, beta, min_seed, line_str,
+                                          action='w')
 
         # # Write pressure and RMS values
         # write_name = pathname + 'data/statistics/pressure_RMS_'
@@ -116,7 +116,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
                                     stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed,
                                     animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
                                     cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                                    write_cenH_data=write_cenH_data, barriers=barriers
+                                    write_cenH_data=write_cenH_data
                                     ),
                             parameter_list, chunksize=1
                             )
@@ -131,7 +131,7 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
                                stats_t_interval=stats_t_interval, set_seed=set_seed, min_seed=min_seed, animate=animate,
                                allow_state_change=allow_state_change, initial_state=initial_state,
                                cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-                               write_cenH_data=write_cenH_data, barriers=barriers
+                               write_cenH_data=write_cenH_data
                                ),
                        parameter_list
                        )
@@ -154,6 +154,6 @@ if __name__ == '__main__':
              alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
              min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
              cell_division=cell_division, cenH_size=cenH_size, cenH_init_idx=cenH_init_idx,
-             write_cenH_data=write_cenH_data, barriers=barriers)
+             write_cenH_data=write_cenH_data)
 
 

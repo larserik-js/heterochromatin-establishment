@@ -18,15 +18,13 @@ def get_project_folder(run_on_cell=False):
         pass
     return pathname
 
-def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, barriers, N, t_total, noise, alpha_1,
+def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division, N, t_total, noise, alpha_1,
                           alpha_2, beta, seed, exclude_seed=False):
 
     param_string = f'pressure={U_pressure_weight:.2f}_init_state={initial_state}_'
 
     if cell_division:
         param_string += 'cell_division_'
-    if barriers:
-        param_string += 'barriers_'
 
     param_string += f'cenH={cenH_size}_cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_noise={noise:.4f}'\
                     + f'_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}'
@@ -39,11 +37,11 @@ def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_i
     return param_string
 
 def edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, cenH_size, cenH_init_idx, cell_division,
-                                  barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
+                                  N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
 
     write_name = pathname + 'data/statistics/stable_silent_times/'
     write_name += create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                      cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta,
+                                      cell_division, N, t_total, noise, alpha_1, alpha_2, beta,
                                       seed, exclude_seed=True) + '.txt'
 
     # Append to the file
@@ -51,13 +49,9 @@ def edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, ce
     data_file.write(line_str + '\n')
     data_file.close()
 
-def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed):
-    param_string = ''
+def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta, seed):
 
-    if barriers:
-        param_string += 'barriers, '
-
-    param_string += f'pressure = {U_pressure_weight:.2f}, cenH = {cenH_size}, '\
+    param_string = f'pressure = {U_pressure_weight:.2f}, cenH = {cenH_size}, '\
                     + f'cenH_indices = {cenH_init_idx}...{cenH_init_idx + cenH_size - 1}, '\
                     + r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise:.2f}'\
                     + r'$l_0$' + ', ' + r'$\alpha_1$' + f' = {alpha_1:.5f}, ' + r'$\alpha_2$' + f' = {alpha_2:.5f}, '\

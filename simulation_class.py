@@ -12,7 +12,7 @@ r = np.random
 class Simulation:
     def __init__(self, pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
                  alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
-                 cenH_init_idx, write_cenH_data, barriers):
+                 cenH_init_idx, write_cenH_data):
 
         # Project folder
         self.pathname = pathname
@@ -62,9 +62,6 @@ class Simulation:
         self.cenH_init_idx = cenH_init_idx
         self.cenH_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
         self.write_cenH_data = write_cenH_data
-
-        # Include barriers
-        self.barriers = barriers
 
         ## Initialize system
         self.X = self.initialize_system('quasi-random-pressure')
@@ -203,8 +200,8 @@ class Simulation:
         self.successful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.barriers,
-                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.N,
+                                            self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Nucleosome scatter marker size
         self.NUCLEOSOME_S = 5
 
@@ -217,7 +214,7 @@ class Simulation:
 
         # File
         self.params_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
-                                                   self.cenH_init_idx, self.cell_division, self.barriers, self.N, self.t_total,
+                                                   self.cenH_init_idx, self.cell_division, self.N, self.t_total,
                                                    self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
         # Create figure
         self.fig = plt.figure(figsize=(10,10))
