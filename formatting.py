@@ -65,19 +65,18 @@ def create_plot_title(U_pressure_weight, cenH_size, cenH_init_idx, barriers, N, 
 
     return param_string
 
-def create_directories(pathname):
+# Make one directory, if it does not already exist
+def make_directory(folder_name):
     try:
-        os.mkdir(pathname + 'data')
+        os.mkdir(folder_name)
     except FileExistsError:
         pass
 
-    try:
-        os.mkdir(pathname + 'data/statistics')
-    except FileExistsError:
-        pass
+# Make all output directories before starting simulations
+def make_output_directories(pathname):
+    make_directory(pathname + 'data')
+    make_directory(pathname + 'data/statistics')
+    make_directory(pathname + 'data/animations')
 
     for folder_name in statistics_folder_names:
-        try:
-            os.mkdir(pathname + 'data/statistics/' + folder_name)
-        except FileExistsError:
-            pass
+        make_directory(pathname + 'data/statistics' + folder_name)

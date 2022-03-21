@@ -1,5 +1,5 @@
 import numpy as np
-from formatting import get_project_folder, create_directories
+from formatting import get_project_folder, make_output_directories
 from skopt import forest_minimize, dump
 import main
 from datetime import datetime
@@ -154,7 +154,7 @@ def pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cen
 if __name__ == '__main__':
     # Make necessary directories
     pathname = get_project_folder(run_on_cell)
-    create_directories(pathname)
+    make_output_directories(pathname)
 
     # Iterate
     for rms in rms_values:

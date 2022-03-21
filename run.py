@@ -10,10 +10,7 @@ import time
 from simulation_class import Simulation
 
 # Pathname
-from formatting import get_project_folder, create_param_string
-
-# External animation file
-from animation_class import create_animation_directory
+from formatting import get_project_folder, create_param_string, make_directory
 
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, pathname, filename):
@@ -110,18 +107,20 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             if animate:
                 # Create destination folder for the individual images
                 param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                                   cell_division, barriers, N, t_total, noise, alpha_1, alpha_2, beta, seed)
-                animation_folder = pathname + 'data/animations/' + param_string + '/'
-                create_animation_directory(animation_folder)
+                                                   cell_division, barriers, N, t_total, noise, alpha_1, alpha_2,
+                                                   beta, seed)
 
-                # Iterate
+                animation_folder = pathname + 'data/animations/' + param_string + '/'
+                make_directory(animation_folder)
+
                 # Ensures that a total of 500 images will be created
                 N_IMAGES = 500
                 iterations_per_image = int(t_total / N_IMAGES)
 
                 # Filename formatting
                 image_idx = 0
-
+                
+                # Iterate
                 for t in range(t_total):
                     # Print progress
                     if (t + 1) % (t_total / 10) == 0:
