@@ -118,7 +118,7 @@ class Optimizer:
 rms_values = [2]
 n_processes = 25
 pool_size = 25
-initial_state = 'active'
+initial_state = 'A'
 cenH_init_idx = 16
 N = 40
 t_total = 20000

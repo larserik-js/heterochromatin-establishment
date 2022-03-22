@@ -217,7 +217,7 @@ class Simulation:
 
         # Colors of scatter plot markers
         self.state_colors = ['r', 'y', 'b']
-        self.state_names = ['Silent', 'Unmodified', 'Active']
+        self.state_names = ['S', 'U', 'A']
         # Plot dimensions
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
         self.r_system = r_system
@@ -271,20 +271,20 @@ class Simulation:
         return X
 
     def initialize_states(self):
-        if self.initial_state == 'active':
+        if self.initial_state == 'A':
             states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
-        elif self.initial_state == 'active_unmodified':
+        elif self.initial_state == 'A_U':
             states = 2*torch.ones_like(self.X[:, 0], dtype=torch.int)
 
             change_probs = torch.rand(size=(self.N,))
             change_conditions = change_probs >= 0.5
 
-            # Change selected monomers to unmodified
+            # Change selected monomers to U
             states[change_conditions] = 1
 
-        elif self.initial_state == 'unmodified':
+        elif self.initial_state == 'U':
             states = torch.ones_like(self.X[:, 0], dtype=torch.int)
-        elif self.initial_state == 'unmodified_silent':
+        elif self.initial_state == 'U_S':
             states = torch.ones_like(self.X[:, 0], dtype=torch.int)
 
             change_probs = torch.rand(size=(self.N,))
@@ -293,7 +293,7 @@ class Simulation:
             # Change selected monomers to silent
             states[change_conditions] = 0
 
-        elif self.initial_state == 'silent':
+        elif self.initial_state == 'S':
             states = torch.zeros_like(self.X[:, 0], dtype=torch.int)
 
         else:
@@ -311,7 +311,7 @@ class Simulation:
         # If cenH or ATF1, do not change
         change_conditions[self.const_silent_indices] = 0
 
-        # Change selected monomers to unmodified
+        # Change selected monomers to U
         self.states[change_conditions] = 1
 
         return None
@@ -499,7 +499,7 @@ class Simulation:
                 # Choose one of those monomers randomly
                 n2_index = r.choice(monomers_within_distance)
 
-                # Do nothing if the recruiting monomer is unmodified, or
+                # Do nothing if the recruiting monomer is U, or
                 # if the recruiting monomer is of the same state as the recruited monomer
                 if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
                     recruited_conversion_pair = None
@@ -702,7 +702,7 @@ class Simulation:
                 # Initialize system in space
                 self.X = self.initialize_system(init_system_type='quasi-random-free')
                 self.X_tilde = self.get_X_tilde()
-                # Change (on average) half the states to unmodified
+                # Change (on average) half the states to U
                 self.states_after_cell_division()
 
         # For update of monomers of even and odd indices, plus the monomers at each end of the chain

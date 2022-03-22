@@ -43,7 +43,7 @@ class Plots:
         self.seed = plot_seed
 
         self.state_colors = ['r', 'y', 'b']
-        self.state_names = ['Silent', 'Unmodified', 'Active']
+        self.state_names = ['S', 'U', 'A']
 
         self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,

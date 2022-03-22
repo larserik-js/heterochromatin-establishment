@@ -113,7 +113,7 @@ def get_parser_args():
     # Initial polymer state
     parser.add_argument('--initial_state',
                         type=str,
-                        default='active',
+                        default='A',
                         help='The initial polymer state.')
 
     # Allow cell division
