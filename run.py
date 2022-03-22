@@ -103,7 +103,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                                  cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
-            param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+            param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
                                                cell_division, N, t_total, noise, alpha_1, alpha_2,
                                                beta, seed)
 

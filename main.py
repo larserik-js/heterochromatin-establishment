@@ -90,8 +90,8 @@ def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l
             # Write the file, and the first two lines
             line_str = f't_total={t_total}' + '\n' + 'silent_t,half_silent_t,n_patches,seed'
             edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
-                                          cell_division, N, t_total, noise, alpha_1, alpha_2, beta, min_seed, line_str,
-                                          action='w')
+                                          ATF1_idx, cell_division, N, t_total, noise, alpha_1, alpha_2, beta, min_seed,
+                                          line_str, action='w')
 
         # # Write pressure and RMS values
         # write_name = pathname + 'data/statistics/pressure_RMS_'

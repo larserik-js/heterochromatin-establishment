@@ -209,8 +209,9 @@ class Simulation:
         self.successful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.N,
-                                            self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                            self.seed)
         # Nucleosome scatter marker size
         self.NUCLEOSOME_S = 5
 
@@ -223,8 +224,9 @@ class Simulation:
 
         # File
         self.params_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
-                                                   self.cenH_init_idx, self.cell_division, self.N, self.t_total,
-                                                   self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+                                                   self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                   self.seed)
         # Create figure
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')

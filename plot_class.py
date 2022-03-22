@@ -19,7 +19,7 @@ from formatting import get_project_folder, create_param_string, create_plot_titl
 
 class Plots:
     def __init__(self, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size,
-                 plot_cenH_sizes, plot_cenH_init_idx, plot_cell_division, plot_N, plot_t_total,
+                 plot_cenH_sizes, plot_cenH_init_idx, plot_ATF1_idx, plot_cell_division, plot_N, plot_t_total,
                  plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
     
         # Project folder
@@ -31,6 +31,7 @@ class Plots:
         self.cenH_size = plot_cenH_size
         self.cenH_sizes = plot_cenH_sizes
         self.cenH_init_idx = plot_cenH_init_idx
+        self.ATF1_idx = plot_ATF1_idx
         self.cell_division = plot_cell_division
         self.N = plot_N
         self.t_total = plot_t_total
@@ -45,10 +46,13 @@ class Plots:
         self.state_names = ['Silent', 'Unmodified', 'Active']
 
         self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
-                                                  self.cenH_init_idx, self.cell_division, self.N, self.t_total,
-                                                  self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.N,
-                                            self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta, self.seed)
+                                                  self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+                                                  self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                  self.seed)
+
+        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                            self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 

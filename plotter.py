@@ -4,14 +4,15 @@ from plot_class import Plots
 plot_cell_division = False
 
 plot_n_processes = 100
-plot_U_pressure_weight = 1e-8
+plot_U_pressure_weight = 0.17
 plot_stats_interval = 100
 
 plot_cenH_size = 0
 plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
+plot_ATF1_idx = 30
 plot_N = 40
-plot_t_total = 20000
+plot_t_total = 10000
 plot_noise = 0.5
 
 initial_states = ['active', 'active_unmodified', 'unmodified', 'unmodified_silent', 'silent']
@@ -25,7 +26,7 @@ plot_seed = 0
 
 plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
                  plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
-                 plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx,
+                 plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx, plot_ATF1_idx=plot_ATF1_idx,
                  plot_cell_division=plot_cell_division, plot_N=plot_N, plot_t_total=plot_t_total, plot_noise=plot_noise,
                  plot_initial_state=plot_initial_state, plot_alpha_1=plot_alpha_1, plot_alpha_2=plot_alpha_2,
                  plot_beta=plot_beta, plot_seed=plot_seed)
@@ -45,7 +46,7 @@ plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_
 #plot_obj.plot_states()
 
 # Plot states in time and space
-#plot_obj.plot_states_time_space()
+plot_obj.plot_states_time_space()
 
 # Plot end-to-end distance R
 #plot_obj.plot_Rs()
