@@ -433,12 +433,15 @@ class Simulation:
 
     # DISTANCE-BASED interaction potential
     def interaction_potential(self):
-        # Only calculate on interacting nucleosomes within the interaction distance
-
-        mask_two_cutoff = (self.interaction_mask_two & (self.norms_all < self.potential_cutoff)).double()
+        # Apply to nucleosomes within the interaction distance,
+        # and not within the nearest-neighbor distance
         mask_all_cutoff = (self.wide_diag_zeros_bool & (self.norms_all < self.potential_cutoff)).double()
-
+        # Repulsive term of potential
         U_interaction = torch.exp(-2 * self.norms_all / self.r0) * mask_all_cutoff
+
+        # Apply only to nucleosomes with a physical attractive interaction
+        mask_two_cutoff = (self.interaction_mask_two & (self.norms_all < self.potential_cutoff)).double()
+        # Attractive term of potential
         U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
 
         return self.U_two_interaction_weight * torch.sum(U_interaction)
@@ -473,18 +476,17 @@ class Simulation:
 
     @staticmethod
     @njit
-    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, cenH_size, const_silent_indices):
+    def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, const_silent_indices):
 
         # Particle on which to attempt a change
         n1_index = r.randint(N)
 
-        # Does not change the cenH region
-        if (cenH_size > 0) and (n1_index in const_silent_indices):
+        # Does not change the cenH region or the ATF1
+        if n1_index in const_silent_indices:
             recruited_conversion_pair = None
             recruited_conversion_dist = None
-            pass
 
-        # If the nucleosome is not part of the cenH region
+        # The chosen particle is not part of the cenH region or the ATF1
         else:
             # Recruited conversion
             # Other particles within distance
@@ -502,7 +504,6 @@ class Simulation:
                 if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
                     recruited_conversion_pair = None
                     recruited_conversion_dist = None
-                    pass
 
                 # Recruited conversion takes place
                 else:
@@ -512,37 +513,33 @@ class Simulation:
                             states[n1_index] += 1
                         else:
                             recruited_conversion_pair = None
-                            pass
+
                     elif states[n1_index] > states[n2_index]:
                         if r.rand() < alpha_1:
                             recruited_conversion_pair = (states[n1_index], states[n2_index])
                             states[n1_index] -= 1
                         else:
                             recruited_conversion_pair = None
-                            pass
                     else:
                         raise AssertionError('Something is wrong in the change_states function!')
 
                     # The distance (in terms of indexed position in the chain) between the nucleosomes in the conversion
                     recruited_conversion_dist = np.abs(n1_index - n2_index)
 
-            # No particles within l_interacting
-            # No recruited conversion
+            # No recruited conversion, due to no particles within l_interacting
             else:
                 recruited_conversion_pair = None
                 recruited_conversion_dist = None
-                pass
 
         # Noisy conversion
-        # Choose new random particle
+        # Particle on which to attempt a change
         n1_index = r.randint(N)
 
-        # Does not change the cenH region
-        if (cenH_size > 0) and (n1_index in const_silent_indices):
+        # Does not change the cenH region or the ATF1
+        if n1_index in const_silent_indices:
             noisy_conversion_idx = None
-            pass
 
-        # The chosen nucleosome is not in the cenH region
+        # The chosen particle is not part of the cenH region or the ATF1
         else:
             if r.rand() < beta:
                 # If the particle is in the S state
@@ -560,7 +557,6 @@ class Simulation:
                         noisy_conversion_idx = 2
                     else:
                         noisy_conversion_idx = None
-
 
                 # If the particle is in the U state
                 elif states[n1_index] == 1:
@@ -587,13 +583,12 @@ class Simulation:
 
         return states, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx
 
-
     # Changes the nucleosome states based on probability
     def change_states(self):
         # Numpy array
         states_numpy, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx = self._change_states(
                                         self.N, self.states.numpy(), self.norms_all.detach().numpy(),
-                                        self.l_interacting, self.alpha_1, self.alpha_2, self.beta, self.cenH_size,
+                                        self.l_interacting, self.alpha_1, self.alpha_2, self.beta,
                                         self.const_silent_indices.numpy())
 
         # Update the number of successful recruited conversions
