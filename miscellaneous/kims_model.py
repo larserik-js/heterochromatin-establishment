@@ -6,7 +6,7 @@ from timeit import default_timer as DT
 r = np.random
 
 N_STATES = 3
-N_PARTICLES = 60
+N_MONOMERS = 60
 t_total = 40000
 #alpha = 0.58
 alpha=0.59
@@ -17,18 +17,18 @@ SCATTER_S = 0.1
 
 state_names = {0: 'M', 1: 'U', 2: 'A'}
 
-def f(N_STATES, N_PARTICLES, t_total, alpha, beta):
+def f(N_STATES, N_MONOMERS, t_total, alpha, beta):
     t_initial = DT()
 
-    #states = r.randint(N_STATES, size=N_PARTICLES)
-    states = np.zeros(N_PARTICLES, dtype=int)
+    #states = r.randint(N_STATES, size=N_MONOMERS)
+    states = np.zeros(N_MONOMERS, dtype=int)
     states[20:40] = 1
     states[40:] = 2
     print(states)
     ts = np.arange(t_total)
     statistics = np.empty((3, t_total))
 
-    statistics = numba_f(states, N_PARTICLES, t_total, alpha, beta, statistics)
+    statistics = numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics)
 
     print(f'Time elapsed: {DT() - t_initial:.2f} s')
 
@@ -36,24 +36,24 @@ def f(N_STATES, N_PARTICLES, t_total, alpha, beta):
 
 
 @njit
-def numba_f(states, N_PARTICLES, t_total, alpha, beta, statistics):
+def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
     for t in range(t_total):
         if t % (t_total / 10) == 0:
             print(t)
-        for i in range(N_PARTICLES):
+        for i in range(N_MONOMERS):
 
-            # Particle on which to attempt a change
-            n1_index = r.randint(N_PARTICLES)
+            # Monomer on which to attempt a change
+            n1_index = r.randint(N_MONOMERS)
 
             # Recruited conversion
             rand_alpha = r.rand()
             if rand_alpha < alpha:
                 #print('Recruited')
                 #print(rand_alpha)
-                # Other particle
-                # Ensure that it is a different particle
+                # Other monomer
+                # Ensure that it is a different monomer
                 while True:
-                    n2_index = r.randint(N_PARTICLES)
+                    n2_index = r.randint(N_MONOMERS)
                     if n2_index != n1_index:
                         break
 
@@ -91,8 +91,8 @@ def numba_f(states, N_PARTICLES, t_total, alpha, beta, statistics):
     return statistics
 
 
-def run(N_STATES, N_PARTICLES, t_total, alpha, beta, SCATTER_S):
-        ts, statistics = f(N_STATES, N_PARTICLES, t_total, alpha, beta)
+def run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
+        ts, statistics = f(N_STATES, N_MONOMERS, t_total, alpha, beta)
 
         fig,ax = plt.subplots(figsize=(8,6))
 
@@ -106,4 +106,4 @@ def run(N_STATES, N_PARTICLES, t_total, alpha, beta, SCATTER_S):
         ax.legend(loc='best')
         plt.show()
 
-run(N_STATES, N_PARTICLES, t_total, alpha, beta, SCATTER_S)
+run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S)

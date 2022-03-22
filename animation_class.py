@@ -55,7 +55,7 @@ class Animation:
             x_plot = X[self.sim_obj.states_booleans[i]]
             y_plot = Y[self.sim_obj.states_booleans[i]]
             z_plot = Z[self.sim_obj.states_booleans[i]]
-            self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.nucleosome_s, c=self.sim_obj.state_colors[i],
+            self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.MONOMER_SIZE, c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
         # # Plot center of mass

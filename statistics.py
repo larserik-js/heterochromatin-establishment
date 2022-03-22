@@ -16,7 +16,7 @@ def update_dist_vecs_to_com(sim_obj):
 
     if t%interval == 0:
         t_idx = int(t/interval)
-        # The distance from each individual nucleosome to the center of mass
+        # The distance from each individual monomer to the center of mass
         sim_obj.dist_vecs_to_com[t_idx] = sim_obj.X - sim_obj.center_of_mass
 
     return None
@@ -90,10 +90,10 @@ def update_interaction_stats(sim_obj):
     sim_obj.interaction_idx_difference += torch.bincount(interaction_distances, minlength=sim_obj.N)
 
     # Average lifetimes
-    # If two nucleosomes are (still) interacting, add 1 to the running lifetimes
+    # If two monomers are (still) interacting, add 1 to the running lifetimes
     sim_obj.running_lifetimes[interaction_indices_i, interaction_indices_j] += 1
 
-    # If two nucleosomes are no longer interacting, reset the running lifetime, and count the reset
+    # If two monomers are no longer interacting, reset the running lifetime, and count the reset
     reset_condition = (sim_obj.previous_interaction_mask & torch.logical_not(interaction_condition) & sim_obj.mask_upper)
     reset_indices_i, reset_indices_j = torch.where(reset_condition)[0], torch.where(reset_condition)[1]
 
@@ -132,13 +132,13 @@ def update_states_time_space(sim_obj):
 
     return None
 
-# For each nucleosome, measures the time it takes for the distance vector to the center of mass to
+# For each monomer, measures the time it takes for the distance vector to the center of mass to
 # rotate more than 90 degrees
 def update_correlation_times(sim_obj):
-    # Current distance vectors from the nucleosomes to the center of mass
+    # Current distance vectors from the monomers to the center of mass
     distance_vecs_to_com = sim_obj.center_of_mass - sim_obj.X
 
-    # The dot product of the initial and current distance vectors from each nucleosome to the center of mass
+    # The dot product of the initial and current distance vectors from each monomer to the center of mass
     dot_products = torch.sum(sim_obj.init_dist_vecs_to_com * distance_vecs_to_com, dim=1)
 
     # Adds the current time the first time the dot product goes below 0
@@ -199,7 +199,7 @@ def _gather_statistics(sim_obj):
         # Update R
         #update_Rs(sim_obj)
 
-        # Count number of particles in each state
+        # Count number of monomers in each state
         #update_states(sim_obj)
         update_states_time_space(sim_obj)
 

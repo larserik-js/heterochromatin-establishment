@@ -247,7 +247,7 @@ class Plots:
             for j in range(len(self.state_names)):
                 ax.plot(ts, state_statistics[j], lw=LINEWIDTH, c=self.state_colors[j], label=self.state_names[j])
 
-        self.format_plot(ax, xlabel='Time-step', ylabel='No. of nucleosomes')
+        self.format_plot(ax, xlabel='Time-step', ylabel='No. of monomers')
         plt.show()
 
     def plot_states_time_space(self):
@@ -292,10 +292,10 @@ class Plots:
         cmap = colors.ListedColormap(self.state_colors)
         ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
         self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * INTERNAL_STATS_INTERVAL}',
-                         ylabel='Nucleosome no.')
+                         ylabel='Monomer no.')
 
         #ax.set_xlabel('Time-steps / 2000', size=12)
-        #ax.set_ylabel('Nucleosome no.', size=12)
+        #ax.set_ylabel('Monomer no.', size=12)
         plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2, borderaxespad=0.)
 
         plt.show()
@@ -461,7 +461,7 @@ class Plots:
             with open(files[i], 'rb') as f:
                 correlation_times = pickle.load(f)[0]
                 ax.bar(np.arange(self.N), correlation_times)
-        self.format_plot(ax, xlabel='Nucleosome index', ylabel='Correlation time / ' + r'$t_{total}$')
+        self.format_plot(ax, xlabel='Monomer index', ylabel='Correlation time / ' + r'$t_{total}$')
 
         fig.tight_layout()
         plt.show()

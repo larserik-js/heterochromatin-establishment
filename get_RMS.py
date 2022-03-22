@@ -21,10 +21,10 @@ def get_rms(X):
     # Center-of-mass
     center_of_mass = torch.sum(X, dim=0) / N
 
-    # All distance vectors from the nucleosomes to the center of mass
+    # All distance vectors from the monomers to the center of mass
     dist_vecs_to_com = X - center_of_mass
 
-    # Distances from the nucleosomes to the center of mass
+    # Distances from the monomers to the center of mass
     dist_to_com = torch.norm(dist_vecs_to_com, dim=1)
 
     # RMS

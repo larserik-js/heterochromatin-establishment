@@ -54,11 +54,11 @@ def get_parser_args():
                         help='Random seed for Pytorch, Numpy and Numba. '\
                               'The minimum value if multiple values are used.')
 
-    # No. of nucleosomes
+    # No. of monomers
     parser.add_argument('--N',
                         type=int,
                         default=40,
-                        help='The number of nucleosomes in the system.')
+                        help='The number of monomers in the system.')
 
     # Equilibrium spring length
     parser.add_argument('--l0',
@@ -100,7 +100,7 @@ def get_parser_args():
     parser.add_argument('--rms',
                         type=float,
                         default=1.0,
-                        help='The root-mean-square of the distances of the nucleosomes to the center-of-mass. '\
+                        help='The root-mean-square of the distances of the monomers to the center-of-mass. '\
                              + ' This value translates directly into a U_pressure_weight value.')
 
     ## State parameters
@@ -108,13 +108,13 @@ def get_parser_args():
     parser.add_argument('--allow_state_change',
                         type=int,
                         default=1,
-                        help='Enables the nucleosome states to change.')
+                        help='Enables the monomer states to change.')
 
-    # List of initial state types
+    # Initial polymer state
     parser.add_argument('--initial_state',
                         type=str,
                         default='active',
-                        help='The initial nucleosome state.')
+                        help='The initial polymer state.')
 
     # Allow cell division
     parser.add_argument('--cell_division',
@@ -131,7 +131,7 @@ def get_parser_args():
     parser.add_argument('--cenH_init_idx',
                         type=int,
                         default=16,
-                        help='The index of the first nucleosome of the cenH region.')
+                        help='The index of the first monomer of the cenH region.')
 
     parser.add_argument('--write_cenH_data',
                         type=int,
@@ -139,12 +139,12 @@ def get_parser_args():
                         help='Collects data on the spreading of the silent state.')
 
     # ATF1
-    # The position of a single silent nucleosome
+    # The position of a single silent monomer
     parser.add_argument('--ATF1_idx',
                         type=none_or_int,
                         default=None,
                         help='The index of the position of the ATF1 protein. '\
-                             + 'For the purpose of this script it is realized as one constantly silent nucleosome. '\
+                             + 'For the purpose of this script it is realized as one constantly silent monomer. '\
                              + 'The default values is "None", which results in no ATF1.')
 
     # Constants

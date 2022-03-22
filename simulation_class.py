@@ -18,7 +18,7 @@ class Simulation:
         self.pathname = pathname
 
         ## Parameters
-        # No. of nucleosomes
+        # No. of monomers
         self.N = N
         # N must be even
         if self.N % 2 != 0:
@@ -65,7 +65,7 @@ class Simulation:
         # Include ATF1
         self.ATF1_idx = ATF1_idx
 
-        # Constantly silent nucleosomes
+        # Constantly silent monomers
         # Includes the cenH region and the ATF1
         self.const_silent_indices = torch.arange(self.cenH_init_idx, self.cenH_init_idx + self.cenH_size)
 
@@ -78,7 +78,7 @@ class Simulation:
         # Half the chain length
         r_system = self.l0 * self.N / 2
 
-        # Index types to determine which nucleosomes to update
+        # Index types to determine which monomers to update
         self.index_types = ['even', 'odd', 'endpoints']
 
         # Vectors for picking out different indices
@@ -94,13 +94,13 @@ class Simulation:
         self.m_even, self.m_odd = m_even[:,None], m_odd[:,None]
         self.indexation_dict = {'even': m_even.bool(), 'odd': m_odd.bool(), 'endpoints': [0,-1]}
 
-        # Points in the middle between the two neighboring particles
+        # Points in the middle between the two neighboring monomers
         self.X_tilde = self.get_X_tilde()
 
         # Rotation vectors
         self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()
 
-        # Angles for nucleosomes
+        # Angles for monomers
         self.theta_zeros = self.get_theta_zeros()
         self.thetas = self.get_theta_zeros()
 
@@ -115,7 +115,7 @@ class Simulation:
         # All states
         self.states = self.initialize_states()
 
-        # Pick out the nucleosomes of the different states
+        # Pick out the monomers of the different states
         self.state_S = (self.states==0)
         self.state_U = (self.states==1)
         self.state_A = (self.states==2)
@@ -126,7 +126,7 @@ class Simulation:
         self.state_two_interaction = copy.deepcopy(self.state_S)
         self.state_unreactive = self.state_U | self.state_A
 
-        ## Distance vectors from all particles to all particles
+        ## Distance vectors from all monomers to all monomers
         self.rij_all, self.norms_all = self.get_norms()
 
         # (N,N) tensor with zeros along the diagonal and both off-diagonals
@@ -141,14 +141,14 @@ class Simulation:
         # Same tensor with dtypes boolean
         self.wide_diag_zeros_bool = self.wide_diag_zeros.bool()
 
-        # Picks out nucleosomes that are allowed to interact with each other
+        # Picks out monomers that are allowed to interact with each other
         self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
 
         # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
         self.r0 = self.l0 / 2
 
-        # Particles within the following distance are counted for statistics
+        # Monomers within the following distance are counted for statistics
         self.l_interacting = 4 * self.r0
 
         # Regulate the potential function
@@ -163,7 +163,7 @@ class Simulation:
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         self.init_center_of_mass = torch.sum(self.X, dim=0) / self.N
 
-        # All distance vectors from the nucleosomes to the center of mass
+        # All distance vectors from the monomers to the center of mass
         self.dist_vecs_to_com = torch.empty(size=(int(self.t_total / stats_t_interval), self.N, 3))
         self.dist_vecs_to_com[0] = self.X - self.center_of_mass
         self.init_dist_vecs_to_com = self.dist_vecs_to_com[0]
@@ -199,7 +199,7 @@ class Simulation:
         self.n_silent_patches = None
         # System in overall silent state
         self.stable_silent = False
-        # Counts the number of particles in the different states
+        # Counts the number of monomers in the different states
         self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / stats_t_interval)))
 
         self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
@@ -212,8 +212,8 @@ class Simulation:
         self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
                                             self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
                                             self.seed)
-        # Nucleosome scatter marker size
-        self.NUCLEOSOME_S = 5
+        # Monomer scatter marker size
+        self.MONOMER_SIZE = 5
 
         # Colors of scatter plot markers
         self.state_colors = ['r', 'y', 'b']
@@ -263,7 +263,7 @@ class Simulation:
         elif init_system_type == 'stretched':
             xs = torch.from_numpy(np.linspace(-(self.N - 1) / 2, (self.N - 1) / 2, self.N) * self.l0)
             ys, zs = torch.from_numpy(np.zeros(self.N)), torch.from_numpy(np.zeros(self.N))
-            # Nucleosome positions
+            # Monomer positions
             X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
         else:
             raise AssertionError("Invalid system type given in function 'initialize_system'!")
@@ -279,7 +279,7 @@ class Simulation:
             change_probs = torch.rand(size=(self.N,))
             change_conditions = change_probs >= 0.5
 
-            # Change selected nucleosomes to unmodified
+            # Change selected monomers to unmodified
             states[change_conditions] = 1
 
         elif self.initial_state == 'unmodified':
@@ -290,7 +290,7 @@ class Simulation:
             change_probs = torch.rand(size=(self.N,))
             change_conditions = change_probs >= 0.5
 
-            # Change selected nucleosomes to silent
+            # Change selected monomers to silent
             states[change_conditions] = 0
 
         elif self.initial_state == 'silent':
@@ -299,7 +299,7 @@ class Simulation:
         else:
             raise AssertionError('Invalid initial state given!')
 
-        # Set cenH and ATF1 nucleosomes to silent
+        # Set cenH and ATF1 monomers to silent
         states[self.const_silent_indices] = 0
 
         return states
@@ -311,7 +311,7 @@ class Simulation:
         # If cenH or ATF1, do not change
         change_conditions[self.const_silent_indices] = 0
 
-        # Change selected nucleosomes to unmodified
+        # Change selected monomers to unmodified
         self.states[change_conditions] = 1
 
         return None
@@ -322,7 +322,7 @@ class Simulation:
         self.state_two_interaction = copy.deepcopy(self.state_S)
         self.state_unreactive = self.state_U | self.state_A
 
-    # Picks out nucleosomes that are allowed to interact with each other
+    # Picks out monomers that are allowed to interact with each other
     def get_interaction_mask(self):
         # Transform torch tensors to numpy array
         norms_all = self.norms_all.detach().numpy()
@@ -344,10 +344,10 @@ class Simulation:
     @staticmethod
     @njit
     def _mask_calculator(norms_all, state_two_interaction, i_idx, j_idx, N_ALLOWED_INTERACTIONS):
-        # Total number of nucleosomes
+        # Total number of monomers
         N = len(norms_all)
 
-        # Shows which nucleosomes interact with which
+        # Shows which monomers interact with which
         interaction_mask_two = np.zeros(norms_all.shape, dtype=np.bool_)
 
         # Sort distances
@@ -355,7 +355,7 @@ class Simulation:
         i_idx = i_idx.flatten()[sort_idx]
         j_idx = j_idx.flatten()[sort_idx]
 
-        # Counts no. of interactions per nucleosome
+        # Counts no. of interactions per monomer
         n_interactions = np.zeros(N, dtype=np.uint8)
         # For stopping criterion
         has_not_counted = np.ones(N, dtype=np.bool_)
@@ -368,22 +368,22 @@ class Simulation:
             i = i_idx[k]
             j = j_idx[k]
 
-            # Checks if both nucleosomes are of the same (interacting) state
+            # Checks if both monomers are of the same (interacting) state
             two_interaction = state_two_interaction[i] and state_two_interaction[j]
 
             # Only S states can interact
             if not two_interaction:
                 continue
 
-            # If the nucleosomes are the same or nearest neighbors
+            # If the monomers are the same or nearest neighbors
             if i == j or i == j+1 or i == j-1:
                 continue
 
-            # If there already exists an interaction between the two nucleosomes
+            # If there already exists an interaction between the two monomers
             if interaction_mask_two[i,j] and interaction_mask_two[j,i]:
                 continue
 
-            # Two-interaction state nucleosomes can only interact with max. 2 other nucleosomes
+            # Two-interaction state monomers can only interact with max. 2 other monomers
             if n_interactions[i] >= N_ALLOWED_INTERACTIONS or n_interactions[j] >= N_ALLOWED_INTERACTIONS:
                 continue
 
@@ -433,13 +433,13 @@ class Simulation:
 
     # DISTANCE-BASED interaction potential
     def interaction_potential(self):
-        # Apply to nucleosomes within the interaction distance,
+        # Apply to monomers within the interaction distance,
         # and not within the nearest-neighbor distance
         mask_all_cutoff = (self.wide_diag_zeros_bool & (self.norms_all < self.potential_cutoff)).double()
         # Repulsive term of potential
         U_interaction = torch.exp(-2 * self.norms_all / self.r0) * mask_all_cutoff
 
-        # Apply only to nucleosomes with a physical attractive interaction
+        # Apply only to monomers with a physical attractive interaction
         mask_two_cutoff = (self.interaction_mask_two & (self.norms_all < self.potential_cutoff)).double()
         # Attractive term of potential
         U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
@@ -478,7 +478,7 @@ class Simulation:
     @njit
     def _change_states(N, states, norms_all, l_interacting, alpha_1, alpha_2, beta, const_silent_indices):
 
-        # Particle on which to attempt a change
+        # Monomer on which to attempt a change
         n1_index = r.randint(N)
 
         # Does not change the cenH region or the ATF1
@@ -486,21 +486,21 @@ class Simulation:
             recruited_conversion_pair = None
             recruited_conversion_dist = None
 
-        # The chosen particle is not part of the cenH region or the ATF1
+        # The chosen monomer is not part of the cenH region or the ATF1
         else:
             # Recruited conversion
-            # Other particles within distance
-            particles_within_distance = \
+            # Other monomers within distance
+            monomers_within_distance = \
             np.where((norms_all[n1_index] <= l_interacting) & (norms_all[n1_index] != 0))[0]
 
-            # If there are other particles within l_interacting
-            if len(particles_within_distance) > 0:
+            # If there are other monomers within l_interacting
+            if len(monomers_within_distance) > 0:
 
-                # Choose one of those particles randomly
-                n2_index = r.choice(particles_within_distance)
+                # Choose one of those monomers randomly
+                n2_index = r.choice(monomers_within_distance)
 
-                # Do nothing if the recruiting nucleosome is unmodified, or
-                # if the recruiting nucleosome is of the same state as the recruited nucleosome
+                # Do nothing if the recruiting monomer is unmodified, or
+                # if the recruiting monomer is of the same state as the recruited monomer
                 if states[n2_index] == 1 or states[n1_index] == states[n2_index]:
                     recruited_conversion_pair = None
                     recruited_conversion_dist = None
@@ -523,26 +523,26 @@ class Simulation:
                     else:
                         raise AssertionError('Something is wrong in the change_states function!')
 
-                    # The distance (in terms of indexed position in the chain) between the nucleosomes in the conversion
+                    # The distance (in terms of indexed position in the chain) between the monomers in the conversion
                     recruited_conversion_dist = np.abs(n1_index - n2_index)
 
-            # No recruited conversion, due to no particles within l_interacting
+            # No recruited conversion, due to no monomers within l_interacting
             else:
                 recruited_conversion_pair = None
                 recruited_conversion_dist = None
 
         # Noisy conversion
-        # Particle on which to attempt a change
+        # Monomer on which to attempt a change
         n1_index = r.randint(N)
 
         # Does not change the cenH region or the ATF1
         if n1_index in const_silent_indices:
             noisy_conversion_idx = None
 
-        # The chosen particle is not part of the cenH region or the ATF1
+        # The chosen monomer is not part of the cenH region or the ATF1
         else:
             if r.rand() < beta:
-                # If the particle is in the S state
+                # If the monomer is in the S state
                 if states[n1_index] == 0:
                     if r.rand() < alpha_2:
                         states[n1_index] = 1
@@ -550,7 +550,7 @@ class Simulation:
                     else:
                         noisy_conversion_idx = None
 
-                # If the particle is in the A state
+                # If the monomer is in the A state
                 elif states[n1_index] == 2:
                     if r.rand() < alpha_1:
                         states[n1_index] = 1
@@ -558,7 +558,7 @@ class Simulation:
                     else:
                         noisy_conversion_idx = None
 
-                # If the particle is in the U state
+                # If the monomer is in the U state
                 elif states[n1_index] == 1:
                     # Used to determine if the state should change to S or A
                     symmetric_rand = r.rand()
@@ -583,7 +583,7 @@ class Simulation:
 
         return states, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx
 
-    # Changes the nucleosome states based on probability
+    # Changes the monomer states based on probability
     def change_states(self):
         # Numpy array
         states_numpy, recruited_conversion_pair, recruited_conversion_dist, noisy_conversion_idx = self._change_states(
@@ -632,14 +632,14 @@ class Simulation:
     def get_theta_zeros(self):
         return torch.zeros(self.N)[:, None]
 
-    # For each nucleosome except endpoint nucleosomes
+    # For each monomer except endpoint monomers
     # The distance between its two neighbors
     def get_d_between_neighbors(self):
         d_between_neighbors = torch.zeros_like(self.X)
         d_between_neighbors[1:-1] = self.X[2:] - self.X[:-2]
         return d_between_neighbors
 
-    # For each nucleosome except endpoint nucleosomes
+    # For each monomer except endpoint monomers
     # The point exactly between its two neighbors
     def get_X_tilde(self):
         d_between_neighbors = self.get_d_between_neighbors()
@@ -651,7 +651,7 @@ class Simulation:
     def get_rot_vectors(self):
         d_between_neighbors = self.get_d_between_neighbors()
 
-        # Rotation vector for each particle
+        # Rotation vector for each monomer
         rot_vector = self.X - self.X_tilde
         # Radius of rotation
         rot_radius = torch.norm(rot_vector, dim=1)
@@ -680,11 +680,11 @@ class Simulation:
 
         return X_theta
 
-    # For all nucleosomes
-    # The normalized distance vectors to all other nucleosomes
+    # For all monomers
+    # The normalized distance vectors to all other monomers
     # As well as the length of these distances
     def get_norms(self):
-        # Distance vectors from all particles to all particles
+        # Distance vectors from all monomers to all monomers
         rij_all = self.X - self.X[:, None, :]
 
         # Length of distances
@@ -705,7 +705,7 @@ class Simulation:
                 # Change (on average) half the states to unmodified
                 self.states_after_cell_division()
 
-        # For update of nucleosomes of even and odd indices, plus the nucleosomes at each end of the chain
+        # For update of monomers of even and odd indices, plus the monomers at each end of the chain
         for index_type in self.index_types:
             # Set index type for the update
             self.index_type = index_type
@@ -852,7 +852,7 @@ class Simulation:
             y_plot = Y[self.states_booleans[i]]
             z_plot = Z[self.states_booleans[i]]
 
-            self.ax.scatter(x_plot, y_plot, z_plot, s=self.NUCLEOSOME_S, c=self.state_colors[i],
+            self.ax.scatter(x_plot, y_plot, z_plot, s=self.MONOMER_SIZE, c=self.state_colors[i],
                                  label=self.state_names[i])
 
         # Set plot dimensions
