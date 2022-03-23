@@ -3,8 +3,8 @@ from plot_class import Plots
 # Plot parameters
 plot_cell_division = False
 
-plot_n_processes = 100
-plot_U_pressure_weight = 0.17
+plot_n_processes = 25
+plot_U_pressure_weight = 0.168
 plot_stats_interval = 100
 
 plot_cenH_size = 8
@@ -12,7 +12,7 @@ plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_ATF1_idx = 30
 plot_N = 40
-plot_t_total = 10000
+plot_t_total = 20000
 plot_noise = 0.5
 
 initial_states = ['A', 'A_U', 'U', 'U_S', 'S']
@@ -46,7 +46,7 @@ plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_
 #plot_obj.plot_states()
 
 # Plot states in time and space
-plot_obj.plot_states_time_space()
+#plot_obj.plot_states_time_space()
 
 # Plot end-to-end distance R
 #plot_obj.plot_Rs()
@@ -69,4 +69,4 @@ plot_obj.plot_states_time_space()
 
 #plot_obj.plot_optimization()
 
-#plot_obj.plot_res()
+plot_obj.plot_res()

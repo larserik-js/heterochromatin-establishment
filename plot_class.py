@@ -23,6 +23,8 @@ class Plots:
         self.project_dir = get_project_dir()
         self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
 
+        print(self.plot_data_dir)
+
         self.n_processes = plot_n_processes
         self.U_pressure_weight = plot_U_pressure_weight
         self.stats_interval = plot_stats_interval
@@ -703,6 +705,8 @@ class Plots:
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl'
+
+        print(open_filename)
 
         # Load file (using Skopt function)
         res = load(open_filename)

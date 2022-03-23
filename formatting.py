@@ -12,7 +12,7 @@ def get_output_dir(project_dir, run_on_cell=False):
     if run_on_cell:
         output_dir = project_dir + '../../../nbicmplx/cell/zfj803/output/'
     else:
-        output_dir = project_dir + '/output/'
+        output_dir = project_dir + 'output/'
 
     return output_dir
 
