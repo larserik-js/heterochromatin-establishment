@@ -125,7 +125,6 @@ class Simulation:
 
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
-        self.state_unreactive = self.state_U | self.state_A
 
         ## Distance vectors from all monomers to all monomers
         self.rij_all, self.norms_all = self.get_norms()
@@ -143,7 +142,7 @@ class Simulation:
         self.wide_diag_zeros_bool = self.wide_diag_zeros.bool()
 
         # Picks out monomers that are allowed to interact with each other
-        self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
+        self.interaction_mask_two = self.get_interaction_mask()
 
         # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
@@ -321,7 +320,6 @@ class Simulation:
     def update_interaction_types(self):
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
-        self.state_unreactive = self.state_U | self.state_A
 
     # Picks out monomers that are allowed to interact with each other
     def get_interaction_mask(self):
@@ -337,10 +335,7 @@ class Simulation:
         # Change from Numpy array to Torch tensor
         interaction_mask_two = torch.from_numpy(interaction_mask_two)
 
-        # Construct the mask for unreactive states
-        interaction_mask_unreactive = torch.logical_not(interaction_mask_two) & self.wide_diag_zeros_bool
-
-        return interaction_mask_two, interaction_mask_unreactive
+        return interaction_mask_two
 
     @staticmethod
     @njit
@@ -797,7 +792,7 @@ class Simulation:
 
             # Create new interaction mask
             # This mask does NOT include the distance requirement for interactions
-            self.interaction_mask_two, self.interaction_mask_unreactive = self.get_interaction_mask()
+            self.interaction_mask_two = self.get_interaction_mask()
 
             # Gather statistics
             self.gather_statistics()
