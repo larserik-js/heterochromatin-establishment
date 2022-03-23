@@ -18,6 +18,12 @@ def get_parser_args():
     # Argparser from command line
     parser = argparse.ArgumentParser()
 
+    # Run on Cell computers
+    parser.add_argument('--run_on_cell',
+                        type=int,
+                        default=0,
+                        help='Run on NBI Cell computers or not.')
+
     # Multiprocessing
     parser.add_argument('--n_processes',
                         type=int,
@@ -185,6 +191,7 @@ def get_parser_args():
 # Extract all parameters
 args =  get_parser_args()
 
+run_on_cell = args.run_on_cell
 n_processes = args.n_processes
 pool_size = args.pool_size
 multiprocessing_parameter = args.multiprocessing_parameter

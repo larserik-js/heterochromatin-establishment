@@ -1,6 +1,6 @@
 import os
 
-# Path to folder to save files
+# Path to project folder
 def get_project_dir():
     project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 

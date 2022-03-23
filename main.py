@@ -12,10 +12,10 @@ from pressure_rms import get_pressure
 from formatting import get_project_dir, get_output_dir, make_output_directories, edit_stable_silent_times_file
 
 # Import all parameters
-from parameters import n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed, N,l0, noise, dt,\
-                       t_total, stats_t_interval, rms, U_two_interaction_weight, allow_state_change, initial_state,\
-                       cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx, constant, alpha_1,\
-                       alpha_1_const, alpha_2, beta
+from parameters import run_on_cell, n_processes, pool_size, multiprocessing_parameter, animate, set_seed, min_seed,N,\
+                       l0, noise, dt, t_total, stats_t_interval, rms, U_two_interaction_weight, allow_state_change,\
+                       initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx, constant,\
+                       alpha_1, alpha_1_const, alpha_2, beta
 
 # Get U_pressure_weight value from rms
 U_pressure_weight = get_pressure.get_pressure(rms)
@@ -46,7 +46,7 @@ def curied_run(x, project_dir, output_dir, multiprocessing_parameter, N, l0, noi
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
 
-def main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt,
+def main(run_on_cell=run_on_cell, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt,
          t_total=t_total, U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight,
          alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
          min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
