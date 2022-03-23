@@ -140,7 +140,7 @@ def main(run_on_cell=run_on_cell, n_processes=n_processes, pool_size=pool_size, 
 
 ## RUN THE SCRIPT
 if __name__ == '__main__':
-    _ = main(run_on_cell=False, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt,
+    _ = main(run_on_cell=run_on_cell, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise, dt=dt,
              t_total=t_total, U_two_interaction_weight=U_two_interaction_weight, U_pressure_weight=U_pressure_weight,
              alpha_1=alpha_1, alpha_2=alpha_2, beta=beta, stats_t_interval=stats_t_interval, set_seed=set_seed,
              min_seed=min_seed, animate=animate, allow_state_change=allow_state_change, initial_state=initial_state,
