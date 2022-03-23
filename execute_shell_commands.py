@@ -14,7 +14,7 @@ initial_state = 'A'
 
 # Bounds on rms_values: (1.677, 4.130)
 rms_values = [2]
-t_total = 30000
+t_total = 10000
 
 alpha_1 = 0.07
 alpha_2 = 0.1
@@ -32,8 +32,8 @@ for rms in rms_values:
     print(f'rms: {rms:.2f}, cenH: {cenH_size}, alpha_1: {alpha_1:.4f}, '
           + f'alpha_2: {alpha_2:.4f}, beta: {beta:.4f}, seed: {min_seed}')
 
-    os.system(f"python3 main.py --n_processes=25 --pool_size=25 --multiprocessing_parameter=seed "
-              + f"--write_cenH_data=0 --animate=1 --allow_state_change=1 --t_total={t_total} --rms={rms} "
+    os.system(f"python3 main.py --n_processes=1 --pool_size=25 --multiprocessing_parameter=seed "
+              + f"--write_cenH_data=0 --animate=0 --allow_state_change=1 --t_total={t_total} --rms={rms} "
               + f"--initial_state={initial_state} --alpha_1={alpha_1} --alpha_2={alpha_2} --beta={beta} "
               + f"--min_seed={min_seed} --cenH_size={cenH_size} --ATF1_idx={ATF1_idx}")
 

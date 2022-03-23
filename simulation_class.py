@@ -129,18 +129,6 @@ class Simulation:
         ## Distance vectors from all monomers to all monomers
         self.rij_all, self.norms_all = self.get_norms()
 
-        # (N,N) tensor with zeros along the diagonal and both off-diagonals
-        self.wide_diag_zeros = torch.ones(size=(self.N, self.N), dtype=torch.double)
-        for i in range(self.N):
-            self.wide_diag_zeros[i, i] = 0
-            if i > 0:
-                self.wide_diag_zeros[i,i-1] = 0
-            if i < self.N - 1:
-                self.wide_diag_zeros[i,i+1] = 0
-
-        # Same tensor with dtypes boolean
-        self.wide_diag_zeros_bool = self.wide_diag_zeros.bool()
-
         # Picks out monomers that are allowed to interact with each other
         self.interaction_mask_two = self.get_interaction_mask()
 
@@ -427,16 +415,20 @@ class Simulation:
         else:
             raise AssertionError('Invalid index type given in function "update".')
 
-    # DISTANCE-BASED interaction potential
+    # Distance-based interaction potential
     def interaction_potential(self):
-        # Apply to monomers within the interaction distance,
-        # and not within the nearest-neighbor distance
-        mask_all_cutoff = (self.wide_diag_zeros_bool & (self.norms_all < self.potential_cutoff)).double()
+        # Monomers within the potential cutoff
+        # Excludes distances to self, i.e. the diagonal is 0
+        # Boolean tensor
+        monomers_within_cutoff_bool = (0 < self.norms_all) & (self.norms_all < self.potential_cutoff)
+        # Tensor of type double
+        monomers_within_cutoff_mask = monomers_within_cutoff_bool.double()
+
         # Repulsive term of potential
-        U_interaction = torch.exp(-2 * self.norms_all / self.r0) * mask_all_cutoff
+        U_interaction = torch.exp(-2 * self.norms_all / self.r0) * monomers_within_cutoff_mask
 
         # Apply only to monomers with a physical attractive interaction
-        mask_two_cutoff = (self.interaction_mask_two & (self.norms_all < self.potential_cutoff)).double()
+        mask_two_cutoff = (self.interaction_mask_two & monomers_within_cutoff_bool).double()
         # Attractive term of potential
         U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
 
