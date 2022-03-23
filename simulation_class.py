@@ -5,17 +5,18 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-from formatting import get_project_folder, create_param_string, create_plot_title
+from formatting import get_output_dir, create_param_string, create_plot_title
 import pickle
 r = np.random
 
 class Simulation:
-    def __init__(self, pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
-                 alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division, cenH_size,
-                 cenH_init_idx, write_cenH_data, ATF1_idx):
+    def __init__(self, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
+                 alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division,
+                 cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
 
-        # Project folder
-        self.pathname = pathname
+        # Project and output directories
+        self.project_dir = project_dir
+        self.output_dir = output_dir
 
         ## Parameters
         # No. of monomers
@@ -233,15 +234,15 @@ class Simulation:
 
 
     def initialize_system(self, init_system_type):
-        # Initial positions are located in the project folder
+        # Initial positions are located in the input folder
         # both for local computer and for Cell computers
-        init_pos_pathname = get_project_folder(run_on_cell=False)
+        input_dir = self.project_dir + 'input/'
 
         # Quasi-random position based on position obtained after 1e6 time-steps of free polymer
         if init_system_type == 'quasi-random-free':
             seed_no = r.randint(100)
-            open_filename = init_pos_pathname + 'quasi_random_initial_states_free/'\
-                                     + f'final_state_N=40_t_total=1000000_noise=0.500_seed={seed_no}.pkl'
+            open_filename = input_dir + 'quasi_random_initial_states_free/final_state_N=40_t_total=1000000_'\
+                                      + f'noise=0.500_seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
                 xs, ys, zs, _ = pickle.load(f)
@@ -253,8 +254,8 @@ class Simulation:
             seed_no = r.randint(100)
 
             rounded_pressure_weight = np.round(self.U_pressure_weight, decimals=2)
-            open_filename = init_pos_pathname + 'quasi_random_initial_states_pressure_before_dynamics/'\
-                                     + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
+            open_filename = input_dir + 'quasi_random_initial_states_pressure_before_dynamics/'\
+                                      + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
                 X = pickle.load(f)
@@ -810,7 +811,7 @@ class Simulation:
 
         # # Write pressure and RMS values
         # if self.t == self.t_total - 1:
-        #     write_name = self.pathname + 'data/statistics/pressure_RMS_'
+        #     write_name = self.output_dir + 'statistics/pressure_RMS_'
         #     write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
         #                   f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
         #                   f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'

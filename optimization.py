@@ -1,5 +1,5 @@
 import numpy as np
-from formatting import get_project_folder, make_output_directories
+from formatting import get_project_dir, get_output_dir, make_output_directories
 from skopt import forest_minimize, dump
 import main
 from datetime import datetime
@@ -127,10 +127,10 @@ alpha_2 = 0.1
 beta = 0.004
 run_on_cell = False
 
-def make_filename(pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2,
+def make_filename(output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2,
                   beta):
 
-    return pathname + f'data/statistics/optimization/U_pressure_weight={U_pressure_weight:.2e}_'\
+    return output_dir + f'statistics/optimization/U_pressure_weight={U_pressure_weight:.2e}_'\
                     + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
                     + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 
@@ -142,9 +142,9 @@ def initialize_file(filename):
 
     data_file.close()
 
-def pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
+def pickle_res(res, output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
                    alpha_2, beta):
-    filename = pathname + f'data/statistics/optimization/res_U_pressure_weight={U_pressure_weight:.2e}_' \
+    filename = output_dir + f'statistics/optimization/res_U_pressure_weight={U_pressure_weight:.2e}_' \
                         + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_' \
                         + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.pkl'
 
@@ -153,8 +153,9 @@ def pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cen
 
 if __name__ == '__main__':
     # Make necessary directories
-    pathname = get_project_folder(run_on_cell)
-    make_output_directories(pathname)
+    project_dir = get_project_dir()
+    output_dir = get_output_dir(project_dir, run_on_cell)
+    make_output_directories(output_dir)
 
     # Iterate
     for rms in rms_values:
@@ -167,7 +168,7 @@ if __name__ == '__main__':
         U_pressure_weight = get_pressure.get_pressure(rms)
 
         # Make the .txt file for data
-        filename = make_filename(pathname, U_pressure_weight, n_processes, initial_state,
+        filename = make_filename(output_dir, U_pressure_weight, n_processes, initial_state,
                                  cenH_init_idx, N, t_total, noise, alpha_2, beta)
         initialize_file(filename)
 
@@ -176,7 +177,7 @@ if __name__ == '__main__':
 
         res = opt_obj.optimize()
 
-        pickle_res(res, pathname, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
+        pickle_res(res, output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
                    alpha_2, beta)
 
         print(res)

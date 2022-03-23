@@ -1,19 +1,18 @@
 # This script is used to import all initial polymers positions for different pressures
 # and calculate the RMS, and then write that value to a .txt document.
-# The .txt document is located in the 'masters_thesis' folder, and is called 'pressure_RMS.txt'.
+# The .txt document is located in the 'masters_thesis/pressure_rms/' folder, and is called 'pressure_RMS.txt'.
 # These values can be plotted against each other (bottom of script).
 
-from formatting import get_project_folder
+from formatting import get_project_dir
 import numpy as np
 import torch
 import pickle
 import matplotlib.pyplot as plt
 
-pathname = get_project_folder()
-folder_name = pathname + 'quasi_random_initial_states_pressure_before_dynamics/'
-write_name = pathname + 'pressure_RMS.txt'
+project_dir = get_project_dir()
+input_dir = project_dir + 'input/quasi_random_initial_states_pressure_before_dynamics/'
+output_file = project_dir + 'pressure_rms/pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)
-
 
 def get_rms(X):
     N = X.shape[0]
@@ -38,7 +37,7 @@ def write_file():
         rms = 0
         N_FILES = 100
         for seed in np.arange(N_FILES):
-            file_name = folder_name + f'pressure={pressure:.2f}/seed={seed}.pkl'
+            file_name = input_dir + f'pressure={pressure:.2f}/seed={seed}.pkl'
 
             ## Open file
             with open(file_name, 'rb') as f:
@@ -53,15 +52,15 @@ def write_file():
         line_str = f'{pressure},{mean_rms}' + '\n'
 
         if i == 0:
-            data_file = open(write_name, 'w')
+            data_file = open(output_file, 'w')
         else:
-            data_file = open(write_name, 'a')
+            data_file = open(output_file, 'a')
         data_file.write(line_str)
         data_file.close()
 
 #write_file()
 
-data = np.loadtxt(pathname + '/pressure_RMS.txt', delimiter=',')
+data = np.loadtxt(output_file, delimiter=',')
 plt.plot(data[:,0], data[:,1])
 plt.xlabel('Pressure', size=12)
 plt.ylabel('RMS', size=12)

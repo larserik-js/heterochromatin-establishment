@@ -8,12 +8,12 @@ import time
 # Simulation class
 from simulation_class import Simulation
 
-# Pathname
-from formatting import get_project_folder, create_param_string, make_directory
+# Formatting
+from formatting import create_param_string, make_directory
 
 # Takes a list of torch tensors, pickles them
-def write_pkl(var_list, pathname, filename):
-    filename = pathname + 'data/statistics/' + filename + '.pkl'
+def write_pkl(var_list, output_dir, filename):
+    filename = output_dir + 'statistics/' + filename + '.pkl'
 
     # Detach tensors and turn them into numpy arrays
     new_var_list = []
@@ -27,7 +27,7 @@ def write_pkl(var_list, pathname, filename):
     with open(filename, 'wb') as f:
         pickle.dump(new_var_list, f)
 
-def save_data(sim_obj, pathname):
+def save_data(sim_obj, output_dir):
     parameter_string = sim_obj.params_filename
 
     # Keys: directory name in which to save files
@@ -63,7 +63,7 @@ def save_data(sim_obj, pathname):
 
     # Pickle and save data
     for dir_name, var_list in directories_and_variables.items():
-        write_pkl(var_list, pathname, dir_name + '/' + parameter_string)
+        write_pkl(var_list, output_dir, dir_name + '/' + parameter_string)
 
 
 # Fix seed value for Numba
@@ -75,8 +75,8 @@ def set_numba_seed(seed):
 # Runs the script
 # from memory_profiler import profile
 # @profile
-def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1, alpha_2,
-        beta, stats_t_interval, set_seed, seed, animate, allow_state_change, initial_state, cell_division,
+def run(project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
+        alpha_2, beta, stats_t_interval, set_seed, seed, animate, allow_state_change, initial_state, cell_division,
         cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
 
     # Number of failed simulation attempts
@@ -88,9 +88,6 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
             # torch.set_num_threads(1)
             print(f'Started simulation with seed = {seed}.')
 
-            # Project folder
-            pathname = get_project_folder(run_on_cell)
-
             # Set seed values
             if set_seed:
                 np.random.seed(seed)
@@ -98,16 +95,16 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                 set_numba_seed(seed)
 
             # Create simulation object
-            sim_obj = Simulation(pathname, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
-                                 alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
-                                 cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
+            sim_obj = Simulation(project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
+                                 U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change,
+                                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
             param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
                                                cell_division, N, t_total, noise, alpha_1, alpha_2,
                                                beta, seed)
 
-            animation_folder = pathname + 'data/animations/' + param_string + '/'
+            animation_folder = output_dir + '/animations/' + param_string + '/'
 
             # Ensures that a total of 500 images will be created
             N_IMAGES = 500
@@ -160,7 +157,7 @@ def run(run_on_cell, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pres
                         pass
 
             # Save data
-            save_data(sim_obj, pathname)
+            save_data(sim_obj, output_dir)
 
             print(f'Finished simulation with seed = {seed}.')
 

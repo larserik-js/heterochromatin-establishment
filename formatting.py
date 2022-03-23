@@ -1,18 +1,21 @@
 import os
-import sys
-
-# # Path to the project folder
-# pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
 
 # Path to folder to save files
-def get_project_folder(run_on_cell=False):
-    pathname = os.path.abspath(os.path.dirname(__file__)) + '/'
+def get_project_dir():
+    project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 
+    return project_dir
+
+# Path to output directory
+# The directories are located on different locations on local and Cell computers
+def get_output_dir(project_dir, run_on_cell=False):
     if run_on_cell:
-        pathname += '../../../nbicmplx/cell/zfj803/'
+        output_dir = project_dir + '../../../nbicmplx/cell/zfj803/output/'
     else:
-        pass
-    return pathname
+        output_dir = project_dir + '/output/'
+
+    return output_dir
+
 
 def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx, cell_division, N, t_total,
                         noise, alpha_1, alpha_2, beta, seed, exclude_seed=False):
@@ -38,10 +41,10 @@ def create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_i
 
     return param_string
 
-def edit_stable_silent_times_file(pathname, U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
+def edit_stable_silent_times_file(output_dir, U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
                                   cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str, action='a'):
 
-    write_name = pathname + 'data/statistics/stable_silent_times/'
+    write_name = output_dir + 'statistics/stable_silent_times/'
     write_name += create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
                                       cell_division, N, t_total, noise, alpha_1, alpha_2, beta,
                                       seed, exclude_seed=True) + '.txt'
@@ -76,14 +79,14 @@ def make_directory(folder_name):
         pass
 
 # Make all output directories before starting simulations
-def make_output_directories(pathname):
+def make_output_directories(output_dir):
     statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com', 'final_state', 'interactions',
                                'Rs', 'states', 'states_time_space', 'successful_conversions', 'stable_silent_times',
                                'optimization']
 
-    make_directory(pathname + 'data')
-    make_directory(pathname + 'data/statistics')
-    make_directory(pathname + 'data/animations')
+    make_directory(output_dir)
+    make_directory(output_dir + 'animations')
+    make_directory(output_dir + 'statistics')
 
     for folder_name in statistics_folder_names:
-        make_directory(pathname + 'data/statistics/' + folder_name)
+        make_directory(output_dir + 'statistics/' + folder_name)

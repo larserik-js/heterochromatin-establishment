@@ -7,7 +7,7 @@ bin-release/
 # Other files and folders
 .settings/
 __pycache__/
-data/
+output/
 
 # Executables
 *.swf

@@ -12,7 +12,7 @@ plot_cenH_sizes = [6,8]
 plot_cenH_init_idx = 16
 plot_ATF1_idx = 30
 plot_N = 40
-plot_t_total = 30000
+plot_t_total = 10000
 plot_noise = 0.5
 
 initial_states = ['A', 'A_U', 'U', 'U_S', 'S']
