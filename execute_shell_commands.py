@@ -9,12 +9,12 @@ dt = 0.02
 cenH_init_idx = 16
 cenH_sizes = [6,7,8]
 cenH_size = 8
-ATF1_idx = 30
+ATF1_idx = None
 initial_state = 'A'
 
 # Bounds on rms_values: (1.677, 4.130)
-rms_values = [2]
-t_total = 10000
+rms_values = [4.13]
+t_total = 100000
 
 alpha_1 = 0.07
 alpha_2 = 0.1

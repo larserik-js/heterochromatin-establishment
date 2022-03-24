@@ -5,14 +5,17 @@ from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import _gather_statistics
-from formatting import get_output_dir, create_param_string, create_plot_title
+from formatting import create_param_string, create_plot_title
 import pickle
 r = np.random
 
 class Simulation:
-    def __init__(self, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight,
-                 alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state, cell_division,
-                 cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
+    def __init__(self, model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
+                 U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
+                 cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
+
+        # Physical model
+        self.model = model
 
         # Project and output directories
         self.project_dir = project_dir
@@ -108,6 +111,9 @@ class Simulation:
         # No. of allowed interactions in non-classic model
         self.N_ALLOWED_INTERACTIONS = 2
 
+        # For use in 'get_two_interaction_mask'
+        self.j_indices, self.i_indices = np.meshgrid(np.arange(self.N), np.arange(self.N))
+
         # Mask to extract upper triangle
         self.mask_upper = torch.zeros(size=(self.N,self.N), dtype=torch.bool)
         self.triu_indices = torch.triu_indices(self.N, self.N, offset=1)
@@ -129,8 +135,11 @@ class Simulation:
         ## Distance vectors from all monomers to all monomers
         self.rij_all, self.norms_all = self.get_norms()
 
+        # Cutoff distances for the potentials for the three different states
+        self.potential_cutoff = 1*self.l0
+
         # Picks out monomers that are allowed to interact with each other
-        self.interaction_mask_two = self.get_interaction_mask()
+        self.interaction_mask_S = self.get_interaction_mask(state='S')
 
         # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
@@ -142,9 +151,6 @@ class Simulation:
         # Regulate the potential function
         # B is the value which ensures that r0 is a local extremum for U_interaction
         self.B = np.real(-2 / lambertw(-2 * np.exp(-2)))
-
-        # Cutoff distances for the potentials for the three different states
-        self.potential_cutoff = 1*self.l0
 
         ## For statistics
         # Center of mass
@@ -309,43 +315,28 @@ class Simulation:
         # Which type of interaction should be associated with the different states
         self.state_two_interaction = copy.deepcopy(self.state_S)
 
-    # Picks out monomers that are allowed to interact with each other
-    def get_interaction_mask(self):
-        # Transform torch tensors to numpy array
-        norms_all = self.norms_all.detach().numpy()
-        state_two_interaction = self.state_two_interaction.detach().numpy()
-
-        # Indices for checking for possible interactions
-        j_idx, i_idx = np.meshgrid(np.arange(self.N), np.arange(self.N))
-        interaction_mask_two = self._mask_calculator(norms_all, state_two_interaction, i_idx, j_idx,
-                                                     self.N_ALLOWED_INTERACTIONS)
-
-        # Change from Numpy array to Torch tensor
-        interaction_mask_two = torch.from_numpy(interaction_mask_two)
-
-        return interaction_mask_two
-
     @staticmethod
     @njit
-    def _mask_calculator(norms_all, state_two_interaction, i_idx, j_idx, N_ALLOWED_INTERACTIONS):
+    def get_two_interaction_mask(norms_all, state_two_interaction, i_idx, j_idx, N_ALLOWED_INTERACTIONS):
         # Total number of monomers
         N = len(norms_all)
 
         # Shows which monomers interact with which
-        interaction_mask_two = np.zeros(norms_all.shape, dtype=np.bool_)
+        two_interaction_mask = np.zeros(norms_all.shape, dtype=np.bool_)
 
         # Sort distances
-        sort_idx = np.argsort(norms_all.flatten())
-        i_idx = i_idx.flatten()[sort_idx]
-        j_idx = j_idx.flatten()[sort_idx]
+        norms_all_flattened = norms_all.flatten()
+        # The indices that sort norms_all_flattened
+        sorted_indices = np.argsort(norms_all_flattened)
+        # The indices that sort norms_all
+        i_idx = i_idx.flatten()[sorted_indices]
+        j_idx = j_idx.flatten()[sorted_indices]
 
         # Counts no. of interactions per monomer
         n_interactions = np.zeros(N, dtype=np.uint8)
         # For stopping criterion
-        has_not_counted = np.ones(N, dtype=np.bool_)
+        has_counted = np.zeros(N, dtype=np.uint8)
         total_2_interactions = 0
-
-        counter = 0
 
         # Loop over combinations of indices
         for k in range(len(i_idx)):
@@ -364,7 +355,7 @@ class Simulation:
                 continue
 
             # If there already exists an interaction between the two monomers
-            if interaction_mask_two[i,j] and interaction_mask_two[j,i]:
+            if two_interaction_mask[i,j] and two_interaction_mask[j,i]:
                 continue
 
             # Two-interaction state monomers can only interact with max. 2 other monomers
@@ -372,27 +363,54 @@ class Simulation:
                 continue
 
             # Create interaction
-            counter += 1
-
-            interaction_mask_two[i, j] = 1
-            interaction_mask_two[j, i] = 1
+            two_interaction_mask[i, j] = 1
+            two_interaction_mask[j, i] = 1
 
             n_interactions[i] += 1
             n_interactions[j] += 1
 
             # For stopping criterion
-            if has_not_counted[i] and n_interactions[i] == N_ALLOWED_INTERACTIONS:
+            if not has_counted[i] and n_interactions[i] == N_ALLOWED_INTERACTIONS:
                 total_2_interactions += 1
-                has_not_counted[i] = False
-            if has_not_counted[j] and n_interactions[j] == N_ALLOWED_INTERACTIONS:
+                has_counted[i] = True
+            if not has_counted[j] and n_interactions[j] == N_ALLOWED_INTERACTIONS:
                 total_2_interactions += 1
-                has_not_counted[j] = False
+                has_counted[j] = True
 
             if total_2_interactions >= N - 1:
-                #print('Loop ended at ' + str(counter))
                 break
 
-        return interaction_mask_two
+        return two_interaction_mask
+
+    # Picks out monomers that are allowed to interact with each other
+    def get_interaction_mask(self, state):
+        # Transform torch tensors to numpy array
+        norms_all = self.norms_all.detach().numpy()
+        state_two_interaction = self.state_two_interaction.detach().numpy()
+
+        if state == 'S':
+            if self.model == 'CMOL':
+                # Indices for checking for possible interactions
+                interaction_mask = self.get_two_interaction_mask(norms_all, state_two_interaction, self.i_indices,
+                                                                 self.j_indices, self.N_ALLOWED_INTERACTIONS)
+            elif self.model == 'S_magnetic':
+                # IMPLEMENT!
+                interaction_mask = None
+            elif self.model == 'S_A_magnetic':
+                # IMPLEMENT
+                interaction_mask = None
+            else:
+                raise AssertionError('Invalid model name in "get_interaction_mask"!')
+        elif state == 'A':
+            # IMPLEMENT!
+            interaction_mask = None
+        else:
+            raise AssertionError('Invalid state in "get_interaction_mask"!')
+
+        # Change from Numpy array to Torch tensor
+        interaction_mask = torch.from_numpy(interaction_mask)
+
+        return interaction_mask
 
     # Require gradient
     def grad_on(self):
@@ -409,26 +427,29 @@ class Simulation:
         if self.index_type == 'even' or self.index_type == 'odd':
             # Reset gradients
             self.thetas.grad.zero_()
-
         elif self.index_type == 'endpoints':
             self.X.grad.zero_()
         else:
             raise AssertionError('Invalid index type given in function "update".')
 
-    # Distance-based interaction potential
-    def interaction_potential(self):
+    def get_monomers_within_cutoff_mask(self):
         # Monomers within the potential cutoff
         # Excludes distances to self, i.e. the diagonal is 0
         # Boolean tensor
         monomers_within_cutoff_bool = (0 < self.norms_all) & (self.norms_all < self.potential_cutoff)
         # Tensor of type double
-        monomers_within_cutoff_mask = monomers_within_cutoff_bool.double()
+        return monomers_within_cutoff_bool.double()
+
+    # Distance-based interaction potential
+    def interaction_potential(self):
+        monomers_within_cutoff_mask = self.get_monomers_within_cutoff_mask()
 
         # Repulsive term of potential
         U_interaction = torch.exp(-2 * self.norms_all / self.r0) * monomers_within_cutoff_mask
 
         # Apply only to monomers with a physical attractive interaction
-        mask_two_cutoff = (self.interaction_mask_two & monomers_within_cutoff_bool).double()
+        mask_two_cutoff = self.interaction_mask_S.double() * monomers_within_cutoff_mask
+
         # Attractive term of potential
         U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
 
@@ -777,14 +798,14 @@ class Simulation:
 
             # Copy previous interaction mask for statistics
             # This mask also includes the distance requirement for interactions
-            self.previous_interaction_mask = self.interaction_mask_two & (self.norms_all < self.l_interacting)
+            self.previous_interaction_mask = self.interaction_mask_S & (self.norms_all < self.l_interacting)
 
             # Update distance vectors
             self.rij_all, self.norms_all = self.get_norms()
 
             # Create new interaction mask
             # This mask does NOT include the distance requirement for interactions
-            self.interaction_mask_two = self.get_interaction_mask()
+            self.interaction_mask_S = self.get_interaction_mask(state='S')
 
             # Gather statistics
             self.gather_statistics()

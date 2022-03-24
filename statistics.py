@@ -81,7 +81,7 @@ def update_correlation_sums(sim_obj):
 def update_interaction_stats(sim_obj):
     # Interaction only applies to distances lower than l_interacting
     # Relevant interactions are only counted once
-    interaction_condition = (sim_obj.interaction_mask_two) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
+    interaction_condition = (sim_obj.interaction_mask_S) & (sim_obj.norms_all < sim_obj.l_interacting) & sim_obj.mask_upper
     interaction_indices_i = torch.where(interaction_condition)[0]
     interaction_indices_j = torch.where(interaction_condition)[1]
 
