@@ -129,9 +129,6 @@ class Simulation:
 
         self.states_booleans = torch.cat([self.state_S[None,:], self.state_U[None,:], self.state_A[None,:]], dim=0)
 
-        # Which type of interaction should be associated with the different states
-        self.state_two_interaction = copy.deepcopy(self.state_S)
-
         ## Distance vectors from all monomers to all monomers
         self.rij_all, self.norms_all = self.get_norms()
 
@@ -310,11 +307,6 @@ class Simulation:
 
         return None
 
-    # Updates interaction types based on states
-    def update_interaction_types(self):
-        # Which type of interaction should be associated with the different states
-        self.state_two_interaction = copy.deepcopy(self.state_S)
-
     @staticmethod
     @njit
     def get_two_interaction_mask(norms_all, state_two_interaction, i_idx, j_idx, N_ALLOWED_INTERACTIONS):
@@ -386,15 +378,15 @@ class Simulation:
     def get_interaction_mask(self, state):
         # Transform torch tensors to numpy array
         norms_all = self.norms_all.detach().numpy()
-        state_two_interaction = self.state_two_interaction.detach().numpy()
 
         if state == 'S':
+            state_S = self.state_S.detach().numpy()
+
             if self.model == 'CMOL':
                 # Indices for checking for possible interactions
-                interaction_mask = self.get_two_interaction_mask(norms_all, state_two_interaction, self.i_indices,
+                interaction_mask = self.get_two_interaction_mask(norms_all, state_S, self.i_indices,
                                                                  self.j_indices, self.N_ALLOWED_INTERACTIONS)
             elif self.model == 'S_magnetic':
-                # IMPLEMENT!
                 interaction_mask = None
             elif self.model == 'S_A_magnetic':
                 # IMPLEMENT
@@ -813,9 +805,6 @@ class Simulation:
             ## CHANGE STATES
             if self.allow_state_change:
                 self.change_states()
-
-                # Updates interaction types based on states
-                self.update_interaction_types()
 
         # # Write pressure and RMS values
         # if self.t == self.t_total - 1:
