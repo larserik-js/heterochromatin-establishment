@@ -15,32 +15,31 @@ from skopt import plots, load
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, plot_model, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size,
-                 plot_cenH_sizes, plot_cenH_init_idx, plot_ATF1_idx, plot_cell_division, plot_N, plot_t_total,
-                 plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
+    def __init__(self, model, n_processes, U_pressure_weight, stats_interval, cenH_size, cenH_sizes, cenH_init_idx,
+                 ATF1_idx, cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
     
         # Project and plot data directories
         self.project_dir = get_project_dir()
         self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
 
         print(self.plot_data_dir)
-        self.model = plot_model
-        self.n_processes = plot_n_processes
-        self.U_pressure_weight = plot_U_pressure_weight
-        self.stats_interval = plot_stats_interval
-        self.cenH_size = plot_cenH_size
-        self.cenH_sizes = plot_cenH_sizes
-        self.cenH_init_idx = plot_cenH_init_idx
-        self.ATF1_idx = plot_ATF1_idx
-        self.cell_division = plot_cell_division
-        self.N = plot_N
-        self.t_total = plot_t_total
-        self.noise = plot_noise
-        self.initial_state = plot_initial_state
-        self.alpha_1 = plot_alpha_1
-        self.alpha_2 = plot_alpha_2
-        self.beta = plot_beta
-        self.seed = plot_seed
+        self.model = model
+        self.n_processes = n_processes
+        self.U_pressure_weight = U_pressure_weight
+        self.stats_interval = stats_interval
+        self.cenH_size = cenH_size
+        self.cenH_sizes = cenH_sizes
+        self.cenH_init_idx = cenH_init_idx
+        self.ATF1_idx = ATF1_idx
+        self.cell_division = cell_division
+        self.N = N
+        self.t_total = t_total
+        self.noise = noise
+        self.initial_state = initial_state
+        self.alpha_1 = alpha_1
+        self.alpha_2 = alpha_2
+        self.beta = beta
+        self.seed = seed
 
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['S', 'U', 'A']
@@ -70,7 +69,7 @@ class Plots:
         return None
 
     # State at the end of the simulation
-    def plot_final_state(self):
+    def final_state(self):
         open_filename = self.create_full_filename('final_state/', '.pkl')
 
         with open(open_filename, 'rb') as f:
@@ -105,7 +104,7 @@ class Plots:
         plt.show()
 
     # Number of interactions and interaction lifetimes as a function of index difference
-    def plot_interactions(self):
+    def interactions(self):
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
         TRANSPARENCY = 0.5
@@ -131,7 +130,7 @@ class Plots:
         plt.show()
 
 
-    def plot_heatmap(self):
+    def heatmap(self):
         polymer_types = ['classic', 'non-classic']
 
         fig, ax = plt.subplots(2,2, sharex=True, sharey=True, figsize=(10,6))
@@ -195,7 +194,7 @@ class Plots:
         plt.tight_layout()
         plt.show()
 
-    def plot_correlation(self):
+    def correlation(self):
         s = 0.5
         fig, ax = plt.subplots(figsize=(8,6))
 
@@ -221,7 +220,7 @@ class Plots:
 
         plt.show()
 
-    def plot_states(self):
+    def states(self):
         open_filename = self.create_full_filename('states/', '.pkl')
 
         files = glob(open_filename)
@@ -250,7 +249,7 @@ class Plots:
         self.format_plot(ax, xlabel='Time-step', ylabel='No. of monomers')
         plt.show()
 
-    def plot_states_time_space(self):
+    def states_time_space(self):
         open_filename = self.create_full_filename('states_time_space/', '.pkl')
         conversions_filename = self.create_full_filename('successful_conversions/', '.pkl')
 
@@ -302,7 +301,7 @@ class Plots:
 
         plt.show()
 
-    def plot_Rs(self):
+    def Rs(self):
         open_filename = self.create_full_filename('Rs/', '.pkl')
 
         files = glob(open_filename)
@@ -340,7 +339,7 @@ class Plots:
         plt.show()
 
     # Plots RMS as a function of pressure
-    def plot_RMS(self):
+    def RMS(self):
         open_filename = self.create_full_filename('dist_vecs_to_com/', '.pkl')
         # Replace the pressure values with the wildcard * to include all pressure values
         open_filename = open_filename.replace(f'pressure={self.U_pressure_weight:.2f}', 'pressure=*')
@@ -404,7 +403,7 @@ class Plots:
 
         return correlations
 
-    def plot_dynamics_time(self):
+    def dynamics_time(self):
         open_filename = self.create_full_filename('dist_vecs_to_com/', '.pkl')
 
         files = glob(open_filename)
@@ -447,7 +446,7 @@ class Plots:
         return None
 
 
-    def plot_correlation_times(self):
+    def correlation_times(self):
         open_filename = self.create_full_filename('correlation_times/', '.pkl')
         files = glob(open_filename)
 
@@ -468,7 +467,7 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
-    def plot_end_to_end_times(self):
+    def end_to_end_times(self):
         open_filename = self.plot_data_dir + f'end_to_end_perpendicular_times_N={self.N}_t_total={self.t_total}' \
                                  + f'_noise={self.noise:.4f}' + '.txt'
 
@@ -489,7 +488,7 @@ class Plots:
         plt.show()
         return data_array
 
-    def plot_successful_recruited_conversions(self):
+    def successful_recruited_conversions(self):
         open_filename = self.create_full_filename('successful_recruited_conversions/', '.pkl')
         files = glob(open_filename)
         print(open_filename)
@@ -534,7 +533,7 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
-    def plot_fraction_ON_cells(self):
+    def fraction_ON_cells(self):
         # Plot
         fig, ax = plt.subplots(figsize=(8, 6))
         txt_string = ''
@@ -579,7 +578,7 @@ class Plots:
         ax.legend(loc='best')
         plt.show()
 
-    def plot_establishment_times_patches(self):
+    def establishment_times_patches(self):
         # Plot
         fig, ax = plt.subplots(2,1, figsize=(7, 6))
 
@@ -673,7 +672,7 @@ class Plots:
     #     ax.set_ylabel('f_minimize_val', size=14)
     #     plt.show()
 
-    def plot_optimization(self):
+    def optimization(self):
         # Finds all .txt files with different pressure values
         filenames = glob(self.plot_data_dir + 'optimization/U_pressure_weight=*'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
@@ -700,7 +699,7 @@ class Plots:
         ax.scatter(pressure_vals, f_min_vals)
         plt.show()
 
-    def plot_res(self):
+    def res(self):
         open_filename = self.plot_data_dir + f'optimization/res_U_pressure_weight={self.U_pressure_weight:.2e}_'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
