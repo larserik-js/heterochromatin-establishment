@@ -16,7 +16,7 @@ def get_output_dir(project_dir, run_on_cell=False):
 
     return output_dir
 
-
+# For filenames
 def create_param_string(model, U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx, cell_division, N,
                         t_total, noise, alpha_1, alpha_2, beta, seed, exclude_seed=False):
 

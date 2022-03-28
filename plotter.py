@@ -3,6 +3,8 @@ from plot_class import Plots
 # Plot parameters
 plot_cell_division = False
 
+plot_model = 'CMOL'
+
 plot_n_processes = 25
 plot_U_pressure_weight = 0.0
 plot_stats_interval = 100
@@ -24,7 +26,7 @@ plot_alpha_2 = 0.1
 plot_beta = 0.004
 plot_seed = 8
 
-plot_obj = Plots(plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
+plot_obj = Plots(plot_model=plot_model, plot_n_processes=plot_n_processes, plot_U_pressure_weight=plot_U_pressure_weight,
                  plot_stats_interval=plot_stats_interval, plot_cenH_size=plot_cenH_size,
                  plot_cenH_sizes=plot_cenH_sizes, plot_cenH_init_idx=plot_cenH_init_idx, plot_ATF1_idx=plot_ATF1_idx,
                  plot_cell_division=plot_cell_division, plot_N=plot_N, plot_t_total=plot_t_total, plot_noise=plot_noise,

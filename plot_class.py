@@ -15,7 +15,7 @@ from skopt import plots, load
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size,
+    def __init__(self, plot_model, plot_n_processes, plot_U_pressure_weight, plot_stats_interval, plot_cenH_size,
                  plot_cenH_sizes, plot_cenH_init_idx, plot_ATF1_idx, plot_cell_division, plot_N, plot_t_total,
                  plot_noise, plot_initial_state, plot_alpha_1, plot_alpha_2, plot_beta, plot_seed):
     
@@ -24,7 +24,7 @@ class Plots:
         self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
 
         print(self.plot_data_dir)
-
+        self.model = plot_model
         self.n_processes = plot_n_processes
         self.U_pressure_weight = plot_U_pressure_weight
         self.stats_interval = plot_stats_interval

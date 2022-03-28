@@ -382,8 +382,8 @@ class Simulation:
             state_S = self.state_S.detach().numpy()
 
             # Indices for checking for possible interactions
-            interaction_mask_S = self.get_two_interaction_mask(norms_all, state_S, self.i_indices,
-                                                             self.j_indices, self.N_ALLOWED_INTERACTIONS)
+            interaction_mask_S = self.get_two_interaction_mask(norms_all, state_S, self.i_indices, self.j_indices,
+                                                               self.N_ALLOWED_INTERACTIONS)
 
             # Transform Numpy array to Torch tensor
             interaction_mask_S = torch.from_numpy(interaction_mask_S)
