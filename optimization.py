@@ -11,9 +11,10 @@ from pressure_rms import get_pressure
 import misc_functions
 
 class Optimizer:
-    def __init__(self, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise,
-                 U_pressure_weight, alpha_2, beta, filename):
+    def __init__(self, model, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, rms,
+                 alpha_2, beta, filename):
 
+        self.model = model
         self.run_on_cell = run_on_cell
         self.n_processes = n_processes
         self.pool_size = pool_size
@@ -23,7 +24,7 @@ class Optimizer:
         self.N = N
         self.t_total = t_total
         self.noise = noise
-        self.U_pressure_weight = U_pressure_weight
+        self.rms = rms
         self.alpha_2 = alpha_2
         self.beta = beta
         self.filename = filename
@@ -36,7 +37,7 @@ class Optimizer:
                               tau_estimate_8_error, f_minimize_val):
         # Append to file
         data_file = open(self.filename, 'a')
-        data_file.write(f'{self.U_pressure_weight},{alpha_1},{tau_estimate_6},{tau_estimate_6_error},'\
+        data_file.write(f'{self.rms},{alpha_1},{tau_estimate_6},{tau_estimate_6_error},'\
                             + f'{tau_estimate_8},{tau_estimate_8_error},{f_minimize_val}' + '\n')
 
         data_file.close()
@@ -61,10 +62,9 @@ class Optimizer:
 
         for cenH_size in self.cenH_sizes:
             # Run the simulations
-            silent_times_list = main.main(run_on_cell=self.run_on_cell, n_processes=self.n_processes,
-                                          pool_size=self.pool_size, set_seed=False, t_total=self.t_total,
-                                          U_pressure_weight=self.U_pressure_weight, alpha_1=alpha_1,
-                                          cenH_size=cenH_size, write_cenH_data=True)
+            silent_times_list = main.main(model=self.model, run_on_cell=self.run_on_cell, n_processes=self.n_processes,
+                                          pool_size=self.pool_size, t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
+                                          cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
 
             tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
@@ -114,7 +114,7 @@ class Optimizer:
 
         return res
 
-
+model = 'CMOL'
 rms_values = [2]
 n_processes = 25
 pool_size = 25
@@ -127,26 +127,25 @@ alpha_2 = 0.1
 beta = 0.004
 run_on_cell = False
 
-def make_filename(output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2,
-                  beta):
+def make_filename(output_dir, model, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
 
-    return output_dir + f'statistics/optimization/U_pressure_weight={U_pressure_weight:.2e}_'\
-                    + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_'\
-                    + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
+    return output_dir + f'statistics/optimization/{model}_rms={rms:.3f}_n_processes={n_processes}_'\
+                      + f'init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_'\
+                      + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
 
 def initialize_file(filename):
     data_file = open(filename, 'w')
 
-    data_file.write('U_pressure_weight,alpha_1,tau_estimate(cenH=6),tau_estimate_error(cenH=6),' \
+    data_file.write('rms,alpha_1,tau_estimate(cenH=6),tau_estimate_error(cenH=6),' \
                     + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val' + '\n')
 
     data_file.close()
 
-def pickle_res(res, output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
+def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
                    alpha_2, beta):
-    filename = output_dir + f'statistics/optimization/res_U_pressure_weight={U_pressure_weight:.2e}_' \
-                        + f'n_processes={n_processes}_init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_' \
-                        + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.pkl'
+    filename = output_dir + f'statistics/optimization/res_rms={rms:.3f}_n_processes={n_processes}_'\
+                          + f'init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_' \
+                          + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.pkl'
 
     # Write to pkl (using Skopt function)
     dump(res, filename, store_objective=False)
@@ -164,21 +163,17 @@ if __name__ == '__main__':
             print('One or more RMS values outside of bounds. Enter valid values.')
             sys.exit()
 
-        # Get U_pressure_weight value from rms
-        U_pressure_weight = get_pressure.get_pressure(rms)
-
         # Make the .txt file for data
-        filename = make_filename(output_dir, U_pressure_weight, n_processes, initial_state,
-                                 cenH_init_idx, N, t_total, noise, alpha_2, beta)
+        filename = make_filename(output_dir, model, rms, n_processes, initial_state, cenH_init_idx, N, t_total,
+                                 noise, alpha_2, beta)
         initialize_file(filename)
 
-        opt_obj = Optimizer(run_on_cell, n_processes, pool_size, initial_state,
-                            cenH_init_idx, N, t_total, noise, U_pressure_weight, alpha_2, beta, filename)
+        opt_obj = Optimizer(model, run_on_cell, n_processes, pool_size, initial_state,
+                            cenH_init_idx, N, t_total, noise, rms, alpha_2, beta, filename)
 
         res = opt_obj.optimize()
 
-        pickle_res(res, output_dir, U_pressure_weight, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
-                   alpha_2, beta)
+        pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta)
 
         print(res)
 

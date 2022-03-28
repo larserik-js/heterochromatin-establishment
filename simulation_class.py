@@ -7,11 +7,15 @@ from scipy.special import lambertw
 from statistics import _gather_statistics
 from formatting import create_param_string, create_plot_title
 import pickle
+
+# Application modules
+from pressure_rms import get_pressure
+
 r = np.random
 
 class Simulation:
     def __init__(self, model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
-                 U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
+                 rms, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
                  cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
 
         # Physical model
@@ -41,9 +45,12 @@ class Simulation:
         self.t = 0
         self.dt = dt
 
+        # RMS for free (all active monomers) polymer
+        self.rms = rms
+
         # Potential weights
         self.U_two_interaction_weight = U_two_interaction_weight
-        self.U_pressure_weight = U_pressure_weight
+        self.U_pressure_weight = get_pressure.get_pressure(rms)
 
         ## State change parameters
         self.alpha_1 = alpha_1
@@ -200,9 +207,9 @@ class Simulation:
         self.successful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.model, self.U_pressure_weight, self.cenH_size, self.cenH_init_idx,
-                                            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                            self.beta, self.seed)
+        self.plot_title = create_plot_title(self.model, self.rms, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                            self.seed)
         # Monomer scatter marker size
         self.MONOMER_SIZE = 5
 
@@ -214,10 +221,10 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_string(self.model, self.U_pressure_weight, self.initial_state,
-                                                   self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
-                                                   self.cell_division, self.N, self.t_total, self.noise, self.alpha_1,
-                                                   self.alpha_2, self.beta, self.seed)
+        self.params_filename = create_param_string(self.model, self.rms, self.initial_state, self.cenH_size,
+                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+                                                   self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                   self.seed)
         # Create figure
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -809,25 +816,6 @@ class Simulation:
             ## CHANGE STATES
             if self.allow_state_change:
                 self.change_states()
-
-        # # Write pressure and RMS values
-        # if self.t == self.t_total - 1:
-        #     write_name = self.output_dir + 'statistics/pressure_RMS_'
-        #     write_name += f'init_state={self.initial_state}_cenH={self.cenH_size}_cenH_init_idx={self.cenH_init_idx}_N={self.N}_'\
-        #                   f't_total={self.t_total}_noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}_'\
-        #                   f'beta={self.beta:.5f}_seed={self.seed}' + '.txt'
-        #
-        #     # Append to the file
-        #     shape_0 = self.dist_vecs_to_com.shape[0]
-        #     # RMS for different time steps
-        #     rms = torch.mean(torch.square(torch.norm(self.dist_vecs_to_com[int(shape_0/2):], dim=2)), dim=1)
-        #
-        #     # This mean is a time average from t_half to the end of the simulation
-        #     mean_rms = torch.mean(rms)
-        #     line_str = f'{self.U_pressure_weight},{mean_rms:.4f}'
-        #     data_file = open(write_name, 'a')
-        #     data_file.write(line_str + '\n')
-        #     data_file.close()
 
     # Clears the figure object and plots the current polymer
     def plot(self):

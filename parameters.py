@@ -22,8 +22,8 @@ def get_parser_args():
     parser.add_argument('--model',
                         type=str,
                         default='CMOL',
-                        choices=['CMOL', 'S_A_magnetic', 'S_magnetic'],
-                        help='Which physical model to use. ')
+                        choices=['CMOL', 'S_magnetic', 'S_A_magnetic'],
+                        help='Which physical model to use. The choices are: "CMOL", "S_magnetic", and "S_A_magnetic".')
 
     # Run on Cell computers
     parser.add_argument('--run_on_cell',
@@ -45,8 +45,9 @@ def get_parser_args():
     parser.add_argument('--multiprocessing_parameter',
                         type=str,
                         default='seed',
+                        choices=['seed', 'alpha_1', 'rms', 'constant'],
                         help='The parameter different in each process when using multiprocessing. '\
-                             + 'The possibilities are: "seed", "alpha_1", "RNS", and "constant".')
+                             + 'The choices are: "seed", "alpha_1", "rms", and "constant".')
 
     # Additionally generates and saves an animation
     parser.add_argument('--animate',

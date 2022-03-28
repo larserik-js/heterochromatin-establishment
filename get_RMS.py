@@ -1,4 +1,4 @@
-# This script is used to import all initial polymers positions for different pressures
+# This script is used to import all initial polymer positions for different pressures
 # and calculate the RMS, and then write that value to a .txt document.
 # The .txt document is located in the 'masters_thesis/pressure_rms/' folder, and is called 'pressure_RMS.txt'.
 # These values can be plotted against each other (bottom of script).

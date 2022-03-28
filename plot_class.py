@@ -15,17 +15,16 @@ from skopt import plots, load
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, model, n_processes, U_pressure_weight, stats_interval, cenH_size, cenH_sizes, cenH_init_idx,
-                 ATF1_idx, cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
+    def __init__(self, model, n_processes, rms, stats_interval, cenH_size, cenH_sizes, cenH_init_idx, ATF1_idx,
+                 cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
     
         # Project and plot data directories
         self.project_dir = get_project_dir()
         self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
 
-        print(self.plot_data_dir)
         self.model = model
         self.n_processes = n_processes
-        self.U_pressure_weight = U_pressure_weight
+        self.rms = rms
         self.stats_interval = stats_interval
         self.cenH_size = cenH_size
         self.cenH_sizes = cenH_sizes
@@ -44,14 +43,14 @@ class Plots:
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['S', 'U', 'A']
 
-        self.param_filename = create_param_string(self.model, self.U_pressure_weight, self.initial_state,
-                                                  self.cenH_size, self.cenH_init_idx, self.ATF1_idx, self.cell_division,
-                                                  self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                                  self.beta, self.seed)
+        self.param_filename = create_param_string(self.model, self.rms, self.initial_state, self.cenH_size,
+                                                  self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+                                                  self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                  self.seed)
 
-        self.plot_title = create_plot_title(self.model, self.U_pressure_weight, self.cenH_size, self.cenH_init_idx,
-                                            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
-                                            self.beta, self.seed)
+        self.plot_title = create_plot_title(self.model, self.rms, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
+                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                            self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
@@ -342,7 +341,7 @@ class Plots:
     def RMS(self):
         open_filename = self.create_full_filename('dist_vecs_to_com/', '.pkl')
         # Replace the pressure values with the wildcard * to include all pressure values
-        open_filename = open_filename.replace(f'pressure={self.U_pressure_weight:.2f}', 'pressure=*')
+        open_filename = open_filename.replace(f'rms={self.rms:.3f}', 'rms=*')
 
         files = glob(open_filename)
         n_files = len(files)
@@ -438,7 +437,7 @@ class Plots:
             ax.scatter(taus, correlations)
             ax.set(ylim=(-0.05, 1.05))
 
-            ax.set_title('Dynamics time, ' + f'pressure = {self.U_pressure_weight:.2f}', size=16)
+            ax.set_title('Dynamics time, ' + f'rms = {self.rms:.3f}', size=16)
             ax.set_xlabel(r'$\tau$', size=14)
             ax.set_ylabel('Correlation', size=14)
             plt.show()
@@ -539,7 +538,7 @@ class Plots:
         txt_string = ''
 
         for cenH_size in self.cenH_sizes:
-            param_string = f'pressure={self.U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_'\
+            param_string = f'pressure={self.rms:.2f}_init_state={self.initial_state}_cenH={cenH_size}_'\
                            + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                            + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}'\
                            + f'_beta={self.beta:.5f}.txt'
@@ -584,34 +583,31 @@ class Plots:
 
         # The values to check for
         # Only values from data will eventually be used
-        pressure_vals = np.arange(0,1.1,0.1)
-
-        pressure_RMS_data = np.loadtxt(self.project_dir + 'pressure_rms/pressure_RMS.txt', delimiter=',')
+        rms_vals = np.arange(1, 4, 0.5)
 
         for cenH_size in self.cenH_sizes:
             # Values will only be appended to the lists if data exist
             RMS_list = []
-            pressure_list = []
             est_time_list = []
             est_time_std_list = []
             n_patches_list = []
             n_patches_std_list = []
 
-            for U_pressure_weight in pressure_vals:
-
-                # Get corresponding RMS_val
-                val_idx = np.argmin(np.abs(pressure_RMS_data[:,0] - U_pressure_weight))
-                RMS = pressure_RMS_data[val_idx,1]
-
-                param_string = f'pressure={U_pressure_weight:.2f}_init_state={self.initial_state}_cenH={cenH_size}_' \
-                               + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
-                               + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}' \
-                               + f'_beta={self.beta:.5f}.txt'
+            for rms in rms_vals:
+                # param_string = f'{self.model}_rms={rms:.3f}_init_state={self.initial_state}_cenH={cenH_size}_' \
+                #                + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
+                #                + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}' \
+                #                + f'_beta={self.beta:.5f}.txt'
+                param_string = create_param_string(self.model, rms, self.initial_state, self.cenH_size,
+                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+                                                   self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+                                                   self.seed, exclude_seed=True)
 
                 # Get data
                 try:
-                    output = np.loadtxt(self.plot_data_dir + 'stable_silent_times/' + param_string,
+                    data = np.loadtxt(self.plot_data_dir + 'stable_silent_times/' + param_string + '.txt',
                                         skiprows=2, usecols=[0,1,2], delimiter=',')
+
                 except:
                     continue
 
@@ -635,9 +631,8 @@ class Plots:
                 n_patches_list.append(n_patches.mean())
                 n_patches_std_list.append(n_patches.std(ddof=1) / np.sqrt(n_data))
 
-                #
-                pressure_list.append(U_pressure_weight)
-                RMS_list.append(RMS)
+                # Appends rms value
+                RMS_list.append(rms)
 
             # Plot
             ax[0].errorbar(RMS_list, est_time_list, yerr=est_time_std_list, fmt='-o', label=f'cenH = {cenH_size}')
@@ -652,29 +647,9 @@ class Plots:
         fig.tight_layout()
         plt.show()
 
-    # # Plots the minimum f_minimize_vals as a function of pressure values, from a .txt document
-    # def plot_optimization(self):
-    #     filename = self.plot_data_dir + f'optimization_init_state={self.initial_state}_'\
-    #                       + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
-    #                       + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt'
-    #
-    #     # Read the data into a Pandas DF
-    #     df = pd.read_csv(filename, usecols=['U_pressure_weight', 'f_minimize_val'])
-    #     # Group the minimum f_minimize_vals by U_pressure_weight
-    #     df = df.groupby('U_pressure_weight')['f_minimize_val'].min()
-    #     # Transform to Numpy arrays
-    #     pressure_vals = df.index.to_numpy()
-    #     f_min_vals = df.to_numpy()
-    #
-    #     fig, ax = plt.subplots(figsize=(8,6))
-    #     ax.scatter(pressure_vals, f_min_vals)
-    #     ax.set_xlabel('U_pressure_weight', size=14)
-    #     ax.set_ylabel('f_minimize_val', size=14)
-    #     plt.show()
-
     def optimization(self):
         # Finds all .txt files with different pressure values
-        filenames = glob(self.plot_data_dir + 'optimization/U_pressure_weight=*'\
+        filenames = glob(self.plot_data_dir + 'optimization/rms=*'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
@@ -700,7 +675,7 @@ class Plots:
         plt.show()
 
     def res(self):
-        open_filename = self.plot_data_dir + f'optimization/res_U_pressure_weight={self.U_pressure_weight:.2e}_'\
+        open_filename = self.plot_data_dir + f'optimization/res_rms={self.rms:.3f}_'\
                          + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
                          + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
                          + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl'

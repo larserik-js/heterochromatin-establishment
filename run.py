@@ -75,7 +75,7 @@ def set_numba_seed(seed):
 # Runs the script
 # from memory_profiler import profile
 # @profile
-def run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, U_pressure_weight, alpha_1,
+def run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, rms, alpha_1,
         alpha_2, beta, stats_t_interval, set_seed, seed, animate, allow_state_change, initial_state, cell_division,
         cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
 
@@ -96,11 +96,11 @@ def run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interac
 
             # Create simulation object
             sim_obj = Simulation(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
-                                 U_pressure_weight, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change,
+                                 rms, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change,
                                  initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
-            param_string = create_param_string(model, U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+            param_string = create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx,
                                                ATF1_idx, cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed)
 
             animation_folder = output_dir + '/animations/' + param_string + '/'
