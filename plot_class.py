@@ -45,14 +45,14 @@ class Plots:
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['S', 'U', 'A']
 
-        self.param_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
-                                                  self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
-                                                  self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                                  self.seed)
+        self.param_filename = create_param_string(self.model, self.U_pressure_weight, self.initial_state,
+                                                  self.cenH_size, self.cenH_init_idx, self.ATF1_idx, self.cell_division,
+                                                  self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                                  self.beta, self.seed)
 
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
-                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                            self.seed)
+        self.plot_title = create_plot_title(self.model, self.U_pressure_weight, self.cenH_size, self.cenH_init_idx,
+                                            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                            self.beta, self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 

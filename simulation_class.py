@@ -136,7 +136,7 @@ class Simulation:
         self.potential_cutoff = 1*self.l0
 
         # Picks out monomers that are allowed to interact with each other
-        self.interaction_mask_S = self.get_interaction_mask(state='S')
+        self.interaction_mask_S, self.interaction_mask_A = self.get_interaction_masks()
 
         # The interaction distance is set to half the equilibrium spring distance
         # The linker DNA in reality consists of up to about 80 bp
@@ -200,9 +200,9 @@ class Simulation:
         self.successful_noisy_conversions = torch.zeros(size=(4,))
 
         ## Plot parameters
-        self.plot_title = create_plot_title(self.U_pressure_weight, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
-                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                            self.seed)
+        self.plot_title = create_plot_title(self.model, self.U_pressure_weight, self.cenH_size, self.cenH_init_idx,
+                                            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2,
+                                            self.beta, self.seed)
         # Monomer scatter marker size
         self.MONOMER_SIZE = 5
 
@@ -214,10 +214,10 @@ class Simulation:
         self.r_system = r_system
 
         # File
-        self.params_filename = create_param_string(self.U_pressure_weight, self.initial_state, self.cenH_size,
-                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
-                                                   self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                                   self.seed)
+        self.params_filename = create_param_string(self.model, self.U_pressure_weight, self.initial_state,
+                                                   self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
+                                                   self.cell_division, self.N, self.t_total, self.noise, self.alpha_1,
+                                                   self.alpha_2, self.beta, self.seed)
         # Create figure
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')
@@ -375,34 +375,32 @@ class Simulation:
         return two_interaction_mask
 
     # Picks out monomers that are allowed to interact with each other
-    def get_interaction_mask(self, state):
-        # Transform torch tensors to numpy array
-        norms_all = self.norms_all.detach().numpy()
-
-        if state == 'S':
+    def get_interaction_masks(self):
+        if self.model == 'CMOL':
+            # Transform Torch tensors to Numpy array
+            norms_all = self.norms_all.detach().numpy()
             state_S = self.state_S.detach().numpy()
 
-            if self.model == 'CMOL':
-                # Indices for checking for possible interactions
-                interaction_mask = self.get_two_interaction_mask(norms_all, state_S, self.i_indices,
-                                                                 self.j_indices, self.N_ALLOWED_INTERACTIONS)
-            elif self.model == 'S_magnetic':
-                interaction_mask = None
-            elif self.model == 'S_A_magnetic':
-                # IMPLEMENT
-                interaction_mask = None
-            else:
-                raise AssertionError('Invalid model name in "get_interaction_mask"!')
-        elif state == 'A':
-            # IMPLEMENT!
-            interaction_mask = None
+            # Indices for checking for possible interactions
+            interaction_mask_S = self.get_two_interaction_mask(norms_all, state_S, self.i_indices,
+                                                             self.j_indices, self.N_ALLOWED_INTERACTIONS)
+
+            # Transform Numpy array to Torch tensor
+            interaction_mask_S = torch.from_numpy(interaction_mask_S)
+            interaction_mask_A = None
+
+        elif self.model == 'S_magnetic':
+            interaction_mask_S = self.state_S * self.state_S[:,None]
+            interaction_mask_A = None
+
+        elif self.model == 'S_A_magnetic':
+            interaction_mask_S = self.state_S * self.state_S[:,None]
+            interaction_mask_A = self.state_A * self.state_A[:,None]
+
         else:
-            raise AssertionError('Invalid state in "get_interaction_mask"!')
+            raise AssertionError('Invalid model name in "get_interaction_mask"!')
 
-        # Change from Numpy array to Torch tensor
-        interaction_mask = torch.from_numpy(interaction_mask)
-
-        return interaction_mask
+        return interaction_mask_S, interaction_mask_A
 
     # Require gradient
     def grad_on(self):
@@ -434,16 +432,25 @@ class Simulation:
 
     # Distance-based interaction potential
     def interaction_potential(self):
-        monomers_within_cutoff_mask = self.get_monomers_within_cutoff_mask()
-
         # Repulsive term of potential
-        U_interaction = torch.exp(-2 * self.norms_all / self.r0) * monomers_within_cutoff_mask
-
-        # Apply only to monomers with a physical attractive interaction
-        mask_two_cutoff = self.interaction_mask_S.double() * monomers_within_cutoff_mask
+        U_interaction = torch.exp(-2 * self.norms_all / self.r0)
 
         # Attractive term of potential
-        U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0)) * mask_two_cutoff
+        U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0))\
+                                        * self.interaction_mask_S.double()
+
+        # Add potential for attracting A states
+        if self.model == 'S_A_magnetic':
+            U_interaction = U_interaction - torch.exp(-2 * self.norms_all / (self.B * self.r0))\
+                                            * self.interaction_mask_A.double()
+        else:
+            pass
+
+        # Only apply the potential to monomers where
+        # the distance is > 0 (excludes self-self interactions), and where
+        # the distance is within the potential cutoff
+        monomers_within_cutoff_mask = self.get_monomers_within_cutoff_mask()
+        U_interaction = U_interaction * monomers_within_cutoff_mask
 
         return self.U_two_interaction_weight * torch.sum(U_interaction)
 
@@ -459,17 +466,13 @@ class Simulation:
 
     # Returns (overall) system potential
     def potential(self):
-        ## INTERACTION-BASED POTENTIAL
+        # Interaction potential
         U_interaction = self.interaction_potential()
 
-        ## PRESSURE POTENTIAL
-        #U_pressure = 0
+        # Pressure potential
         U_pressure = self.pressure_potential()
 
-        #return self.U_spring_weight * U_spring + U_interaction + self.U_pressure_weight * U_pressure
-        #return U_interaction + self.U_pressure_weight * U_pressure
         return U_interaction + U_pressure
-
 
     # Uses imported function
     def gather_statistics(self):
@@ -789,15 +792,16 @@ class Simulation:
             self.center_of_mass = torch.sum(self.X, dim=0) / self.N
 
             # Copy previous interaction mask for statistics
-            # This mask also includes the distance requirement for interactions
+            # Only applies to S monomer interactions
+            # This mask also includes the distance requirement for counting interactions
             self.previous_interaction_mask = self.interaction_mask_S & (self.norms_all < self.l_interacting)
 
             # Update distance vectors
             self.rij_all, self.norms_all = self.get_norms()
 
             # Create new interaction mask
-            # This mask does NOT include the distance requirement for interactions
-            self.interaction_mask_S = self.get_interaction_mask(state='S')
+            # This mask does NOT include the distance requirement for counting interactions
+            self.interaction_mask_S, self.interaction_mask_A = self.get_interaction_masks()
 
             # Gather statistics
             self.gather_statistics()

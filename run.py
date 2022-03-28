@@ -100,9 +100,8 @@ def run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interac
                                  initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
-            param_string = create_param_string(U_pressure_weight, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
-                                               cell_division, N, t_total, noise, alpha_1, alpha_2,
-                                               beta, seed)
+            param_string = create_param_string(model, U_pressure_weight, initial_state, cenH_size, cenH_init_idx,
+                                               ATF1_idx, cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed)
 
             animation_folder = output_dir + '/animations/' + param_string + '/'
 

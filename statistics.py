@@ -78,6 +78,7 @@ def update_correlation_sums(sim_obj):
     sim_obj.correlation_sums += normalized_correlations
     return None
 
+# Only applies to interactions between S state monomers
 def update_interaction_stats(sim_obj):
     # Interaction only applies to distances lower than l_interacting
     # Relevant interactions are only counted once
@@ -159,10 +160,11 @@ def _gather_statistics(sim_obj):
             if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N:
                 line_str = f'{sim_obj.t},{sim_obj.half_silent_time},{sim_obj.n_silent_patches},{sim_obj.seed}'
 
-                edit_stable_silent_times_file(sim_obj.output_dir, sim_obj.U_pressure_weight, sim_obj.initial_state,
-                                              sim_obj.cenH_size, sim_obj.cenH_init_idx, sim_obj.ATF1_idx,
-                                              sim_obj.cell_division, sim_obj.N, sim_obj.t_total, sim_obj.noise,
-                                              sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
+                edit_stable_silent_times_file(sim_obj.output_dir, sim_obj.model, sim_obj.U_pressure_weight,
+                                              sim_obj.initial_state, sim_obj.cenH_size, sim_obj.cenH_init_idx,
+                                              sim_obj.ATF1_idx, sim_obj.cell_division, sim_obj.N, sim_obj.t_total,
+                                              sim_obj.noise, sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta,
+                                              sim_obj.seed, line_str)
 
                 print(f'Wrote to file at seed {sim_obj.seed}')
 
@@ -173,10 +175,11 @@ def _gather_statistics(sim_obj):
             elif sim_obj.t == sim_obj.t_total - 1:
                 line_str = f'NaN,NaN,NaN,{sim_obj.seed}'
 
-                edit_stable_silent_times_file(sim_obj.output_dir, sim_obj.U_pressure_weight, sim_obj.initial_state,
-                                              sim_obj.cenH_size, sim_obj.cenH_init_idx, sim_obj.ATF1_idx,
-                                              sim_obj.cell_division, sim_obj.N, sim_obj.t_total, sim_obj.noise,
-                                              sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta, sim_obj.seed, line_str)
+                edit_stable_silent_times_file(sim_obj.output_dir, sim_obj.model, sim_obj.U_pressure_weight,
+                                              sim_obj.initial_state, sim_obj.cenH_size, sim_obj.cenH_init_idx,
+                                              sim_obj.ATF1_idx, sim_obj.cell_division, sim_obj.N, sim_obj.t_total,
+                                              sim_obj.noise, sim_obj.alpha_1, sim_obj.alpha_2, sim_obj.beta,
+                                              sim_obj.seed, line_str)
 
                 print(f'Wrote to file at seed {sim_obj.seed}')
 
