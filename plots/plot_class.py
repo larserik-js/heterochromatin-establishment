@@ -15,30 +15,45 @@ from skopt import plots, load
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 class Plots:
-    def __init__(self, model, n_processes, rms, stats_interval, cenH_size, cenH_sizes, cenH_init_idx, ATF1_idx,
-                 cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
-    
+    # def __init__(self, model, n_processes, rms, stats_interval, cenH_size, cenH_sizes, cenH_init_idx, ATF1_idx,
+    #              cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
+
+    def __init__(self, plot_func, param_vals):
+
+        # REMOVE AT SOME POINT
+        self.stats_interval = 100
+
+        # The plot function to call
+        self.plot_func = plot_func
+
+        print(self.plot_func)
+
+
         # Project and plot data directories
         self.project_dir = get_project_dir()
         self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
 
-        self.model = model
-        self.n_processes = n_processes
-        self.rms = rms
-        self.stats_interval = stats_interval
-        self.cenH_size = cenH_size
-        self.cenH_sizes = cenH_sizes
-        self.cenH_init_idx = cenH_init_idx
-        self.ATF1_idx = ATF1_idx
-        self.cell_division = cell_division
-        self.N = N
-        self.t_total = t_total
-        self.noise = noise
-        self.initial_state = initial_state
-        self.alpha_1 = alpha_1
-        self.alpha_2 = alpha_2
-        self.beta = beta
-        self.seed = seed
+        self.model = param_vals['model']
+        self.n_processes = int(param_vals['n_processes'])
+        self.rms = float(param_vals['rms'])
+        self.cenH_size = int(param_vals['cenH_size'])
+        self.cenH_sizes = [6,7,8]
+        self.cenH_init_idx = int(param_vals['cenH_init_idx'])
+
+        try:
+            self.ATF1_idx = int(param_vals['ATF1_idx'])
+        except ValueError:
+            self.ATF1_idx = None
+
+        self.cell_division = int(param_vals['cell_division'])
+        self.N = int(param_vals['N'])
+        self.t_total = int(param_vals['t_total'])
+        self.noise = float(param_vals['noise'])
+        self.initial_state = param_vals['initial_state']
+        self.alpha_1 = float(param_vals['alpha_1'])
+        self.alpha_2 = float(param_vals['alpha_2'])
+        self.beta = float(param_vals['beta'])
+        self.seed = int(param_vals['seed'])
 
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['S', 'U', 'A']
@@ -697,3 +712,35 @@ class Plots:
         true_x0 = res['space'].inverse_transform(min_fun_res.reshape(1, 1))
         print('SURROGATE MINIMUM =', true_x0)
         plt.show()
+
+    def plot(self):
+        if self.plot_func == 'Correlations':
+            self.correlation()
+        elif self.plot_func == 'End-to-end distances':
+            self.Rs()
+        elif self.plot_func == 'End-to-end times':
+            self.end_to_end_times()
+        elif self.plot_func == 'Establishment times and silent patches':
+            self.establishment_times_patches()
+        elif self.plot_func == 'Final state':
+            self.final_state()
+        elif self.plot_func == 'Fractions of "ON" cells':
+            self.fraction_ON_cells()
+        elif self.plot_func == 'Heatmap':
+            self.heatmap()
+        elif self.plot_func == 'Monomer interactions':
+            self.interactions()
+        elif self.plot_func == 'Monomer states':
+            self.states()
+        elif self.plot_func == 'Monomer states (time-space plot)':
+            self.states_time_space()
+        elif self.plot_func == 'Optimization':
+            self.optimization()
+        elif self.plot_func == 'Optimization result''RMS':
+            self.res()
+        elif self.plot_func == 'Successful recruited conversions':
+            self.successful_recruited_conversions()
+        elif self.plot_func == 'Time dynamics':
+            self.dynamics_time()
+        else:
+            raise AssertionError("Invalid plot function called!")
