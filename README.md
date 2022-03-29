@@ -1,5 +1,5 @@
-# Master's Thesis
-> Developing a physical model for the establishment of heterochromatin on DNA.
+# Heterochromatin establishment
+> Developing a 3D polymer model for the establishment of heterochromatin on DNA.
 
 The repository contains a variety of modules used to simulate a 3D polymer, which represents the bead-on-a-string structure of nucleosomes in DNA. Data can be gathered on the behavior of the different monomer states.
 
@@ -17,7 +17,7 @@ The best way to start exploring the repository is probably by generating one or 
 ```sh
 python3 main.py --animate=1 --t_total=100000 --cenH_size=8
 ```
-The files can be found in ``output/animations/``.
+The generated files can be found in ``output/animations/``.
 
 To generate several animations at once (using multiprocessing with different seeds), use the multiprocessing argument. E.g. to generate 10 animations, run:
 ```sh
@@ -29,4 +29,4 @@ More usage examples will be added as better input functionality is implemented f
 ## Meta
 Lars Erik J. Skjegstad - lars_erik_skjegstad@hotmail.com
 
-This project is not open source, and thus comes without a license.
+This project is not open source, and thus does not come with a license.
