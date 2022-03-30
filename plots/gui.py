@@ -9,7 +9,7 @@ class App(tk.Tk):
         self.plot_type = ('Correlations', 'Correlation times', 'End-to-end distances', 'End-to-end times',
                           'Establishment times and silent patches', 'Final state', 'Fractions of "ON" cells', 'Heatmap',
                           'Monomer interactions', 'Monomer states', 'Monomer states (time-space plot)', 'Optimization',
-                          'Optimization result''RMS', 'Successful recruited conversions', 'Time dynamics')
+                          'Optimization result', 'RMS', 'Successful recruited conversions', 'Time dynamics')
 
         self.parameters = ('model', 'n_processes', 'rms', 'cenH_size', 'cenH_init_idx', 'ATF1_idx', 'N', 't_total',
                            'noise', 'initial_state', 'dt', 'alpha_1', 'alpha_2', 'beta', 'seed', 'cell_division')
@@ -28,19 +28,20 @@ class App(tk.Tk):
 
     def create_widget(self):
         self.title('')
-        self.geometry("350x450")
+        self.geometry("440x440")
 
         # padding for widgets using the grid layout
         paddings = {'padx': 5, 'pady': 5}
 
         # Option menu
-        option_label = ttk.Label(self,  text='Select plot type:')
+        headline_font = ('Helvetica', 12, 'bold')
+        option_label = ttk.Label(self,  text='Select plot type:', font = headline_font)
         option_label.grid(column=0, row=0, sticky=tk.W, **paddings)
         option_menu = ttk.OptionMenu(self, self.option_var, self.plot_type[0], *self.plot_type, command=None)
         option_menu.grid(column=1, row=0, sticky=tk.W, **paddings)
 
         # Entry fields
-        ttk.Label(self, text='Parameters:').grid(column=0, row=1)
+        ttk.Label(self, text='Parameters:', font=headline_font).grid(column=0, row=1)
         for i, param in enumerate(self.parameters):
             row_idx = i+2
 
@@ -53,7 +54,7 @@ class App(tk.Tk):
             # Prefill
             self.entries[i].insert(tk.END, str(self.prefill_params[i]))
 
-        # Ok button
+        # OK button
         ok_button = tk.Button(self, text='OK', state=tk.NORMAL, command=self.get_input)
         ok_button_row_idx = len(self.parameters) + 2
         ok_button.grid(column=1, row=ok_button_row_idx)
