@@ -16,7 +16,7 @@ class App(tk.Tk):
 
         self.entries = [ttk.Entry(self) for _ in range(len(self.parameters))]
         self.input_param_vals = {}
-        self.plot_func = ''
+        self.plot_func_name = ''
 
         self.prefill_params = ('CMOL', 1, 2, 8, 16, None, 40, 10000, 0.5, 'A', 0.02, 0.07, 0.1, 0.004, 0, 0)
 
@@ -65,7 +65,7 @@ class App(tk.Tk):
             parameter = self.parameters[i]
             self.input_param_vals[parameter] = (entry.get())
 
-        self.plot_func = self.option_var.get()
+        self.plot_func_name = self.option_var.get()
 
         self.destroy()
 

@@ -1,30 +1,26 @@
-import copy
 import torch
 import pickle
 import matplotlib.pyplot as plt
 from matplotlib import colors, patches
 import numpy as np
 from glob import glob
-import seaborn as sns
 import re
 from numba import njit
 import pandas as pd
 from scipy import optimize
 from skopt import plots, load
 
+# Own modules
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 class Plots:
-    # def __init__(self, model, n_processes, rms, stats_interval, cenH_size, cenH_sizes, cenH_init_idx, ATF1_idx,
-    #              cell_division, N, t_total, noise, initial_state, alpha_1, alpha_2, beta, seed):
-
-    def __init__(self, plot_func, param_vals):
+    def __init__(self, plot_func_name, param_vals):
 
         # REMOVE AT SOME POINT
         self.stats_interval = 100
 
         # The plot function to call
-        self.plot_func = plot_func
+        self.plot_func_name = plot_func_name
 
         # Project and plot data directories
         self.project_dir = get_project_dir()
@@ -65,6 +61,7 @@ class Plots:
                                             self.seed)
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
+
 
     def create_full_filename(self, stats_dir, format):
         return self.plot_data_dir + stats_dir + self.param_filename + format
@@ -729,37 +726,29 @@ class Plots:
         plt.show()
 
     def plot(self):
-        if self.plot_func == 'Correlations':
-            self.correlation()
-        elif self.plot_func == 'Correlation times':
-            self.correlation_times()
-        elif self.plot_func == 'End-to-end distances':
-            self.Rs()
-        elif self.plot_func == 'End-to-end times':
-            self.end_to_end_times()
-        elif self.plot_func == 'Establishment times and silent patches':
-            self.establishment_times_patches()
-        elif self.plot_func == 'Final state':
-            self.final_state()
-        elif self.plot_func == 'Fractions of "ON" cells':
-            self.fraction_ON_cells()
-        elif self.plot_func == 'Heatmap':
-            self.heatmap()
-        elif self.plot_func == 'Monomer interactions':
-            self.interactions()
-        elif self.plot_func == 'Monomer states':
-            self.states()
-        elif self.plot_func == 'Monomer states (time-space plot)':
-            self.states_time_space()
-        elif self.plot_func == 'Optimization':
-            self.optimization()
-        elif self.plot_func == 'Optimization result':
-            self.res()
-        elif self.plot_func == 'RMS':
-            self.RMS()
-        elif self.plot_func == 'Successful recruited conversions':
-            self.successful_recruited_conversions()
-        elif self.plot_func == 'Time dynamics':
-            self.dynamics_time()
+        function_dict = {'Correlations': self.correlation,
+                         'Correlation times': self.correlation_times,
+                         'End-to-end distances': self.Rs,
+                         'End-to-end times': self.end_to_end_times,
+                         'Establishment times and silent patches': self.establishment_times_patches,
+                         'Final state': self.final_state,
+                         'Fractions of "ON" cells': self.fraction_ON_cells,
+                         'Heatmap': self.heatmap,
+                         'Monomer interactions': self.interactions,
+                         'Monomer states': self.states,
+                         'Monomer states (time-space plot)': self.states_time_space,
+                         'Optimization': self.optimization,
+                         'Optimization result': self.res,
+                         'RMS': self.RMS,
+                         'Successful recruited conversions': self.successful_recruited_conversions,
+                         'Time dynamics': self.dynamics_time
+                        }
+
+        # Get the appropriate function
+        try:
+            plot_func = function_dict[self.plot_func_name]
+        except:
+            print(f'No function by the name "{self.plot_func_name}".')
+        # Call the function
         else:
-            raise AssertionError("Invalid plot function called!")
+            plot_func()
