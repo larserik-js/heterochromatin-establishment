@@ -1,7 +1,7 @@
 import argparse
 
 # The function returns an integer, a NoneType object, or raises an error message
-def none_or_int(value):
+def _none_or_int(value):
     if value == 'None':
         return None
     else:
@@ -14,7 +14,7 @@ def none_or_int(value):
             return int_value
 
 
-def get_parser_args():
+def _get_parser_args():
     # Argparser from command line
     parser = argparse.ArgumentParser()
 
@@ -113,7 +113,7 @@ def get_parser_args():
     # rms
     parser.add_argument('--rms',
                         type=float,
-                        default=1.0,
+                        default=2.0,
                         help='The root-mean-square of the distances of the monomers to the center-of-mass. '\
                              + ' This value translates directly into a U_pressure_weight value.')
 
@@ -155,7 +155,7 @@ def get_parser_args():
     # ATF1
     # The position of a single silent monomer
     parser.add_argument('--ATF1_idx',
-                        type=none_or_int,
+                        type=_none_or_int,
                         default=None,
                         help='The index of the position of the ATF1 protein. '\
                              + 'For the purpose of this script it is realized as one constantly silent monomer. '\
@@ -171,7 +171,7 @@ def get_parser_args():
     # Towards S
     parser.add_argument('--alpha_1',
                         type=float,
-                        default=35*0.02*0.1,
+                        default=0.07,
                         help='The reaction rate for the recruited conversions of A to U and U to S.')
 
     parser.add_argument('--alpha_1_const',
@@ -182,13 +182,13 @@ def get_parser_args():
     # Towards A
     parser.add_argument('--alpha_2',
                         type=float,
-                        default=49*0.02*0.1,
+                        default=0.1,
                         help='The reaction rate for the recruited conversions of S to U and U to A.')
 
     ## Noisy conversion probability
     parser.add_argument('--beta',
                         type=float,
-                        default=4*0.02*0.1,
+                        default=0.004,
                         help='The reaction rate for the noisy conversions of all states.')
 
     # Gather all arguments in a namespace object
@@ -197,33 +197,34 @@ def get_parser_args():
     return args
 
 # Extract all parameters
-args =  get_parser_args()
+_args =  _get_parser_args()
 
-model = args.model
-run_on_cell = args.run_on_cell
-n_processes = args.n_processes
-pool_size = args.pool_size
-multiprocessing_parameter = args.multiprocessing_parameter
-animate = args.animate
-set_seed = args.set_seed
-min_seed = args.min_seed
-N = args.N
-l0 = args.l0
-noise = args.noise
-dt = args.dt
-t_total = args.t_total
-stats_t_interval = args.stats_t_interval
-rms = args.rms
-U_two_interaction_weight = args.U_two_interaction_weight
-allow_state_change = args.allow_state_change
-initial_state = args.initial_state
-cell_division = args.cell_division
-cenH_size = args.cenH_size
-cenH_init_idx = args.cenH_init_idx
-write_cenH_data = args.write_cenH_data
-ATF1_idx = args.ATF1_idx
-constant = args.constant
-alpha_1 = args.alpha_1
-alpha_1_const = args.alpha_1_const
-alpha_2 = args.alpha_2
-beta = args.beta
+# All of the parameters below will be imported into 'main.py'
+model = _args.model
+run_on_cell = _args.run_on_cell
+n_processes = _args.n_processes
+pool_size = _args.pool_size
+multiprocessing_parameter = _args.multiprocessing_parameter
+animate = _args.animate
+set_seed = _args.set_seed
+min_seed = _args.min_seed
+N = _args.N
+l0 = _args.l0
+noise = _args.noise
+dt = _args.dt
+t_total = _args.t_total
+stats_t_interval = _args.stats_t_interval
+rms = _args.rms
+U_two_interaction_weight = _args.U_two_interaction_weight
+allow_state_change = _args.allow_state_change
+initial_state = _args.initial_state
+cell_division = _args.cell_division
+cenH_size = _args.cenH_size
+cenH_init_idx = _args.cenH_init_idx
+write_cenH_data = _args.write_cenH_data
+ATF1_idx = _args.ATF1_idx
+constant = _args.constant
+alpha_1 = _args.alpha_1
+alpha_1_const = _args.alpha_1_const
+alpha_2 = _args.alpha_2
+beta = _args.beta

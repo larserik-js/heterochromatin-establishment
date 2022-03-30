@@ -10,11 +10,8 @@ from functools import partial
 import run
 from formatting import get_project_dir, get_output_dir, make_output_directories, edit_stable_silent_times_file
 
-# Import all parameters
-from parameters import model, run_on_cell, n_processes, pool_size, multiprocessing_parameter, animate, set_seed,\
-                       min_seed, N, l0, noise, dt, t_total, stats_t_interval, rms, U_two_interaction_weight,\
-                       allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data,\
-                       ATF1_idx, constant, alpha_1, alpha_1_const, alpha_2, beta
+# Import all parameters from 'parameters.py'
+from parameters import *
 
 ##############################################################################
 ##############################################################################
