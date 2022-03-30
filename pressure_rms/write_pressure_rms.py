@@ -1,5 +1,6 @@
 import torch
 
+
 # Write pressure and RMS values at the end of a simulation
 def write_pressure_rms(output_dir, initial_state, cenH_size, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta,
                        seed, dist_vecs_to_com, U_pressure_weight):

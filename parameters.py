@@ -1,5 +1,6 @@
 import argparse
 
+
 # The function returns an integer, a NoneType object, or raises an error message
 def _none_or_int(value):
     if value == 'None':
@@ -195,6 +196,7 @@ def _get_parser_args():
     args = parser.parse_args()
 
     return args
+
 
 # Extract all parameters
 _args =  _get_parser_args()

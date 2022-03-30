@@ -3,9 +3,13 @@ import matplotlib.pyplot as plt
 import mpmath
 import tqdm as tqdm
 from scipy import optimize
+
+
 r = np.random
 
+
 class Estimator:
+
     def __init__(self, tau_true=2, t_max=5, n_samples=100, n_runs=10):
         self.tau_true = tau_true
         self.t_max = t_max
@@ -27,7 +31,7 @@ class Estimator:
             data = np.array(data)
             print(data)
             #Is = ~np.isnan(data)
-            Is = data != None
+            Is = data is not None
             print(Is)
             pass
 
@@ -50,7 +54,7 @@ class Estimator:
             second_derivative = k/tau_estimate**2 - 2 * ts.sum() / tau_estimate**3 - 2*(N-k)*self.t_max / tau_estimate**3
             tau_estimate_error = np.sqrt(-1 / second_derivative)
 
-            if print_stats == True:
+            if print_stats:
                 print(f'Estimated tau: {tau_estimate:.4f} +/- {tau_estimate_error:.4f}')
 
             return ts, tau_estimate, tau_estimate_error, term_1
@@ -68,7 +72,6 @@ class Estimator:
             self.print_stats(tau_estimates)
 
         return tau_estimates
-
 
     def plot_estimate_by_cutoff(self):
         t_max_array = np.linspace(1, self.tau_true + 20, self.n_runs)
@@ -128,6 +131,7 @@ class Estimator:
 
         return res
 
+
 def expectations_vs_analytic(n_samples_max, n_runs, tau_true, t_max):
     Ns = np.arange(1,n_samples_max)
     expectation_means = np.empty(len(Ns))
@@ -153,10 +157,12 @@ def expectations_vs_analytic(n_samples_max, n_runs, tau_true, t_max):
     plt.legend(loc='best')
     plt.show()
 
+
 def solve_empirical(tau_estimate, N, t_max):
     func = lambda tau: tau * N / (N - np.pi*np.exp(-t_max/tau)) - tau_estimate
     res = optimize.fsolve(func, tau_estimate)
     return res[0]
+
 
 def plot_taus():
     n_plots = 4
@@ -210,6 +216,7 @@ def plot_taus():
         ax[i].legend(loc='upper right')
     ax[n_plots-1].set_xlabel(r'$N$', size=14)
     plt.show()
+
 
 if __name__ == '__main__':
     #expectations_vs_analytic(n_samples_max=10, n_runs=1000, tau_true=2, t_max=10)

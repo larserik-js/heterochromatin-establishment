@@ -9,10 +9,12 @@ import torch
 import pickle
 import matplotlib.pyplot as plt
 
+
 project_dir = get_project_dir()
 input_dir = project_dir + 'input/quasi_random_initial_states_pressure_before_dynamics/'
 output_file = project_dir + 'pressure_rms/pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)
+
 
 def get_rms(X):
     N = X.shape[0]
@@ -30,6 +32,7 @@ def get_rms(X):
     rms = torch.sqrt(torch.mean(torch.square(dist_to_com)))
 
     return rms
+
 
 def write_file():
     for i, pressure in enumerate(pressure_vals):
@@ -58,8 +61,8 @@ def write_file():
         data_file.write(line_str)
         data_file.close()
 
-#write_file()
 
+#write_file()
 data = np.loadtxt(output_file, delimiter=',')
 plt.plot(data[:,0], data[:,1])
 plt.xlabel('Pressure', size=12)

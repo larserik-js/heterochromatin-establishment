@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def rms_vals_within_bounds(array_or_list):
     # Converts input to ndarray
     rms_vals = np.asarray(array_or_list)

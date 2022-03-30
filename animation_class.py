@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import torch
-import sys
-import os
+
 
 class Animation:
+
     def __init__(self, sim_obj, t_total, coords_init):
         # Parameters
         self.sim_obj = sim_obj
@@ -85,7 +85,7 @@ class Animation:
 
     def animation_loop(self, t):
         # Print progress
-        if t != None:
+        if t is not None:
             if (t + 1) % (self.t_total / 10) == 0:
                 print(f'Time-step: {t + 1} / {self.t_total}')
 

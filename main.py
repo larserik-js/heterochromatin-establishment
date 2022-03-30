@@ -13,14 +13,11 @@ from formatting import get_project_dir, get_output_dir, make_output_directories,
 # Import all parameters from 'parameters.py'
 from parameters import *
 
-##############################################################################
-##############################################################################
 
 def curied_run(x, model, project_dir, output_dir, multiprocessing_parameter, N, l0, noise, dt, t_total,
                U_two_interaction_weight, rms, alpha_1, alpha_2, beta, stats_t_interval, set_seed,
                min_seed, animate, allow_state_change, initial_state, cell_division, cenH_size, cenH_init_idx,
                write_cenH_data, ATF1_idx):
-
 
     if multiprocessing_parameter == 'seed':
         return run.run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, rms,
@@ -38,6 +35,7 @@ def curied_run(x, model, project_dir, output_dir, multiprocessing_parameter, N, 
                        cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
     else:
         raise AssertionError('Invalid multiprocessing_parameter given.')
+
 
 def main(model=model, run_on_cell=run_on_cell, n_processes=n_processes, pool_size=pool_size, N=N, l0=l0, noise=noise,
          dt=dt, t_total=t_total, U_two_interaction_weight=U_two_interaction_weight, rms=rms, alpha_1=alpha_1,

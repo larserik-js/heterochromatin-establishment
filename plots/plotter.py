@@ -1,6 +1,7 @@
 from plot_class import Plots
 import gui
 
+
 if __name__ == '__main__':
     # Create widget
     widget_obj = gui.App()

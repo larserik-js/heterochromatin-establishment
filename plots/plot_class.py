@@ -13,7 +13,9 @@ from skopt import plots, load
 # Own modules
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
+
 class Plots:
+
     def __init__(self, plot_func_name, param_vals):
 
         # REMOVE AT SOME POINT
@@ -62,7 +64,6 @@ class Plots:
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
-
     def create_full_filename(self, stats_dir, format):
         return self.plot_data_dir + stats_dir + self.param_filename + format
 
@@ -74,7 +75,6 @@ class Plots:
         ax.set_title(self.plot_title, size=12)
         ax.legend(loc=legend_loc)
         plt.tight_layout()
-        return None
 
     def correlation(self):
         print('No working implementation.')
@@ -163,8 +163,6 @@ class Plots:
             ax.set_xlabel(r'$\tau$', size=14)
             ax.set_ylabel('Correlation', size=14)
             plt.show()
-
-        return None
 
     # Plots from one specific file
     def end_to_end_times(self):
@@ -704,16 +702,19 @@ class Plots:
         ax[0,0].set_title('S to U', size=14)
         ax[0,0].set_ylabel('Frequency', size=12)
         ax[0,0].set(ylim=(0,max_frequency))
+
         # U to A
         ax[0,1].bar(np.arange(self.N), successful_recruited_conversions[1])
         ax[0,1].set_title('U to A', size=14)
         ax[0,1].set(ylim=(0,max_frequency))
+
         # A to U
         ax[1,0].bar(np.arange(self.N), successful_recruited_conversions[2])
         ax[1,0].set_title('A to U', size=14)
         ax[1,0].set_xlabel('Index difference', size=12)
         ax[1,0].set_ylabel('Frequency', size=12)
         ax[1,0].set(ylim=(0,max_frequency))
+
         # U to S
         ax[1,1].bar(np.arange(self.N), successful_recruited_conversions[3])
         ax[1,1].set_title('U to S', size=14)

@@ -1,8 +1,10 @@
 import numpy as np
 
+
 # Decaying sigmoid function
 def sigmoid(x, shift):
     return 1 - 1 / (1 + np.exp(-(x + shift)))
+
 
 # Constants are calculated in module 'fitpowerlaw.py'
 def get_pressure(rms):

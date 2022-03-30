@@ -6,7 +6,9 @@ from scipy import optimize
 # Own module
 import get_pressure
 
+
 class FitPowerLaw:
+
     def __init__(self):
         self.rms, self.pressure = self.get_data()
         self.initial_guess = np.array([1, -2, 0])
@@ -40,6 +42,7 @@ class FitPowerLaw:
         scale_fit, exponent_fit, shift_fit = result.x[0], result.x[1], result.x[2]
         print(f'Fit values: SCALE = {scale_fit:.3f}, EXPONENT = {exponent_fit:.3f}, SHIFT = {shift_fit:.3f}')
         self.plot(scale_fit, exponent_fit, shift_fit)
+
 
 if __name__ == '__main__':
     fit_obj = FitPowerLaw()

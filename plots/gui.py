@@ -1,7 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
 
+
 class App(tk.Tk):
+
     def __init__(self):
         super().__init__()
 
@@ -25,6 +27,7 @@ class App(tk.Tk):
 
         # create widget
         self.create_widget()
+
 
     def create_widget(self):
         self.title('')
@@ -59,6 +62,7 @@ class App(tk.Tk):
         ok_button_row_idx = len(self.parameters) + 2
         ok_button.grid(column=1, row=ok_button_row_idx)
 
+
     def get_input(self):
         # Get all input data
         for i, entry in enumerate(self.entries):
@@ -68,7 +72,3 @@ class App(tk.Tk):
         self.plot_func_name = self.option_var.get()
 
         self.destroy()
-
-
-
-#

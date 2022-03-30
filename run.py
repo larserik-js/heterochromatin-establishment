@@ -11,6 +11,7 @@ from simulation_class import Simulation
 # Formatting
 from formatting import create_param_string, make_directory
 
+
 # Takes a list of torch tensors, pickles them
 def write_pkl(var_list, output_dir, filename):
     filename = output_dir + 'statistics/' + filename + '.pkl'
@@ -26,6 +27,7 @@ def write_pkl(var_list, output_dir, filename):
     # Write to pkl
     with open(filename, 'wb') as f:
         pickle.dump(new_var_list, f)
+
 
 def save_data(sim_obj, output_dir):
     parameter_string = sim_obj.params_filename
@@ -70,7 +72,7 @@ def save_data(sim_obj, output_dir):
 @njit
 def set_numba_seed(seed):
     np.random.seed(seed)
-    return None
+
 
 # Runs the script
 # from memory_profiler import profile
@@ -171,6 +173,3 @@ def run(model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interac
             break
 
     return None
-
-##############################################################################
-##############################################################################

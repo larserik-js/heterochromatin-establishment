@@ -10,7 +10,9 @@ import sys
 from pressure_rms import get_pressure
 import misc_functions
 
+
 class Optimizer:
+
     def __init__(self, model, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, rms,
                  alpha_2, beta, filename):
 
@@ -52,7 +54,6 @@ class Optimizer:
         _, tau_estimate, tau_estimate_error, _ = estimator_obj.estimate(data)
 
         return tau_estimate, tau_estimate_error
-
 
     # The function to be minimized
     def f_minimize(self, alpha_1):
@@ -114,6 +115,7 @@ class Optimizer:
 
         return res
 
+
 model = 'CMOL'
 rms_values = [2]
 n_processes = 25
@@ -127,11 +129,13 @@ alpha_2 = 0.1
 beta = 0.004
 run_on_cell = False
 
+
 def make_filename(output_dir, model, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
 
     return output_dir + f'statistics/optimization/{model}_rms={rms:.3f}_n_processes={n_processes}_'\
                       + f'init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_'\
                       + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
+
 
 def initialize_file(filename):
     data_file = open(filename, 'w')
@@ -140,6 +144,7 @@ def initialize_file(filename):
                     + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val' + '\n')
 
     data_file.close()
+
 
 def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
                    alpha_2, beta):
@@ -150,6 +155,7 @@ def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, 
     # Write to pkl (using Skopt function)
     dump(res, filename, store_objective=False)
 
+
 if __name__ == '__main__':
     # Make necessary directories
     project_dir = get_project_dir()
@@ -159,7 +165,7 @@ if __name__ == '__main__':
     # Iterate
     for rms in rms_values:
         # Check if input RMS values are valid
-        if misc_functions.rms_vals_within_bounds(rms_values) == False:
+        if not misc_functions.rms_vals_within_bounds(rms_values):
             print('One or more RMS values outside of bounds. Enter valid values.')
             sys.exit()
 

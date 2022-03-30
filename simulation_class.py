@@ -4,16 +4,19 @@ import torch
 from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
-from statistics import _gather_statistics
+from statistics import gather_statistics_
 from formatting import create_param_string, create_plot_title
 import pickle
 
 # Application modules
 from pressure_rms import get_pressure
 
+
 r = np.random
 
+
 class Simulation:
+
     def __init__(self, model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
                  rms, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
                  cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
@@ -229,7 +232,6 @@ class Simulation:
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')
 
-
     def initialize_system(self, init_system_type):
         # Initial positions are located in the input folder
         # both for local computer and for Cell computers
@@ -311,8 +313,6 @@ class Simulation:
 
         # Change selected monomers to U
         self.states[change_conditions] = 1
-
-        return None
 
     @staticmethod
     @njit
@@ -483,7 +483,7 @@ class Simulation:
 
     # Uses imported function
     def gather_statistics(self):
-        return _gather_statistics(self)
+        return gather_statistics_(self)
 
     @staticmethod
     @njit
@@ -616,13 +616,13 @@ class Simulation:
         elif recruited_conversion_pair == (1,0):
             self.successful_recruited_conversions[3,recruited_conversion_dist] += 1
         # No recruited conversion
-        elif recruited_conversion_pair == None:
+        elif recruited_conversion_pair is None:
             pass
         else:
             raise AssertionError("Invalid recruited conversion pair in function 'change_states'!")
 
         # Update the number of noisy conversions
-        if noisy_conversion_idx == None:
+        if noisy_conversion_idx is None:
             pass
         elif noisy_conversion_idx <= 3:
             self.successful_noisy_conversions[noisy_conversion_idx] += 1
@@ -636,8 +636,6 @@ class Simulation:
         # Update individual (boolean) tensors
         self.state_S, self.state_U, self.state_A = (self.states==0), (self.states==1), (self.states==2)
         self.states_booleans = torch.cat([self.state_S[None,:], self.state_U[None,:], self.state_A[None,:]], dim=0)
-
-        return None
 
     # Returns a tensor of zeros
     def get_theta_zeros(self):
@@ -792,7 +790,6 @@ class Simulation:
                 self.thetas = self.get_theta_zeros()
                 self.X = self.X.detach()
 
-
         # Statistics
         with torch.no_grad():
             # New center of mass
@@ -835,7 +832,6 @@ class Simulation:
         # Plot chain
         self.ax.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
 
-
         # Plot each state type separately
         for i in range(len(self.states_booleans)):
             x_plot = X[self.states_booleans[i]]
@@ -856,7 +852,3 @@ class Simulation:
         self.ax.set_ylabel('y', size=14)
         self.ax.set_zlabel('z', size=14)
         self.ax.legend(loc='upper left')
-
-        return None
-
-

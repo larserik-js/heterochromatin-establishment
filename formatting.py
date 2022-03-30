@@ -1,10 +1,12 @@
 import os
 
+
 # Path to project folder
 def get_project_dir():
     project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 
     return project_dir
+
 
 # Path to output directory
 # The directories are located on different locations on local and Cell computers
@@ -15,6 +17,7 @@ def get_output_dir(project_dir, run_on_cell=False):
         output_dir = project_dir + 'output/'
 
     return output_dir
+
 
 # For filenames
 def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx, cell_division, N,
@@ -36,10 +39,11 @@ def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF
     param_string += f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'\
                     + f'beta={beta:.5f}'
 
-    if exclude_seed == False:
+    if not exclude_seed:
         param_string += f'_seed = {seed}'
 
     return param_string
+
 
 def edit_stable_silent_times_file(output_dir, model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
                                   cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str,
@@ -54,6 +58,7 @@ def edit_stable_silent_times_file(output_dir, model, rms, initial_state, cenH_si
     data_file = open(write_name, action)
     data_file.write(line_str + '\n')
     data_file.close()
+
 
 def create_plot_title(model, rms, cenH_size, cenH_init_idx, ATF1_idx, N, t_total, noise, alpha_1, alpha_2, beta, seed):
 
@@ -71,12 +76,14 @@ def create_plot_title(model, rms, cenH_size, cenH_init_idx, ATF1_idx, N, t_total
 
     return param_string
 
+
 # Make one directory, if it does not already exist
 def make_directory(folder_name):
     try:
         os.mkdir(folder_name)
     except FileExistsError:
         pass
+
 
 # Make all output directories before starting simulations
 def make_output_directories(output_dir):

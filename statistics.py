@@ -2,12 +2,12 @@ import torch
 import numpy as np
 from scipy import ndimage
 from copy import deepcopy
-from numba import njit
-import matplotlib.pyplot as plt
 from formatting import edit_stable_silent_times_file
 from typing import TYPE_CHECKING
+
 # if TYPE_CHECKING:
 #     from simulation_class import Simulation
+
 
 # Calculate radius of gyration
 def update_dist_vecs_to_com(sim_obj):
@@ -19,7 +19,6 @@ def update_dist_vecs_to_com(sim_obj):
         # The distance from each individual monomer to the center of mass
         sim_obj.dist_vecs_to_com[t_idx] = sim_obj.X - sim_obj.center_of_mass
 
-    return None
 
 # Update the end-to-end vector
 def update_Rs(sim_obj):
@@ -29,11 +28,10 @@ def update_Rs(sim_obj):
         t_interval = int(t / interval)
         sim_obj.Rs[t_interval] = torch.linalg.norm(sim_obj.X[-1] - sim_obj.X[0], dim=0)
 
-    return None
 
 def end_to_end_dot(sim_obj):
     sim_obj.end_to_end_vec_dot = torch.sum((sim_obj.X[-1] - sim_obj.X[0]) * sim_obj.end_to_end_vec_init)
-    return None
+
 
 def get_correlations(interaction_indices_i, interaction_indices_j, shifts):
     correlation_sums = np.zeros_like(shifts)
@@ -70,13 +68,14 @@ def get_correlations(interaction_indices_i, interaction_indices_j, shifts):
 
     return correlation_sums
 
+
 def update_correlation_sums(sim_obj):
     normalized_correlations = get_correlations(sim_obj.interaction_indices_i.numpy(),
                                                     sim_obj.interaction_indices_j.numpy(),
                                                     sim_obj.shifts) / sim_obj.t_half
 
     sim_obj.correlation_sums += normalized_correlations
-    return None
+
 
 # Only applies to interactions between S state monomers
 def update_interaction_stats(sim_obj):
@@ -109,7 +108,7 @@ def update_interaction_stats(sim_obj):
             i, j = sim_obj.triu_indices[0][k], sim_obj.triu_indices[1][k]
             idx = j - i
             sim_obj.average_lifetimes[idx] += sim_obj.lifetimes[i, j] / (sim_obj.completed_lifetimes[i, j] + 1e-7)
-    return None
+
 
 def update_states(sim_obj):
     t = sim_obj.t
@@ -121,7 +120,6 @@ def update_states(sim_obj):
         sim_obj.state_statistics[1, t_interval] = (sim_obj.states == 1).sum()
         sim_obj.state_statistics[2, t_interval] = (sim_obj.states == 2).sum()
 
-    return None
 
 def update_states_time_space(sim_obj):
     t = sim_obj.t
@@ -131,7 +129,6 @@ def update_states_time_space(sim_obj):
         t_interval = int(t / interval)
         sim_obj.states_time_space[t_interval] = sim_obj.states
 
-    return None
 
 # For each monomer, measures the time it takes for the distance vector to the center of mass to
 # rotate more than 90 degrees
@@ -145,9 +142,8 @@ def update_correlation_times(sim_obj):
     # Adds the current time the first time the dot product goes below 0
     sim_obj.correlation_times[(sim_obj.correlation_times == 0) & (dot_products <= 0)] = sim_obj.t / sim_obj.t_total
 
-    return None
 
-def _gather_statistics(sim_obj):
+def gather_statistics_(sim_obj):
     # Write cenH data
     if sim_obj.write_cenH_data:
         # When half the polymer reaches the silent state
@@ -156,7 +152,7 @@ def _gather_statistics(sim_obj):
             _, sim_obj.n_silent_patches = ndimage.label(sim_obj.states == 0)
 
         # If the polymer collapses to silent, write the time at which this occurs to a .txt file
-        if sim_obj.stable_silent == False:
+        if not sim_obj.stable_silent:
             if torch.sum(sim_obj.states == 0) >= 0.9*sim_obj.N:
                 line_str = f'{sim_obj.t},{sim_obj.half_silent_time},{sim_obj.n_silent_patches},{sim_obj.seed}'
 
@@ -187,10 +183,9 @@ def _gather_statistics(sim_obj):
             else:
                 pass
 
-        # If stable_silent == True, the simulation will exit before this step, through 'run.py'
+        # If stable_silent is True, the simulation will exit before this step, through 'run.py'
         else:
             pass
-
 
     # Do not gather any statistics if cenH data is to be written
     # This is because the different simulations will have different length,
@@ -220,5 +215,3 @@ def _gather_statistics(sim_obj):
         #
         #     # # Count correlations by shift
         #     # update_correlation_sums(sim_obj)
-
-    return None

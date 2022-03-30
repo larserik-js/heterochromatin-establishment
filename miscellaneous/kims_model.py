@@ -3,6 +3,7 @@ from numba import njit
 import matplotlib.pyplot as plt
 from timeit import default_timer as DT
 
+
 r = np.random
 
 N_STATES = 3
@@ -16,6 +17,7 @@ F = alpha/(1-alpha)
 SCATTER_S = 0.1
 
 state_names = {0: 'M', 1: 'U', 2: 'A'}
+
 
 def f(N_STATES, N_MONOMERS, t_total, alpha, beta):
     t_initial = DT()
@@ -87,7 +89,6 @@ def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
         statistics[1, t] = (states == 1).sum()
         statistics[2, t] = (states == 2).sum()
 
-
     return statistics
 
 
@@ -105,5 +106,6 @@ def run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
         ax.set_ylabel(r'$N$', size=14)
         ax.legend(loc='best')
         plt.show()
+
 
 run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S)
