@@ -27,7 +27,7 @@ multidict==5.1.0
 numba==0.54.1
 numpy==1.20.3
 pandas==1.4.2
-Pillow==9.1.0
+Pillow==9.0.1
 pyaml==21.10.1
 pycparser==2.20
 pyface==7.3.0
