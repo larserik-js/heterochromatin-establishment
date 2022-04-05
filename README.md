@@ -11,7 +11,7 @@ The necessary libraries for this application can be installed in the following w
 ```sh
 pip install -r requirements.txt
 ```
-The libraries listed in the document were last available on 5th April 2022.
+The libraries listed in the document are compatible with Python 3.10, and were last available for download on 5th April 2022.
 
 ## Usage example
 The best way to start exploring the repository is probably by generating one or more animations, to see how the polymer behaves in space. The following command starts generating the animation (the files will take up a total of approximately 77 MB, and the process should take around 5 minutes in total):
