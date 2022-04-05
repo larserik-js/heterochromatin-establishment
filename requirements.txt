@@ -15,7 +15,6 @@ freetype-py==2.2.0
 hsluv==5.0.2
 hyperlink==21.0.0
 idna==3.2
-iminuit==2.10.0
 importlib-metadata==4.8.1
 importlib-resources==5.2.2
 incremental==21.3.0
