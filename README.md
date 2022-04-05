@@ -5,14 +5,14 @@ The repository contains a variety of modules used to simulate a 3D polymer, whic
 
 ## Setup (macOS & Linux)
 The necessary libraries for this application can be installed in the following way:
-* Navigate into the directory of the repository, i.e. the location of ``requirements.txt``
+* Navigate into the repository directory, i.e. the location of ``requirements.txt``
 * Set up a virtual environment, e.g. via ``python3 -m venv env``
 * Activate the environment via ``source env/bin/activate``
 * Install libraries via:
 ```sh
 pip3 install -r requirements.txt
 ```
-The libraries listed in the document are compatible with Python 3.10, and were last available for download on 5th April 2022.
+The libraries listed in the document are compatible with Python 3.8.10-3.9.12, and were last available for download on 5th April 2022.
 
 ## Usage example
 The best way to start exploring the repository is probably by generating one or more animations, to see how the polymer behaves in space. The following command starts generating the animation (the files will take up a total of approximately 77 MB, and the process should take around 5 minutes in total):
