@@ -99,12 +99,6 @@ def _get_parser_args():
                         default=1000,
                         help='The number of time-steps.')
 
-    # Time interval for taking statistics
-    parser.add_argument('--stats_t_interval',
-                        type=int,
-                        default=100,
-                        help='The time-step interval at which to collect values for statistics.')
-
     # Potential weight
     parser.add_argument('--U_two_interaction_weight',
                         type=float,
@@ -209,7 +203,6 @@ l0 = _args.l0
 noise = _args.noise
 dt = _args.dt
 t_total = _args.t_total
-stats_t_interval = _args.stats_t_interval
 rms = _args.rms
 U_two_interaction_weight = _args.U_two_interaction_weight
 allow_state_change = _args.allow_state_change

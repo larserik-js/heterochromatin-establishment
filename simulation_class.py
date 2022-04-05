@@ -18,8 +18,8 @@ r = np.random
 class Simulation:
 
     def __init__(self, model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
-                 rms, alpha_1, alpha_2, beta, stats_t_interval, seed, allow_state_change, initial_state,
-                 cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx):
+                 rms, alpha_1, alpha_2, beta, seed, allow_state_change, initial_state, cell_division, cenH_size,
+                 cenH_init_idx, write_cenH_data, ATF1_idx):
 
         # Physical model
         self.model = model
@@ -160,19 +160,21 @@ class Simulation:
         self.B = np.real(-2 / lambertw(-2 * np.exp(-2)))
 
         ## For statistics
+        STATS_T_INTERVAL = 100
+
         # Center of mass
         self.center_of_mass = torch.sum(self.X, dim=0) / self.N
         self.init_center_of_mass = torch.sum(self.X, dim=0) / self.N
 
         # All distance vectors from the monomers to the center of mass
-        self.dist_vecs_to_com = torch.empty(size=(int(self.t_total / stats_t_interval), self.N, 3))
+        self.dist_vecs_to_com = torch.empty(size=(int(self.t_total / STATS_T_INTERVAL), self.N, 3))
         self.dist_vecs_to_com[0] = self.X - self.center_of_mass
         self.init_dist_vecs_to_com = self.dist_vecs_to_com[0]
 
         self.correlation_times = torch.zeros(size=(self.N,))
 
         # End-to-end distance
-        self.Rs = torch.empty(size=(int(self.t_total / stats_t_interval),))
+        self.Rs = torch.empty(size=(int(self.t_total / STATS_T_INTERVAL),))
         self.end_to_end_vec_init = self.X[-1] - self.X[0]
         self.end_to_end_vec_dot = 999
 
@@ -201,9 +203,9 @@ class Simulation:
         # System in overall silent state
         self.stable_silent = False
         # Counts the number of monomers in the different states
-        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / stats_t_interval)))
+        self.state_statistics = torch.empty(size=(len(self.states_booleans), int(self.t_total / STATS_T_INTERVAL)))
 
-        self.states_time_space = torch.empty(size=(int(self.t_total / stats_t_interval), self.N))
+        self.states_time_space = torch.empty(size=(int(self.t_total / STATS_T_INTERVAL), self.N))
 
         # Successful recruited conversions
         self.successful_recruited_conversions = torch.zeros(size=(4,self.N))
