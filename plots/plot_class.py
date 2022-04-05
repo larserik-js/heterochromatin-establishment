@@ -18,9 +18,6 @@ class Plots:
 
     def __init__(self, plot_func_name, param_vals):
 
-        # REMOVE AT SOME POINT
-        self.stats_interval = 100
-
         # The plot function to call
         self.plot_func_name = plot_func_name
 
@@ -504,14 +501,14 @@ class Plots:
                                     columns=['S to U', 'U to A', 'A to U', 'U to S', 'Total'])
         print(df)
         # Plot
-        INTERNAL_STATS_INTERVAL = 2
+        INTERNAL_STATS_INTERVAL = 200
 
         labels = [patches.Patch(color=self.state_colors[i],
                                 label=self.state_names[i]) for i in range(len(self.state_colors))
                   ]
         cmap = colors.ListedColormap(self.state_colors)
         ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
-        self.format_plot(ax, xlabel=f'Time-steps / {self.stats_interval * INTERNAL_STATS_INTERVAL}',
+        self.format_plot(ax, xlabel=f'Time-steps / {INTERNAL_STATS_INTERVAL}',
                          ylabel='Monomer no.')
 
         #ax.set_xlabel('Time-steps / 2000', size=12)
