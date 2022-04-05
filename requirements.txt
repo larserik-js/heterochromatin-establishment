@@ -54,7 +54,7 @@ Twisted==21.7.0
 txaio==21.2.1
 typing-extensions==3.10.0.2
 vispy==0.8.1
-vtk==9.0.3
+vtk==9.1.0
 wslink==1.0.7
 yarl==1.6.3
 zipp==3.5.0
