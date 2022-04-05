@@ -739,6 +739,10 @@ class Simulation:
 
             ## Update variables
             with torch.no_grad():
+                # Noise constants
+                DIFFUSION_CONSTANT = 1
+                VISCOSITY = 1
+
                 if index_type == 'even' or index_type == 'odd':
                     if torch.isnan(torch.sum(self.thetas.grad)):
                         raise AssertionError('NAN in gradient!')
@@ -747,12 +751,6 @@ class Simulation:
                     self.thetas[indexation] -= self.thetas.grad[indexation] * self.dt
 
                     # Add noise
-                    #self.X += self.noise * torch.randn_like(self.X) * np.exp(-self.t / self.t_total)
-                    #self.X += self.noise * torch.randn_like(self.X) * (1 - self.t/self.t_total)
-                    #self.X += self.noise * torch.randn_like(self.X)
-                    DIFFUSION_CONSTANT = 1
-                    VISCOSITY = 1
-
                     self.thetas[indexation] += self.noise * torch.empty_like(self.thetas[indexation]).\
                         normal_(mean=0, std=np.sqrt(2 * DIFFUSION_CONSTANT / VISCOSITY * self.dt))\
                                 / (self.rot_radius[indexation][:,None] + 1e-10)
@@ -768,9 +766,6 @@ class Simulation:
                     self.X[indexation] -= self.X.grad[indexation] * self.dt
 
                     # Add noise
-                    DIFFUSION_CONSTANT = 1
-                    VISCOSITY = 1
-
                     self.X[indexation] += self.noise * torch.empty_like(self.X[indexation])\
                                                            .normal_(mean=0, std=np.sqrt(2 * DIFFUSION_CONSTANT\
                                                                                         / VISCOSITY * self.dt)
@@ -778,7 +773,8 @@ class Simulation:
 
                     # Adjust distances from endpoints to their neighbors back to l0
                     endpoint_d_vecs = self.X[indexation] - self.X[[1,-2]]
-                    self.X[indexation] = self.X[[1,-2]] + endpoint_d_vecs * (self.l0 / torch.linalg.norm(endpoint_d_vecs, dim=1)[:,None])
+                    self.X[indexation] = self.X[[1,-2]] \
+                                     + endpoint_d_vecs * (self.l0 / torch.linalg.norm(endpoint_d_vecs, dim=1)[:,None])
 
                 self.X_tilde = self.get_X_tilde()
                 self.rot_vector, self.rot_radius, self.rot_vector_ppdc = self.get_rot_vectors()

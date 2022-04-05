@@ -65,9 +65,6 @@ def main(model=model, run_on_cell=run_on_cell, n_processes=n_processes, pool_siz
     # rms list
     elif multiprocessing_parameter == 'rms':
         parameter_list = np.linspace(1.677, 4.130, n_processes)
-    # constant list
-    elif multiprocessing_parameter == 'constant':
-        parameter_list = constant * np.logspace(start=-2, stop=0, num=n_processes)
     else:
         raise AssertionError('Invalid multiprocessing parameter given.')
 

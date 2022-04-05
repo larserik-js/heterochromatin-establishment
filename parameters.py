@@ -46,9 +46,9 @@ def _get_parser_args():
     parser.add_argument('--multiprocessing_parameter',
                         type=str,
                         default='seed',
-                        choices=['seed', 'alpha_1', 'rms', 'constant'],
+                        choices=['seed', 'alpha_1', 'rms'],
                         help='The parameter different in each process when using multiprocessing. '\
-                             + 'The choices are: "seed", "alpha_1", "rms", and "constant".')
+                             + 'The choices are: "seed", "alpha_1", and "rms".')
 
     # Additionally generates and saves an animation
     parser.add_argument('--animate',
@@ -162,12 +162,6 @@ def _get_parser_args():
                              + 'For the purpose of this script it is realized as one constantly silent monomer. '\
                              + 'The default values is "None", which results in no ATF1.')
 
-    # Constants
-    parser.add_argument('--constant',
-                        type=float,
-                        default=1,
-                        help='The constant can be used to scale different parameters.')
-
     ## Recruited conversion probabilities
     # Towards S
     parser.add_argument('--alpha_1',
@@ -225,7 +219,6 @@ cenH_size = _args.cenH_size
 cenH_init_idx = _args.cenH_init_idx
 write_cenH_data = _args.write_cenH_data
 ATF1_idx = _args.ATF1_idx
-constant = _args.constant
 alpha_1 = _args.alpha_1
 alpha_1_const = _args.alpha_1_const
 alpha_2 = _args.alpha_2
