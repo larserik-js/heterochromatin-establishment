@@ -1,14 +1,12 @@
 import pickle
-import numpy as np
-import torch
 import os
-from numba import njit
 import time
 
-# Simulation class
-from simulation_class import Simulation
+import numpy as np
+import torch
+from numba import njit
 
-# Formatting
+from simulation_class import Simulation
 from formatting import create_param_string, make_directory
 
 

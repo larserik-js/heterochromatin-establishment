@@ -1,14 +1,14 @@
 import copy
+import pickle
+
 import numpy as np
 import torch
 from numba import njit
 import matplotlib.pyplot as plt
 from scipy.special import lambertw
 from statistics import gather_statistics_
-from formatting import create_param_string, create_plot_title
-import pickle
 
-# Application modules
+from formatting import create_param_string, create_plot_title
 from pressure_rms import get_pressure
 
 

@@ -1,13 +1,12 @@
-import numpy as np
-from formatting import get_project_dir, get_output_dir, make_output_directories
-from skopt import forest_minimize, dump
-import main
-from datetime import datetime
-from estimation import Estimator
 import sys
+from datetime import datetime
 
-# Own modules
-from pressure_rms import get_pressure
+import numpy as np
+from skopt import forest_minimize, dump
+
+import main
+from estimation import Estimator
+from formatting import get_project_dir, get_output_dir, make_output_directories
 import misc_functions
 
 

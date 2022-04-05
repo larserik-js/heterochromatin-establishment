@@ -1,16 +1,13 @@
-# External libraries
 from timeit import default_timer as timer
-import torch
-from torch.multiprocessing import Pool
-import numpy as np
 from datetime import datetime
 from functools import partial
 
-# Own modules
+import torch
+from torch.multiprocessing import Pool
+import numpy as np
+
 import run
 from formatting import get_project_dir, get_output_dir, make_output_directories, edit_stable_silent_times_file
-
-# Import all parameters from 'parameters.py'
 from parameters import *
 
 

@@ -3,11 +3,13 @@
 # The .txt document is located in the 'masters_thesis/pressure_rms/' folder, and is called 'pressure_RMS.txt'.
 # These values can be plotted against each other (bottom of script).
 
-from formatting import get_project_dir
+import pickle
+
 import numpy as np
 import torch
-import pickle
 import matplotlib.pyplot as plt
+
+from formatting import get_project_dir
 
 
 project_dir = get_project_dir()

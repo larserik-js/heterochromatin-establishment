@@ -1,16 +1,16 @@
-import torch
 import pickle
+from glob import glob
+import re
+
+import torch
 import matplotlib.pyplot as plt
 from matplotlib import colors, patches
 import numpy as np
-from glob import glob
-import re
 from numba import njit
 import pandas as pd
 from scipy import optimize
 from skopt import plots, load
 
-# Own modules
 from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
 
 

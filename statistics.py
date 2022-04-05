@@ -1,12 +1,10 @@
 import torch
+from copy import deepcopy
+
 import numpy as np
 from scipy import ndimage
-from copy import deepcopy
-from formatting import edit_stable_silent_times_file
-from typing import TYPE_CHECKING
 
-# if TYPE_CHECKING:
-#     from simulation_class import Simulation
+from formatting import edit_stable_silent_times_file
 
 
 # Calculate radius of gyration

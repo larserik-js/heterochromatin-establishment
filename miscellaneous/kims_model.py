@@ -1,7 +1,8 @@
+from timeit import default_timer as DT
+
 import numpy as np
 from numba import njit
 import matplotlib.pyplot as plt
-from timeit import default_timer as DT
 
 
 r = np.random
