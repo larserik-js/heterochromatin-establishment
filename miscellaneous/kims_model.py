@@ -61,9 +61,12 @@ def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
                         break
 
                 # If the n2 state is U, do not perform any changes
-                if states[n1_index] < states[n2_index] and states[n2_index] != 1:
+                if (states[n1_index] < states[n2_index]
+                        and states[n2_index] != 1):
                     states[n1_index] += 1
-                elif states[n1_index] > states[n2_index] and states[n2_index] != 1:
+
+                elif (states[n1_index] > states[n2_index]
+                      and states[n2_index] != 1):
                     states[n1_index] -= 1
 
             # Noisy conversion

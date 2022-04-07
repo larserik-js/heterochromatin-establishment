@@ -1,6 +1,8 @@
-# This script is used to import all initial polymer positions for different pressures
-# and calculate the RMS, and then write that value to a .txt document.
-# The .txt document is located in the 'masters_thesis/pressure_rms/' folder, and is called 'pressure_RMS.txt'.
+# This script is used to import all initial polymer positions for
+# different pressures and calculate the RMS,
+# and then write that value to a .txt document.
+# The .txt document is located in the 'masters_thesis/pressure_rms/' folder,
+# and is called 'pressure_RMS.txt'.
 # These values can be plotted against each other (bottom of script).
 
 import pickle
@@ -13,7 +15,8 @@ from formatting import get_directories
 
 
 project_dir, _, _ = get_directories()
-input_dir = project_dir + 'input/quasi_random_initial_states_pressure_before_dynamics/'
+input_dir = (project_dir
+             + 'input/quasi_random_initial_states_pressure_before_dynamics/')
 output_file = project_dir + 'pressure_rms/pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)
 
@@ -70,17 +73,3 @@ plt.plot(data[:,0], data[:,1])
 plt.xlabel('Pressure', size=12)
 plt.ylabel('RMS', size=12)
 plt.show()
-
-#
-# import glob
-# for fname in glob.glob('/home/lars/PycharmProjects/masters_thesis/quasi_random_initial_states_pressure_before_dynamics/pressure=0.19/*.pkl'):
-#     with open(fname, 'rb') as f:
-#         x = pickle.load(f)
-#     x0 = torch.mean(x, dim=0)
-#
-#     p_interaction = torch.mean(1.0 * (torch.sqrt(torch.sum((x[None, :, :] - x[:, None, :])**2, dim=2)) < 2))
-#     print(p_interaction)
-#
-# plt.plot(x[:, 0], x[:, 1], '-o')
-#
-# plt.show()

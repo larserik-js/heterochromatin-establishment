@@ -20,9 +20,12 @@ class FitPowerLaw:
         return rms[::-1], pressure[::-1]
 
     def cost_function(self, initial_guess):
-        scale, exponent, shift = initial_guess[0], initial_guess[1], initial_guess[2]
+        scale, exponent, shift = (initial_guess[0], initial_guess[1],
+                                  initial_guess[2])
 
-        return get_pressure.sigmoid(self.rms, shift) * scale * self.rms**exponent - self.pressure
+        return (get_pressure.sigmoid(self.rms, shift) * scale
+                    * self.rms**exponent
+                - self.pressure)
 
     def plot(self, scale, exponent, shift):
         xs = np.linspace(self.rms[0], self.rms[-1], 1000)
@@ -37,8 +40,13 @@ class FitPowerLaw:
     def run(self):
         result = optimize.least_squares(self.cost_function, self.initial_guess)
 
-        scale_fit, exponent_fit, shift_fit = result.x[0], result.x[1], result.x[2]
-        print(f'Fit values: SCALE = {scale_fit:.3f}, EXPONENT = {exponent_fit:.3f}, SHIFT = {shift_fit:.3f}')
+        scale_fit = result.x[0]
+        exponent_fit = result.x[1]
+        shift_fit = result.x[2]
+
+        print(f'Fit values: SCALE = {scale_fit:.3f}, '
+              + f'EXPONENT = {exponent_fit:.3f}, SHIFT = {shift_fit:.3f}')
+
         self.plot(scale_fit, exponent_fit, shift_fit)
 
 

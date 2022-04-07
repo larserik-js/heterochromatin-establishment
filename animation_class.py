@@ -55,20 +55,19 @@ class Animation:
             x_plot = X[self.sim_obj.states_booleans[i]]
             y_plot = Y[self.sim_obj.states_booleans[i]]
             z_plot = Z[self.sim_obj.states_booleans[i]]
-            self.ax_anim.scatter(x_plot, y_plot, z_plot, s=self.sim_obj.MONOMER_SIZE, c=self.sim_obj.state_colors[i],
+            self.ax_anim.scatter(x_plot, y_plot, z_plot,
+                                 s=self.sim_obj.MONOMER_SIZE,
+                                 c=self.sim_obj.state_colors[i],
                                  label=self.sim_obj.state_names[i])
 
-        # # Plot center of mass
-        # self.ax_anim.scatter(self.sim_obj.center_of_mass[0], self.sim_obj.center_of_mass[1], self.sim_obj.center_of_mass[2],
-        #                      s=0.5, c='g')
-
         # Set plot dimensions
-        self.ax_anim.set(xlim=(self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[0],
-                               self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[1]),
-                         ylim=(self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[0],
-                               self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[1]),
-                         zlim=(self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[0],
-                               self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
+        self.ax_anim.set(
+            xlim=(self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[0],
+                  self.sim_obj.center_of_mass[0] + self.sim_obj.plot_dim[1]),
+            ylim=(self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[0],
+                  self.sim_obj.center_of_mass[1] + self.sim_obj.plot_dim[1]),
+            zlim=(self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[0],
+                  self.sim_obj.center_of_mass[2] + self.sim_obj.plot_dim[1]))
 
         # Set title, labels and legend
         self.ax_anim.set_title(self.sim_obj.plot_title, size=7)
@@ -91,8 +90,9 @@ class Animation:
 
         with torch.no_grad():
             # Plot
-            X_plot, Y_plot, Z_plot = self.sim_obj.X[:, 0].numpy(), self.sim_obj.X[:, 1].numpy(), self.sim_obj.X[:, 2].numpy()
+            X_plot = self.sim_obj.X[:, 0].numpy()
+            Y_plot = self.sim_obj.X[:, 1].numpy()
+            Z_plot = self.sim_obj.X[:, 2].numpy()
 
             self.ax_anim.clear()
-
             self.plot(X_plot, Y_plot, Z_plot)

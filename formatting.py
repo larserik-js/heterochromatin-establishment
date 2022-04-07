@@ -6,7 +6,8 @@ def get_directories(run_on_cell=False):
     project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 
     # Paths to input and output directories
-    # The directories are located on different locations on local and Cell computers
+    # The directories are located on different locations
+    # on local and Cell computers
     if run_on_cell:
         input_dir = project_dir + '../../../nbicmplx/cell/zfj803/input/'
         output_dir = project_dir + '../../../nbicmplx/cell/zfj803/output/'
@@ -18,8 +19,9 @@ def get_directories(run_on_cell=False):
 
 
 # For filenames
-def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx, cell_division, N,
-                        t_total, noise, alpha_1, alpha_2, beta, seed, exclude_seed=False):
+def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx,
+                        ATF1_idx, cell_division, N, t_total, noise, alpha_1,
+                        alpha_2, beta, seed, exclude_seed=False):
 
     param_string = f'{model}_rms={rms:.3f}_init_state={initial_state}_'
 
@@ -34,8 +36,9 @@ def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF
     if ATF1_idx is not None:
         param_string += f'ATF1_idx={ATF1_idx}_'
 
-    param_string += f'N={N}_t_total={t_total}_noise={noise:.4f}_alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'\
-                    + f'beta={beta:.5f}'
+    param_string += (f'N={N}_t_total={t_total}_noise={noise:.4f}_'
+                     + f'alpha_1={alpha_1:.5f}_alpha_2={alpha_2:.5f}_'
+                     + f'beta={beta:.5f}')
 
     if not exclude_seed:
         param_string += f'_seed = {seed}'
@@ -43,14 +46,17 @@ def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF
     return param_string
 
 
-def edit_stable_silent_times_file(output_dir, model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
-                                  cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed, line_str,
-                                  action='a'):
+def edit_stable_silent_times_file(output_dir, model, rms, initial_state,
+                                  cenH_size, cenH_init_idx, ATF1_idx,
+                                  cell_division, N, t_total, noise, alpha_1,
+                                  alpha_2, beta, seed, line_str, action='a'):
 
     write_name = output_dir + 'statistics/stable_silent_times/'
-    write_name += create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
-                                      cell_division, N, t_total, noise, alpha_1, alpha_2, beta,
-                                      seed, exclude_seed=True) + '.txt'
+    write_name += (create_param_string(
+                       model, rms, initial_state, cenH_size,
+                       cenH_init_idx, ATF1_idx, cell_division, N, t_total,
+                       noise, alpha_1, alpha_2, beta, seed, exclude_seed=True)
+                   + '.txt')
 
     # Append to the file
     data_file = open(write_name, action)
@@ -58,19 +64,23 @@ def edit_stable_silent_times_file(output_dir, model, rms, initial_state, cenH_si
     data_file.close()
 
 
-def create_plot_title(model, rms, cenH_size, cenH_init_idx, ATF1_idx, N, t_total, noise, alpha_1, alpha_2, beta, seed):
+def create_plot_title(model, rms, cenH_size, cenH_init_idx, ATF1_idx, N,
+                      t_total, noise, alpha_1, alpha_2, beta, seed):
 
     param_string = f'"{model}", RMS = {rms:.3f}, cenH = {cenH_size}, '
 
     if cenH_size != 0:
-        param_string += f'cenH_indices = {cenH_init_idx}...{cenH_init_idx + cenH_size - 1}, '
+        param_string += (f'cenH_indices = {cenH_init_idx}'
+                         + f'...{cenH_init_idx + cenH_size - 1}, ')
 
     if ATF1_idx is not None:
         param_string += f'ATF1_idx = {ATF1_idx}, '
 
-    param_string += r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, noise = {noise:.2f}'\
-                    + r'$l_0$' + ', ' + r'$\alpha_1$' + f' = {alpha_1:.5f}, ' + r'$\alpha_2$' + f' = {alpha_2:.5f}, '\
-                    + r'$\beta$' + f' = {beta:.5f}, seed = {seed}'
+    param_string += (r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total}, '
+                     + f'noise = {noise:.2f}' + r'$l_0$' + ', ' + r'$\alpha_1$'
+                     + f' = {alpha_1:.5f}, ' + r'$\alpha_2$'
+                     + f' = {alpha_2:.5f}, ' + r'$\beta$'
+                     + f' = {beta:.5f}, seed = {seed}')
 
     return param_string
 
@@ -85,9 +95,11 @@ def make_directory(folder_name):
 
 # Make all output directories before starting simulations
 def make_output_directories(output_dir):
-    statistics_folder_names = ['correlation', 'correlation_times', 'dist_vecs_to_com', 'final_state', 'interactions',
-                               'Rs', 'states', 'states_time_space', 'successful_conversions', 'stable_silent_times',
-                               'optimization']
+    statistics_folder_names = ['correlation', 'correlation_times',
+                               'dist_vecs_to_com', 'final_state',
+                               'interactions', 'Rs', 'states',
+                               'states_time_space', 'successful_conversions',
+                               'stable_silent_times', 'optimization']
 
     make_directory(output_dir)
     make_directory(output_dir + 'animations')

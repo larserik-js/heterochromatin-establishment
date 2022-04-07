@@ -50,21 +50,26 @@ class Plots:
         self.state_colors = ['r', 'y', 'b']
         self.state_names = ['S', 'U', 'A']
 
-        self.param_filename = create_param_string(self.model, self.rms, self.initial_state, self.cenH_size,
-                                                  self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
-                                                  self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                                  self.seed)
+        self.param_filename = create_param_string(
+            self.model, self.rms, self.initial_state, self.cenH_size,
+            self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
+            self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
+            self.seed)
 
-        self.plot_title = create_plot_title(self.model, self.rms, self.cenH_size, self.cenH_init_idx, self.ATF1_idx,
-                                            self.N, self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                            self.seed)
+        self.plot_title = create_plot_title(
+            self.model, self.rms, self.cenH_size, self.cenH_init_idx,
+            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1,
+            self.alpha_2, self.beta, self.seed)
+
         r_system = self.N / 2
         self.plot_dim = (-0.5*r_system, 0.5*r_system)
 
     def create_full_filename(self, stats_dir, format):
         return self.plot_data_dir + stats_dir + self.param_filename + format
 
-    def format_plot(self, ax, xlabel=',', ylabel=',', zlabel=None, legend_loc='best'):
+    def format_plot(self, ax, xlabel=',', ylabel=',', zlabel=None,
+                    legend_loc='best'):
+
         ax.set_xlabel(xlabel, size=12)
         ax.set_ylabel(ylabel, size=12)
         if zlabel is not None:
@@ -84,7 +89,8 @@ class Plots:
         #
         # for i in range(len(polymer_types)):
         #     # Finds all .pkl files for N = N
-        #     files = glob(self.plot_data_dir + 'correlation/' + polymer_types[i]
+        #     files = glob(self.plot_data_dir + 'correlation/'
+        #                  + polymer_types[i]
         #                  + f'_N=100_t_total={t_total}_noise={noise:.2f}.pkl')
         #
         #     if len(files) > 0:
@@ -92,10 +98,12 @@ class Plots:
         #             correlation = pickle.load(f)[0]
         #             shifts = np.arange(1, len(correlation) + 1, 1)
         #
-        #             ax.bar(shifts, correlation, alpha=alphas[i], label=labels[i])
+        #             ax.bar(shifts, correlation, alpha=alphas[i],
+        #                    label=labels[i])
         #
         # # Set plot title
-        # self.format_plot(ax, xlabel='Shift', ylabel='Average no. of interactions')
+        # self.format_plot(ax, xlabel='Shift',
+        #                  ylabel='Average no. of interactions')
         # ax.set_yscale('log')
         #
         # plt.show()
@@ -116,7 +124,8 @@ class Plots:
             with open(files[i], 'rb') as f:
                 correlation_times = pickle.load(f)[0]
                 ax.bar(np.arange(self.N), correlation_times)
-        self.format_plot(ax, xlabel='Monomer index', ylabel='Correlation time / ' + r'$t_{total}$')
+        self.format_plot(ax, xlabel='Monomer index',
+                         ylabel='Correlation time / ' + r'$t_{total}$')
 
         fig.tight_layout()
         plt.show()
@@ -144,10 +153,13 @@ class Plots:
             denominator = (dist_vecs_to_com ** 2).sum() / n_taus
 
             for i in range(n_taus):
-                numerator = (dist_vecs_to_com[:(n_taus - i)] * dist_vecs_to_com[i:]).sum() / (n_taus - i)
+                numerator = (dist_vecs_to_com[:(n_taus - i)]
+                             * dist_vecs_to_com[i:]).sum() / (n_taus - i)
+
                 correlations[i] = numerator / denominator
 
-            #correlations = self._calculate_correlations(correlations, dist_vecs_to_com, n_taus)
+            #correlations = self._calculate_correlations(
+            #     correlations, dist_vecs_to_com, n_taus)
 
             taus = np.arange(n_taus) * stats_t_interval
 
@@ -163,22 +175,28 @@ class Plots:
 
     # Plots from one specific file
     def end_to_end_times(self):
-        open_filename = self.plot_data_dir + f'end_to_end_perpendicular_times_N={self.N}_t_total=10000000' \
-                                 + f'_noise={self.noise:.4f}' + '.txt'
+        open_filename = (
+            self.plot_data_dir
+            + f'end_to_end_perpendicular_times_N={self.N}_t_total=10000000'
+            + f'_noise={self.noise:.4f}' + '.txt')
 
-        data_array = np.loadtxt(open_filename, skiprows=1, usecols=0, delimiter=',')
+        data_array = np.loadtxt(open_filename, skiprows=1, usecols=0,
+                                delimiter=',')
 
         mean = data_array.mean()
         std = data_array.std(ddof=1)
 
         fig, ax = plt.subplots()
 
-        ax.text(400000, 200, f'Mean: {mean:.0f} +/- {std/np.sqrt(len(data_array)):.0f}', c='r')
+        ax.text(
+            400000, 200,
+            f'Mean: {mean:.0f} +/- {std/np.sqrt(len(data_array)):.0f}', c='r')
 
         ax.set_xlabel('First time of perpendicular end-to-end vector')
         ax.set_ylabel('Frequency')
-        ax.set_title(r'$N$' + f' = {self.N}, ' + r'$t_{total}$' + f' = {self.t_total}, '
-                      + f'noise = {self.noise:.2f}' + r'$l_0$')
+        ax.set_title(r'$N$' + f' = {self.N}, ' + r'$t_{total}$'
+                     + f' = {self.t_total}, noise = {self.noise:.2f}'
+                     + r'$l_0$')
         ax.hist(data_array, bins=40)
         plt.show()
 
@@ -201,19 +219,18 @@ class Plots:
             n_patches_std_list = []
 
             for rms in rms_vals:
-                # param_string = f'{self.model}_rms={rms:.3f}_init_state={self.initial_state}_cenH={cenH_size}_' \
-                #                + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
-                #                + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}' \
-                #                + f'_beta={self.beta:.5f}.txt'
-                param_string = create_param_string(self.model, rms, self.initial_state, self.cenH_size,
-                                                   self.cenH_init_idx, self.ATF1_idx, self.cell_division, self.N,
-                                                   self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
-                                                   self.seed, exclude_seed=True)
+                param_string = create_param_string(
+                    self.model, rms, self.initial_state, self.cenH_size,
+                    self.cenH_init_idx, self.ATF1_idx, self.cell_division,
+                    self.N, self.t_total, self.noise, self.alpha_1,
+                    self.alpha_2, self.beta, self.seed, exclude_seed=True)
 
                 # Get data
                 try:
-                    data = np.loadtxt(self.plot_data_dir + 'stable_silent_times/' + param_string + '.txt',
-                                        skiprows=2, usecols=[0,1,2], delimiter=',')
+                    data = np.loadtxt(
+                        self.plot_data_dir + 'stable_silent_times/'
+                            + param_string + '.txt',
+                        skiprows=2, usecols=[0,1,2], delimiter=',')
 
                 except:
                     continue
@@ -228,22 +245,27 @@ class Plots:
 
                 # ESTABLISHMENT TIMES
                 # Keep only finite values
-                establishment_times = silent_times[not_NaNs] - half_silent_times[not_NaNs]
+                establishment_times = (silent_times[not_NaNs]
+                                       - half_silent_times[not_NaNs])
 
                 est_time_list.append(establishment_times.mean())
-                est_time_std_list.append(establishment_times.std(ddof=1) / np.sqrt(n_data))
+                est_time_std_list.append(establishment_times.std(ddof=1)
+                                         / np.sqrt(n_data))
 
                 # N_PATCHES
                 n_patches = n_patches[not_NaNs]
                 n_patches_list.append(n_patches.mean())
-                n_patches_std_list.append(n_patches.std(ddof=1) / np.sqrt(n_data))
+                n_patches_std_list.append(n_patches.std(ddof=1)
+                                          / np.sqrt(n_data))
 
                 # Appends rms value
                 RMS_list.append(rms)
 
             # Plot
-            ax[0].errorbar(RMS_list, est_time_list, yerr=est_time_std_list, fmt='-o', label=f'cenH = {cenH_size}')
-            ax[1].errorbar(RMS_list, n_patches_list, yerr=n_patches_std_list, fmt='-o', label=f'cenH = {cenH_size}')
+            ax[0].errorbar(RMS_list, est_time_list, yerr=est_time_std_list,
+                           fmt='-o', label=f'cenH = {cenH_size}')
+            ax[1].errorbar(RMS_list, n_patches_list, yerr=n_patches_std_list,
+                           fmt='-o', label=f'cenH = {cenH_size}')
 
         ax[0].set_ylabel('Time from 50% - 90% silent', size=12)
         ax[1].set_xlabel('RMS', size=12)
@@ -270,13 +292,16 @@ class Plots:
 
         # Plot the different states
         for i in range(len(self.state_colors)):
-            ax.scatter(x_plot[states == i], y_plot[states == i], z_plot[states == i], s=5, c=self.state_colors[i])
+            ax.scatter(x_plot[states == i], y_plot[states == i],
+                       z_plot[states == i], s=5, c=self.state_colors[i])
 
         # Plot chain line
-        all_condition = torch.ones_like(torch.from_numpy(states), dtype=torch.bool)
+        all_condition = torch.ones_like(torch.from_numpy(states),
+                                        dtype=torch.bool)
 
-        ax.plot(x_plot[all_condition], y_plot[all_condition], z_plot[all_condition],
-                marker='o', ls='solid', markersize=1, c='k', lw=0.7)
+        ax.plot(x_plot[all_condition], y_plot[all_condition],
+                z_plot[all_condition], marker='o', ls='solid', markersize=1,
+                c='k', lw=0.7)
 
         for i in range(len(self.state_colors)):
             ax.scatter([],[],c=self.state_colors[i],label=self.state_names[i])
@@ -286,7 +311,8 @@ class Plots:
                ylim=(com[1] + self.plot_dim[0], com[1] + self.plot_dim[1]),
                zlim=(com[2] + self.plot_dim[0], com[2] + self.plot_dim[1]))
 
-        self.format_plot(ax, xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$', legend_loc='upper left')
+        self.format_plot(ax, xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$',
+                         legend_loc='upper left')
         plt.show()
 
     def fraction_ON_cells(self):
@@ -298,15 +324,20 @@ class Plots:
         file_found = 0
 
         for cenH_size in self.cenH_sizes:
-            param_string = f'pressure={self.rms:.2f}_init_state={self.initial_state}_cenH={cenH_size}_'\
-                           + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
-                           + f'noise={self.noise:.4f}_alpha_1={self.alpha_1:.5f}_alpha_2={self.alpha_2:.5f}'\
-                           + f'_beta={self.beta:.5f}.txt'
+            param_string = (f'pressure={self.rms:.2f}_'
+                            + f'init_state={self.initial_state}_'
+                            + f'cenH={cenH_size}_'
+                            + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_'
+                            + f't_total={self.t_total}_noise={self.noise:.4f}_'
+                            + f'alpha_1={self.alpha_1:.5f}_'
+                            + f'alpha_2={self.alpha_2:.5f}_'
+                            + f'beta={self.beta:.5f}.txt')
 
             try:
                 # First time where 90% of the polymer is silent
-                silent_times = np.loadtxt(self.plot_data_dir + 'stable_silent_times/'
-                                          + param_string, skiprows=2, usecols=0, delimiter=',')
+                silent_times = np.loadtxt(
+                    self.plot_data_dir + 'stable_silent_times/' + param_string,
+                    skiprows=2, usecols=0, delimiter=',')
 
                 # No. of data points
                 n_data = len(silent_times)
@@ -318,16 +349,22 @@ class Plots:
                 # Estimate
                 tau_estimate = ts.mean() + (n_data/k-1) * self.t_total
                 # The error
-                second_derivative = k / tau_estimate ** 2 - 2 * ts.sum() / tau_estimate ** 3 - 2 * (n_data - k)\
-                                    * self.t_total / tau_estimate ** 2
+                second_derivative = (
+                    k / tau_estimate ** 2
+                    - 2 * ts.sum() / tau_estimate ** 3
+                    - 2 * (n_data - k) * self.t_total / tau_estimate ** 2)
+
                 tau_estimate_error = np.sqrt(-1 / second_derivative)
 
                 # Plot the fraction of 'ON' cells
-                t_axis = np.linspace(0,5*self.t_total, 1000)
-                ax.plot(t_axis, np.exp(-t_axis/tau_estimate), label=f'cenH={cenH_size}')
+                t_axis = np.linspace(0, 5*self.t_total, 1000)
+                ax.plot(t_axis, np.exp(-t_axis/tau_estimate),
+                        label=f'cenH={cenH_size}')
 
                 # Add info to the text string
-                txt_string += f'cenH size = {cenH_size}: tau estimate = {tau_estimate:.3g} +/- {tau_estimate_error:.3g}' + '\n'
+                txt_string += (f'cenH size = {cenH_size}: '
+                               + f'tau estimate = {tau_estimate:.3g} '
+                               + f'+/- {tau_estimate_error:.3g}' + '\n')
 
                 # Create plot text
                 plt.text(2.5e5, 0.05, txt_string, c='r', size=8)
@@ -356,8 +393,9 @@ class Plots:
         # for j in range(len(polymer_types)):
         #
         #     # Finds all .pkl files for N = N
-        #     files = glob(self.plot_data_dir + 'interactions/' + polymer_types[j]
-        #                  + '_N=' + str(N) + f'_t_total={t_total}_noise=' + '*.pkl')
+        #     files = glob(self.plot_data_dir + 'interactions/'
+        #                  + polymer_types[j] + f'_N={N}'
+        #                  + f'_t_total={t_total}_noise=' + '*.pkl')
         #
         #     # Sort filenames by noise level
         #     files = sorted(files)
@@ -370,24 +408,33 @@ class Plots:
         #     for k in range(n_files):
         #         with open(files[k], 'rb') as f:
         #
-        #             _, noise_list[k], _, interaction_idx_difference, average_lifetimes = pickle.load(f)
+        #             (_, noise_list[k], _,
+        #              interaction_idx_difference,
+        #              average_lifetimes) = pickle.load(f)
         #
         #             if k == 0:
         #                 lifetimes_array = copy.deepcopy(average_lifetimes)
-        #                 int_idx_diff_array = copy.deepcopy(interaction_idx_difference)
+        #                 int_idx_diff_array = \
+        #                     copy.deepcopy(interaction_idx_difference)
         #             else:
-        #                 lifetimes_array = np.block([[lifetimes_array], [average_lifetimes]])
-        #                 int_idx_diff_array = np.block([[int_idx_diff_array], [interaction_idx_difference]])
+        #                 lifetimes_array = np.block([[lifetimes_array],
+        #                                             [average_lifetimes]])
+        #                 int_idx_diff_array = np.block(
+        #                     [[int_idx_diff_array],
+        #                      [interaction_idx_difference]])
         #
         #     if n_files > 0:
         #         # Create heatmaps
-        #         sns.heatmap(np.log(lifetimes_array + 1e-2), ax=ax[0, j], cbar_kws={'label': colorbar_labels[0]})
-        #         sns.heatmap(np.log(int_idx_diff_array + 1e-2), ax=ax[1, j], cbar_kws={'label': colorbar_labels[1]})
+        #         sns.heatmap(np.log(lifetimes_array + 1e-2), ax=ax[0, j],
+        #                     cbar_kws={'label': colorbar_labels[0]})
+        #         sns.heatmap(np.log(int_idx_diff_array + 1e-2), ax=ax[1, j],
+        #                     cbar_kws={'label': colorbar_labels[1]})
         #
         #         # Set axis ticks and labels
         #         _, xtick_labels = plt.xticks()
         #         ytick_locs, _ = plt.yticks()
-        #         ytick_labels = np.linspace(noise_list.min(), noise_list.max(), len(ytick_locs))
+        #         ytick_labels = np.linspace(noise_list.min(), noise_list.max(),
+        #                                    len(ytick_locs))
         #         ax[1,j].set_xticklabels(xtick_labels, rotation=0)
         #         ax[0,j].set_yticks(ytick_locs)
         #         ax[0,j].set_yticklabels(ytick_labels, rotation=0)
@@ -400,7 +447,8 @@ class Plots:
         # ax[0,0].invert_yaxis()
         #
         # # Set titles
-        # fig.suptitle(r'$N$' + f' = {N}, ' + r'$t_{total}$' + f' = {t_total/2:.0f}', size=16)
+        # fig.suptitle(r'$N$' + f' = {N}, ' + r'$t_{total}$'
+        #              + f' = {t_total/2:.0f}', size=16)
         # ax[0,0].set_title('Classic', size=16)
         # ax[0,1].set_title('Non-classic', size=16)
         #
@@ -410,7 +458,8 @@ class Plots:
         # plt.tight_layout()
         # plt.show()
 
-    # Number of interactions and interaction lifetimes as a function of index difference
+    # Number of interactions and interaction lifetimes
+    # as a function of index difference
     def interactions(self):
         fig, ax = plt.subplots(2,1, figsize=(8,6))
 
@@ -422,9 +471,13 @@ class Plots:
 
         if len(files) > 0:
             with open(files[0], 'rb') as f:
-                N, noise, interaction_idx_difference, average_lifetimes = pickle.load(f)
-                ax[0].plot(np.arange(N), average_lifetimes, label='Average lifetimes')
-                ax[1].bar(np.arange(N), interaction_idx_difference, alpha=TRANSPARENCY, label='Interaction length')
+                (N, noise, interaction_idx_difference,
+                 average_lifetimes) = pickle.load(f)
+
+                ax[0].plot(np.arange(N), average_lifetimes,
+                           label='Average lifetimes')
+                ax[1].bar(np.arange(N), interaction_idx_difference,
+                          alpha=TRANSPARENCY, label='Interaction length')
 
         # Set plot title
         self.format_plot(ax[0], ylabel='Average lifetimes')
@@ -455,19 +508,22 @@ class Plots:
             with open(files[i], 'rb') as f:
                 state_statistics = pickle.load(f)[0]
 
-            ts = torch.arange(len(state_statistics[0])) * (self.t_total / len(state_statistics[0]))
+            n_ts = len(state_statistics[0])
+            ts = torch.arange(n_ts) * self.t_total / n_ts
 
             LINEWIDTH = 0.2
 
             for j in range(len(self.state_names)):
-                ax.plot(ts, state_statistics[j], lw=LINEWIDTH, c=self.state_colors[j], label=self.state_names[j])
+                ax.plot(ts, state_statistics[j], lw=LINEWIDTH,
+                        c=self.state_colors[j], label=self.state_names[j])
 
         self.format_plot(ax, xlabel='Time-step', ylabel='No. of monomers')
         plt.show()
 
     def states_time_space(self):
         open_filename = self.create_full_filename('states_time_space/', '.pkl')
-        conversions_filename = self.create_full_filename('successful_conversions/', '.pkl')
+        conversions_filename = self.create_full_filename(
+            'successful_conversions/', '.pkl')
 
         files = glob(open_filename)
         conversion_files = glob(conversions_filename)
@@ -486,26 +542,29 @@ class Plots:
             with open(conversion_files[i], 'rb') as f_c:
                 recruited_conversions, noisy_conversions = pickle.load(f_c)
 
-        recruited_conversions = np.concatenate([recruited_conversions.sum(axis=1),
-                                                np.array([recruited_conversions.sum()])
-                                                ])
+        recruited_conversions = np.concatenate(
+            [recruited_conversions.sum(axis=1),
+             np.array([recruited_conversions.sum()])])
 
-        noisy_conversions = np.concatenate([noisy_conversions, np.array([noisy_conversions.sum()])])
+        noisy_conversions = np.concatenate(
+            [noisy_conversions, np.array([noisy_conversions.sum()])])
 
-        df_array = np.block([[recruited_conversions],
-                             [noisy_conversions]
-                             ])
+        df_array = np.block([[recruited_conversions], [noisy_conversions]])
 
         # Show conversion data
-        df = pd.DataFrame(df_array, index=['Recruited conversions / t', 'Noisy conversions / t'],
-                                    columns=['S to U', 'U to A', 'A to U', 'U to S', 'Total'])
+        df = pd.DataFrame(
+            df_array,
+            index=['Recruited conversions / t', 'Noisy conversions / t'],
+            columns=['S to U', 'U to A', 'A to U', 'U to S', 'Total'])
+
         print(df)
         # Plot
         INTERNAL_STATS_INTERVAL = 200
 
         labels = [patches.Patch(color=self.state_colors[i],
-                                label=self.state_names[i]) for i in range(len(self.state_colors))
-                  ]
+                                label=self.state_names[i])
+                  for i in range(len(self.state_colors))]
+
         cmap = colors.ListedColormap(self.state_colors)
         ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
         self.format_plot(ax, xlabel=f'Time-steps / {INTERNAL_STATS_INTERVAL}',
@@ -513,17 +572,20 @@ class Plots:
 
         #ax.set_xlabel('Time-steps / 2000', size=12)
         #ax.set_ylabel('Monomer no.', size=12)
-        plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2, borderaxespad=0.)
+        plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2,
+                   borderaxespad=0.)
 
         plt.show()
 
     # Optimization
     def optimization(self):
         # Finds all .txt files with different pressure values
-        filenames = glob(self.plot_data_dir + 'optimization/rms=*' \
-                         + f'n_processes={self.n_processes}_init_state={self.initial_state}_' \
-                         + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_' \
-                         + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
+        filenames = glob(
+            self.plot_data_dir + 'optimization/rms=*'
+            + f'n_processes={self.n_processes}_init_state={self.initial_state}_'
+            + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_'
+            + f't_total={self.t_total}_noise={self.noise:.4f}_'
+            + f'alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
 
         # Sort filenames by pressure values
         filenames = sorted(filenames)
@@ -547,10 +609,13 @@ class Plots:
 
     # Optimization result object
     def res(self):
-        open_filename = self.plot_data_dir + f'optimization/res_rms={self.rms:.3f}_'\
-                         + f'n_processes={self.n_processes}_init_state={self.initial_state}_'\
-                         + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_t_total={self.t_total}_'\
-                         + f'noise={self.noise:.4f}_alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl'
+        open_filename = (
+            self.plot_data_dir + f'optimization/res_'
+            + f'rms={self.rms:.3f}_n_processes={self.n_processes}_'
+            + f'init_state={self.initial_state}_'
+            + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_'
+            + f't_total={self.t_total}_noise={self.noise:.4f}_'
+            + f'alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.pkl')
 
         print(open_filename)
 
@@ -561,9 +626,11 @@ class Plots:
 
         plots.plot_gaussian_process(res)
 
-        loss_func = lambda x0: res['models'][-1].predict(np.asarray(x0).reshape(-1, 1))
+        loss_func = (lambda x0:
+                     res['models'][-1].predict(np.asarray(x0).reshape(-1, 1)))
 
-        # min_fun_res = optimize.minimize_scalar(loss_func, bounds=(0, 1), method='bounded').x
+        # min_fun_res = optimize.minimize_scalar(loss_func, bounds=(0, 1),
+                     #                           method='bounded').x
         min_fun_res = optimize.brute(loss_func, [(0, 1)], Ns=300, disp=True)
 
         true_x0 = res['space'].inverse_transform(min_fun_res.reshape(1, 1))
@@ -573,7 +640,8 @@ class Plots:
     # Plots RMS as a function of pressure
     def RMS(self):
         open_filename = self.create_full_filename('dist_vecs_to_com/', '.pkl')
-        # Replace the pressure values with the wildcard * to include all pressure values
+        # Replace the pressure values with the wildcard *
+        # to include all pressure values
         open_filename = open_filename.replace(f'rms={self.rms:.3f}', 'rms=*')
 
         files = glob(open_filename)
@@ -596,8 +664,11 @@ class Plots:
 
                     with open(files[i], 'rb') as f:
                         dist_vecs_to_com = pickle.load(f)[0]
-                        t_idx, N = dist_vecs_to_com.shape[0], dist_vecs_to_com.shape[1]
-                        RMSs.append(np.sqrt(np.square(dist_vecs_to_com).sum() / t_idx / N))
+                        t_idx, N = (dist_vecs_to_com.shape[0],
+                                    dist_vecs_to_com.shape[1])
+
+                        RMSs.append(np.sqrt(np.square(dist_vecs_to_com).sum()
+                                            / t_idx / N))
                 else:
                     pass
 
@@ -649,7 +720,9 @@ class Plots:
     @staticmethod
     @njit
     def _calculate_correlations(correlations, dist_vecs_to_com, n_taus):
-        i_tot, j_tot, k_tot = dist_vecs_to_com.shape[0], dist_vecs_to_com.shape[1], dist_vecs_to_com.shape[2]
+        i_tot, j_tot, k_tot = (dist_vecs_to_com.shape[0],
+                               dist_vecs_to_com.shape[1],
+                               dist_vecs_to_com.shape[2])
 
         # Compute denominator
         denominator = 0
@@ -668,7 +741,8 @@ class Plots:
             for i in range(n_taus - tau):
                 for j in range(j_tot):
                     for k in range(k_tot):
-                        numerator += dist_vecs_to_com[tau+i,j,k] * dist_vecs_to_com[i,j,k]
+                        numerator += (dist_vecs_to_com[tau+i,j,k] *
+                                      dist_vecs_to_com[i,j,k])
 
             numerator /= (n_taus - tau)
             correlations[tau] = numerator / denominator
@@ -676,7 +750,8 @@ class Plots:
         return correlations
 
     def successful_recruited_conversions(self):
-        open_filename = self.create_full_filename('successful_recruited_conversions/', '.pkl')
+        open_filename = self.create_full_filename(
+            'successful_recruited_conversions/', '.pkl')
         files = glob(open_filename)
         print(open_filename)
 
@@ -724,23 +799,25 @@ class Plots:
         plt.show()
 
     def plot(self):
-        function_dict = {'Correlations': self.correlation,
-                         'Correlation times': self.correlation_times,
-                         'End-to-end distances': self.Rs,
-                         'End-to-end times': self.end_to_end_times,
-                         'Establishment times and silent patches': self.establishment_times_patches,
-                         'Final state': self.final_state,
-                         'Fractions of "ON" cells': self.fraction_ON_cells,
-                         'Heatmap': self.heatmap,
-                         'Monomer interactions': self.interactions,
-                         'Monomer states': self.states,
-                         'Monomer states (time-space plot)': self.states_time_space,
-                         'Optimization': self.optimization,
-                         'Optimization result': self.res,
-                         'RMS': self.RMS,
-                         'Successful recruited conversions': self.successful_recruited_conversions,
-                         'Time dynamics': self.dynamics_time
-                        }
+        function_dict = {
+            'Correlations': self.correlation,
+            'Correlation times': self.correlation_times,
+            'End-to-end distances': self.Rs,
+            'End-to-end times': self.end_to_end_times,
+            'Establishment times and silent patches':
+                self.establishment_times_patches,
+            'Final state': self.final_state,
+            'Fractions of "ON" cells': self.fraction_ON_cells,
+            'Heatmap': self.heatmap,
+            'Monomer interactions': self.interactions,
+            'Monomer states': self.states,
+            'Monomer states (time-space plot)': self.states_time_space,
+            'Optimization': self.optimization,
+            'Optimization result': self.res,
+            'RMS': self.RMS,
+            'Successful recruited conversions':
+                self.successful_recruited_conversions,
+            'Time dynamics': self.dynamics_time}
 
         # Get the appropriate function
         try:

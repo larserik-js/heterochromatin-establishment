@@ -12,8 +12,9 @@ import misc_functions
 
 class Optimizer:
 
-    def __init__(self, model, run_on_cell, n_processes, pool_size, initial_state, cenH_init_idx, N, t_total, noise, rms,
-                 alpha_2, beta, filename):
+    def __init__(self, model, run_on_cell, n_processes, pool_size,
+                 initial_state, cenH_init_idx, N, t_total, noise, rms, alpha_2,
+                 beta, filename):
 
         self.model = model
         self.run_on_cell = run_on_cell
@@ -34,12 +35,14 @@ class Optimizer:
         # (cenH = 6) / (cenH = 8)
         self.SLOPE_FRACTION_6_8 = 0.04891
 
-    def write_best_param_data(self, alpha_1, tau_estimate_6, tau_estimate_6_error, tau_estimate_8,
+    def write_best_param_data(self, alpha_1, tau_estimate_6,
+                              tau_estimate_6_error, tau_estimate_8,
                               tau_estimate_8_error, f_minimize_val):
         # Append to file
         data_file = open(self.filename, 'a')
-        data_file.write(f'{self.rms},{alpha_1},{tau_estimate_6},{tau_estimate_6_error},'\
-                            + f'{tau_estimate_8},{tau_estimate_8_error},{f_minimize_val}' + '\n')
+        data_file.write(f'{self.rms},{alpha_1},{tau_estimate_6},'
+                        + f'{tau_estimate_6_error},{tau_estimate_8},'
+                        + f'{tau_estimate_8_error},{f_minimize_val}' + '\n')
 
         data_file.close()
 
@@ -62,16 +65,19 @@ class Optimizer:
 
         for cenH_size in self.cenH_sizes:
             # Run the simulations
-            silent_times_list = main.main(model=self.model, run_on_cell=self.run_on_cell, n_processes=self.n_processes,
-                                          pool_size=self.pool_size, t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
-                                          cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
+            silent_times_list = main.main(
+                model=self.model, run_on_cell=self.run_on_cell,
+                n_processes=self.n_processes, pool_size=self.pool_size,
+                t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
+                cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
 
-            tau_estimate, tau_estimate_error = self.get_maxL_param(silent_times_list)
+            (tau_estimate,
+             tau_estimate_error) = self.get_maxL_param(silent_times_list)
             tau_estimates.append(tau_estimate)
             tau_estimates_errors.append(tau_estimate_error)
 
         # Divide to get actual slope fractions
-        if tau_estimates[0] is not None and tau_estimates[1] is not None:
+        if (tau_estimates[0] is not None) and (tau_estimates[1] is not None):
             slope_cenH_6 = -1/tau_estimates[0]
             slope_cenH_8 = -1/tau_estimates[1]
 
@@ -79,7 +85,8 @@ class Optimizer:
             slope_fraction_data = slope_cenH_6 / slope_cenH_8
 
             # The value to be minimized
-            f_minimize_val = np.abs(self.SLOPE_FRACTION_6_8 - slope_fraction_data)**2
+            f_minimize_val = np.abs(self.SLOPE_FRACTION_6_8
+                                    - slope_fraction_data)**2
 
         else:
             tau_estimates[0], tau_estimates[1] = 'NaN', 'NaN'
@@ -87,30 +94,33 @@ class Optimizer:
             f_minimize_val = 0.1 / alpha_1
 
         # Write data continuously
-        self.write_best_param_data(alpha_1, tau_estimates[0], tau_estimates_errors[0],
-                                   tau_estimates[1], tau_estimates_errors[1], f_minimize_val)
+        self.write_best_param_data(
+            alpha_1, tau_estimates[0], tau_estimates_errors[0],
+            tau_estimates[1], tau_estimates_errors[1], f_minimize_val)
 
         return f_minimize_val
 
     def optimize(self):
         # Minimize
-        res = forest_minimize(self.f_minimize,  # The function to minimize
+        res = forest_minimize(
+            # The function to minimize
+            self.f_minimize,
 
-                          # The bounds on alpha_1
-                          dimensions=[(0.01, 0.2)],
+            # The bounds on alpha_1
+            dimensions=[(0.01, 0.2)],
 
-                          # The acquisition function
-                          acq_func="EI",
+            # The acquisition function
+            acq_func="EI",
 
-                          # The number of evaluations of f
-                          n_calls=5,
+            # The number of evaluations of f
+            n_calls=5,
 
-                          # Number of evaluations of func with random points
-                          # before approximating it with base_estimator.
-                          n_initial_points=2,
+            # Number of evaluations of func with random points
+            # before approximating it with base_estimator.
+            n_initial_points=2,
 
-                          # The random seed
-                          random_state=0)
+            # The random seed
+            random_state=0)
 
         return res
 
@@ -129,27 +139,34 @@ beta = 0.004
 run_on_cell = False
 
 
-def make_filename(output_dir, model, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta):
+def make_filename(output_dir, model, rms, n_processes, initial_state,
+                  cenH_init_idx, N, t_total, noise, alpha_2, beta):
 
-    return output_dir + f'statistics/optimization/{model}_rms={rms:.3f}_n_processes={n_processes}_'\
-                      + f'init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_'\
-                      + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt'
+    return (output_dir + f'statistics/optimization/{model}_rms={rms:.3f}_'
+            + f'n_processes={n_processes}_init_state={initial_state}_'
+            + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_'
+            + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.txt')
 
 
 def initialize_file(filename):
     data_file = open(filename, 'w')
 
-    data_file.write('rms,alpha_1,tau_estimate(cenH=6),tau_estimate_error(cenH=6),' \
-                    + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val' + '\n')
+    data_file.write(
+        'rms,alpha_1,tau_estimate(cenH=6),tau_estimate_error(cenH=6),'
+        + 'tau_estimate(cenH=8),tau_estimate_error(cenH=8),f_minimize_val'
+        + '\n')
 
     data_file.close()
 
 
-def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise,
-                   alpha_2, beta):
-    filename = output_dir + f'statistics/optimization/res_rms={rms:.3f}_n_processes={n_processes}_'\
-                          + f'init_state={initial_state}_cenH_init_idx={cenH_init_idx}_N={N}_' \
-                          + f't_total={t_total}_noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}.pkl'
+def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx,
+               N, t_total, noise, alpha_2, beta):
+
+    filename = (output_dir + f'statistics/optimization/res_rms={rms:.3f}_'
+                + f'n_processes={n_processes}_init_state={initial_state}_'
+                + f'cenH_init_idx={cenH_init_idx}_N={N}_t_total={t_total}_'
+                + f'noise={noise:.4f}_alpha_2={alpha_2:.5f}_beta={beta:.5f}'
+                + '.pkl')
 
     # Write to pkl (using Skopt function)
     dump(res, filename, store_objective=False)
@@ -164,20 +181,24 @@ if __name__ == '__main__':
     for rms in rms_values:
         # Check if input RMS values are valid
         if not misc_functions.rms_vals_within_bounds(rms_values):
-            print('One or more RMS values outside of bounds. Enter valid values.')
+            print('One or more RMS values outside of bounds. '
+                  'Enter valid values.')
             sys.exit()
 
         # Make the .txt file for data
-        filename = make_filename(output_dir, model, rms, n_processes, initial_state, cenH_init_idx, N, t_total,
-                                 noise, alpha_2, beta)
+        filename = make_filename(
+            output_dir, model, rms, n_processes, initial_state, cenH_init_idx,
+            N, t_total, noise, alpha_2, beta)
         initialize_file(filename)
 
-        opt_obj = Optimizer(model, run_on_cell, n_processes, pool_size, initial_state,
-                            cenH_init_idx, N, t_total, noise, rms, alpha_2, beta, filename)
+        opt_obj = Optimizer(
+            model, run_on_cell, n_processes, pool_size, initial_state,
+            cenH_init_idx, N, t_total, noise, rms, alpha_2, beta, filename)
 
         res = opt_obj.optimize()
 
-        pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, N, t_total, noise, alpha_2, beta)
+        pickle_res(res, output_dir, rms, n_processes, initial_state,
+                   cenH_init_idx, N, t_total, noise, alpha_2, beta)
 
         print(res)
 

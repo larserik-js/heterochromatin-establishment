@@ -43,10 +43,13 @@ def save_data(sim_obj, output_dir):
         'dist_vecs_to_com': [sim_obj.dist_vecs_to_com],
 
         # Final state
-        'final_state': [sim_obj.X[:, 0], sim_obj.X[:, 1], sim_obj.X[:, 2], sim_obj.states],
+        'final_state': [sim_obj.X[:, 0], sim_obj.X[:, 1],
+                        sim_obj.X[:, 2], sim_obj.states],
 
         # Interactions and lifetimes
-        'interactions': [sim_obj.N, sim_obj.noise, sim_obj.interaction_idx_difference, sim_obj.average_lifetimes],
+        'interactions': [sim_obj.N, sim_obj.noise,
+                         sim_obj.interaction_idx_difference,
+                         sim_obj.average_lifetimes],
 
         # End-to-end distance
         'Rs': [sim_obj.Rs],
@@ -58,7 +61,8 @@ def save_data(sim_obj, output_dir):
         'states_time_space': [sim_obj.states_time_space],
 
         # Succesful conversions
-        'successful_conversions': [sim_obj.successful_recruited_conversions, sim_obj.successful_noisy_conversions]
+        'successful_conversions': [sim_obj.successful_recruited_conversions,
+                                   sim_obj.successful_noisy_conversions]
     }
 
     # Pickle and save data
@@ -75,8 +79,9 @@ def set_numba_seed(seed):
 # Runs the script
 # from memory_profiler import profile
 # @profile
-def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, interaction_size, rms, alpha_1,
-        alpha_2, beta, set_seed, seed, animate, allow_state_change, initial_state, cell_division, cenH_size,
+def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total,
+        interaction_size, rms, alpha_1, alpha_2, beta, set_seed, seed, animate,
+        allow_state_change, initial_state, cell_division, cenH_size,
         cenH_init_idx, write_cenH_data, ATF1_idx):
 
     # Number of failed simulation attempts
@@ -95,13 +100,16 @@ def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, in
                 set_numba_seed(seed)
 
             # Create simulation object
-            sim_obj = Simulation(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total,
-                                 interaction_size, rms, alpha_1, alpha_2, beta, seed, allow_state_change,
-                                 initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
+            sim_obj = Simulation(
+                model, project_dir, input_dir, output_dir, N, l0, noise, dt,
+                t_total, interaction_size, rms, alpha_1, alpha_2, beta, seed,
+                allow_state_change, initial_state, cell_division, cenH_size,
+                cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images
-            param_string = create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx,
-                                               ATF1_idx, cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed)
+            param_string = create_param_string(
+                model, rms, initial_state, cenH_size, cenH_init_idx, ATF1_idx,
+                cell_division, N, t_total, noise, alpha_1, alpha_2, beta, seed)
 
             animation_folder = output_dir + '/animations/' + param_string + '/'
 
@@ -139,7 +147,8 @@ def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, in
                         image_idx += 1
 
                         # Set dpi=60 to get < 50MB data
-                        sim_obj.fig.savefig(animation_folder + f'{image_idx:03d}', dpi=100)
+                        sim_obj.fig.savefig(
+                            animation_folder + f'{image_idx:03d}', dpi=100)
 
                     # No image saved
                     else:
