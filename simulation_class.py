@@ -236,14 +236,10 @@ class Simulation:
         self.ax = self.fig.add_subplot(111, projection='3d')
 
     def initialize_system(self, init_system_type):
-        # Initial positions are located in the input folder
-        # both for local computer and for Cell computers
-        input_dir = self.project_dir + 'input/'
-
         # Quasi-random position based on position obtained after 1e6 time-steps of free polymer
         if init_system_type == 'quasi-random-free':
             seed_no = r.randint(100)
-            open_filename = input_dir + 'quasi_random_initial_states_free/final_state_N=40_t_total=1000000_'\
+            open_filename = self.input_dir + 'quasi_random_initial_states_free/final_state_N=40_t_total=1000000_'\
                                       + f'noise=0.500_seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
@@ -256,7 +252,7 @@ class Simulation:
             seed_no = r.randint(100)
 
             rounded_pressure_weight = np.round(self.U_pressure_weight, decimals=2)
-            open_filename = input_dir + 'quasi_random_initial_states_pressure_before_dynamics/'\
+            open_filename = self.input_dir + 'quasi_random_initial_states_pressure_before_dynamics/'\
                                       + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
 
             with open(open_filename, 'rb') as f:
