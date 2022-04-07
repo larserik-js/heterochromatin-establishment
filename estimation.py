@@ -23,24 +23,20 @@ class Estimator:
         if data is None:
             # All sampled data
             data = r.exponential(scale=self.tau_true, size=self.n_samples)
-
-            Is = (data < self.t_max)
+            are_below_t_max = (data < self.t_max)
 
         # Experimental data given as argument
         else:
             data = np.array(data)
-            print(data)
-            #Is = ~np.isnan(data)
-            Is = data is not None
-            print(Is)
+            are_below_t_max = np.array([val is not None for val in data])
             pass
 
         # No data below t_max
-        if Is.sum() == 0:
+        if not np.any(are_below_t_max):
             return None, None, None, None
         else:
             # Data sampled from continuous distribution
-            ts = data[Is]
+            ts = data[are_below_t_max]
             k = len(ts)
             N = len(data)
 
