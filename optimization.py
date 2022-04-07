@@ -6,7 +6,7 @@ from skopt import forest_minimize, dump
 
 import main
 from estimation import Estimator
-from formatting import get_project_dir, get_output_dir, make_output_directories
+from formatting import get_directories, make_output_directories
 import misc_functions
 
 
@@ -157,8 +157,7 @@ def pickle_res(res, output_dir, rms, n_processes, initial_state, cenH_init_idx, 
 
 if __name__ == '__main__':
     # Make necessary directories
-    project_dir = get_project_dir()
-    output_dir = get_output_dir(project_dir, run_on_cell)
+    project_dir, _, output_dir = get_directories(run_on_cell)
     make_output_directories(output_dir)
 
     # Iterate

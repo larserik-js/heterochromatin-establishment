@@ -11,7 +11,7 @@ import pandas as pd
 from scipy import optimize
 from skopt import plots, load
 
-from formatting import get_project_dir, get_output_dir, create_param_string, create_plot_title
+from formatting import get_directories, create_param_string, create_plot_title
 
 
 class Plots:
@@ -22,8 +22,8 @@ class Plots:
         self.plot_func_name = plot_func_name
 
         # Project and plot data directories
-        self.project_dir = get_project_dir()
-        self.plot_data_dir = get_output_dir(self.project_dir) + 'statistics/'
+        self.project_dir, _, output_dir = get_directories()
+        self.plot_data_dir = output_dir + 'statistics/'
 
         self.model = param_vals['model']
         self.n_processes = int(param_vals['n_processes'])

@@ -17,15 +17,16 @@ r = np.random
 
 class Simulation:
 
-    def __init__(self, model, project_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
+    def __init__(self, model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
                  rms, alpha_1, alpha_2, beta, seed, allow_state_change, initial_state, cell_division, cenH_size,
                  cenH_init_idx, write_cenH_data, ATF1_idx):
 
         # Physical model
         self.model = model
 
-        # Project and output directories
+        # Project, input, and output directories
         self.project_dir = project_dir
+        self.input_dir = input_dir
         self.output_dir = output_dir
 
         ## Parameters

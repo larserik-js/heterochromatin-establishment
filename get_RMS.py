@@ -9,10 +9,10 @@ import numpy as np
 import torch
 import matplotlib.pyplot as plt
 
-from formatting import get_project_dir
+from formatting import get_directories
 
 
-project_dir = get_project_dir()
+project_dir, _, _ = get_directories()
 input_dir = project_dir + 'input/quasi_random_initial_states_pressure_before_dynamics/'
 output_file = project_dir + 'pressure_rms/pressure_RMS.txt'
 pressure_vals = np.arange(0,1.01,0.01)

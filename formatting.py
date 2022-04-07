@@ -1,22 +1,20 @@
 import os
 
 
-# Path to project folder
-def get_project_dir():
+def get_directories(run_on_cell=False):
+    # Path to project directory
     project_dir = os.path.abspath(os.path.dirname(__file__)) + '/'
 
-    return project_dir
-
-
-# Path to output directory
-# The directories are located on different locations on local and Cell computers
-def get_output_dir(project_dir, run_on_cell=False):
+    # Paths to input and output directories
+    # The directories are located on different locations on local and Cell computers
     if run_on_cell:
+        input_dir = project_dir + '../../../nbicmplx/cell/zfj803/input/'
         output_dir = project_dir + '../../../nbicmplx/cell/zfj803/output/'
     else:
+        input_dir = project_dir + 'input/'
         output_dir = project_dir + 'output/'
 
-    return output_dir
+    return project_dir, input_dir, output_dir
 
 
 # For filenames
