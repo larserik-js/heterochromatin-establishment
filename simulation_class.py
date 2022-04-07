@@ -17,7 +17,7 @@ r = np.random
 
 class Simulation:
 
-    def __init__(self, model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight,
+    def __init__(self, model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, interaction_size,
                  rms, alpha_1, alpha_2, beta, seed, allow_state_change, initial_state, cell_division, cenH_size,
                  cenH_init_idx, write_cenH_data, ATF1_idx):
 
@@ -53,8 +53,8 @@ class Simulation:
         self.rms = rms
 
         # Potential weights
-        self.U_two_interaction_weight = U_two_interaction_weight
-        self.U_pressure_weight = get_pressure.get_pressure(rms)
+        self.interaction_size = interaction_size
+        self.pressure_size = get_pressure.get_pressure(rms)
 
         ## State change parameters
         self.alpha_1 = alpha_1
@@ -251,7 +251,7 @@ class Simulation:
         elif init_system_type == 'quasi-random-pressure':
             seed_no = r.randint(100)
 
-            rounded_pressure_weight = np.round(self.U_pressure_weight, decimals=2)
+            rounded_pressure_weight = np.round(self.pressure_size, decimals=2)
             open_filename = self.input_dir + 'quasi_random_initial_states_pressure_before_dynamics/'\
                                       + f'pressure={rounded_pressure_weight:.2f}/seed={seed_no}.pkl'
 
@@ -458,7 +458,7 @@ class Simulation:
         monomers_within_cutoff_mask = self.get_monomers_within_cutoff_mask()
         U_interaction = U_interaction * monomers_within_cutoff_mask
 
-        return self.U_two_interaction_weight * torch.sum(U_interaction)
+        return self.interaction_size * torch.sum(U_interaction)
 
     # Nuclear envelope pressure potential
     def pressure_potential(self):
@@ -467,7 +467,7 @@ class Simulation:
         #U_pressure = torch.sum(1/(torch.abs(norms-2*self.r_system) + 1e-10) )
 
         # Hooke potential
-        U_pressure = self.U_pressure_weight * torch.sum(norms**2)
+        U_pressure = self.pressure_size * torch.sum(norms**2)
         return U_pressure
 
     # Returns (overall) system potential

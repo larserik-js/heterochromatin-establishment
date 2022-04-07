@@ -3,7 +3,7 @@ import torch
 
 # Write pressure and RMS values at the end of a simulation
 def write_pressure_rms(output_dir, initial_state, cenH_size, cenH_init_idx, N, t_total, noise, alpha_1, alpha_2, beta,
-                       seed, dist_vecs_to_com, U_pressure_weight):
+                       seed, dist_vecs_to_com, pressure_size):
 
     # Make filename
     write_name = output_dir + 'statistics/pressure_RMS_'
@@ -18,7 +18,7 @@ def write_pressure_rms(output_dir, initial_state, cenH_size, cenH_init_idx, N, t
 
     # This mean is a time average from t_half to the end of the simulation
     mean_rms = torch.mean(rms)
-    line_str = f'{U_pressure_weight},{mean_rms:.4f}'
+    line_str = f'{pressure_size},{mean_rms:.4f}'
     data_file = open(write_name, 'a')
     data_file.write(line_str + '\n')
     data_file.close()

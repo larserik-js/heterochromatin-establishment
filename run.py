@@ -75,7 +75,7 @@ def set_numba_seed(seed):
 # Runs the script
 # from memory_profiler import profile
 # @profile
-def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, U_two_interaction_weight, rms, alpha_1,
+def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, interaction_size, rms, alpha_1,
         alpha_2, beta, set_seed, seed, animate, allow_state_change, initial_state, cell_division, cenH_size,
         cenH_init_idx, write_cenH_data, ATF1_idx):
 
@@ -96,7 +96,7 @@ def run(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total, U_
 
             # Create simulation object
             sim_obj = Simulation(model, project_dir, input_dir, output_dir, N, l0, noise, dt, t_total,
-                                 U_two_interaction_weight, rms, alpha_1, alpha_2, beta, seed, allow_state_change,
+                                 interaction_size, rms, alpha_1, alpha_2, beta, seed, allow_state_change,
                                  initial_state, cell_division, cenH_size, cenH_init_idx, write_cenH_data, ATF1_idx)
 
             # Folder for saving animation images

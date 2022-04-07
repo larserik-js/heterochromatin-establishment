@@ -100,7 +100,7 @@ def _get_parser_args():
                         help='The number of time-steps.')
 
     # Potential weight
-    parser.add_argument('--U_two_interaction_weight',
+    parser.add_argument('--interaction_size',
                         type=float,
                         default=50,
                         help='Scales the strength of the two-interaction potential.')
@@ -110,7 +110,7 @@ def _get_parser_args():
                         type=float,
                         default=2.0,
                         help='The root-mean-square of the distances of the monomers to the center-of-mass. '\
-                             + ' This value translates directly into a U_pressure_weight value.')
+                             + ' This value translates directly into a pressure_size value.')
 
     ## State parameters
     # Allow states to change
@@ -204,7 +204,7 @@ noise = _args.noise
 dt = _args.dt
 t_total = _args.t_total
 rms = _args.rms
-U_two_interaction_weight = _args.U_two_interaction_weight
+interaction_size = _args.interaction_size
 allow_state_change = _args.allow_state_change
 initial_state = _args.initial_state
 cell_division = _args.cell_division
