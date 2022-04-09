@@ -51,7 +51,7 @@ def _get_parser_args():
         help='The number of workers.')
 
     parser.add_argument(
-        '--multiprocessing_parameter',
+        '--multiprocessing_param',
         type=str,
         default='seed',
         choices=['seed', 'alpha_1', 'rms'],
@@ -224,38 +224,11 @@ def _get_parser_args():
         help='The reaction rate for the noisy conversions of all states.')
 
     # Gather all arguments in a namespace object
-    args = parser.parse_args()
-
-    return args
-
+    params = parser.parse_args()
+    # Transform to dictionary
+    params = vars(params)
+    
+    return params
 
 # Extract all parameters
-_args =  _get_parser_args()
-
-# All of the parameters below will be imported into 'main.py'
-model = _args.model
-run_on_cell = _args.run_on_cell
-n_processes = _args.n_processes
-pool_size = _args.pool_size
-multiprocessing_parameter = _args.multiprocessing_parameter
-animate = _args.animate
-set_seed = _args.set_seed
-min_seed = _args.min_seed
-N = _args.N
-l0 = _args.l0
-noise = _args.noise
-dt = _args.dt
-t_total = _args.t_total
-rms = _args.rms
-interaction_size = _args.interaction_size
-allow_state_change = _args.allow_state_change
-initial_state = _args.initial_state
-cell_division = _args.cell_division
-cenH_size = _args.cenH_size
-cenH_init_idx = _args.cenH_init_idx
-write_cenH_data = _args.write_cenH_data
-ATF1_idx = _args.ATF1_idx
-alpha_1 = _args.alpha_1
-alpha_1_const = _args.alpha_1_const
-alpha_2 = _args.alpha_2
-beta = _args.beta
+params = _get_parser_args()
