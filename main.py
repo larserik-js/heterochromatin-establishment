@@ -9,7 +9,6 @@ import numpy as np
 import run
 from formatting import (get_directories, make_output_directories,
                         edit_stable_silent_times_file)
-#from parameters import *
 from parameters import params
 
 

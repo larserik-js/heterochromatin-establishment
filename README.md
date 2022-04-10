@@ -6,8 +6,15 @@ The repository contains a variety of modules used to simulate a 3D polymer, whic
 ## Setup (macOS & Linux)
 The necessary libraries for this application can be installed in the following way:
 * Navigate into the repository directory, i.e. the location of ``requirements.txt``
-* Set up a virtual environment, e.g. via ``python3 -m venv env``
-* Activate the environment via ``source env/bin/activate``
+* Set up a virtual environment, e.g. via:
+```sh
+python3 -m venv env
+```
+
+* Activate the environment via:
+```sh
+source env/bin/activate
+```
 * Install libraries via:
 ```sh
 pip3 install -r requirements.txt
@@ -21,7 +28,7 @@ python3 main.py --animate=1 --t_total=100000 --cenH_size=8
 ```
 The generated files can be found in ``output/animations/``.
 
-To generate several animations at once (using multiprocessing with different seeds), use the multiprocessing argument. E.g. to generate 10 animations, run:
+To generate several animations in parallel (using multiprocessing with different seeds), use the multiprocessing argument. E.g. to generate 10 animations, run:
 ```sh
 python3 main.py --animate=1 --t_total=100000 --cenH_size=8 --n_processes=10
 ```
