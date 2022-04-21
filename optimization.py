@@ -16,20 +16,22 @@ class Optimizer:
                  initial_state, cenH_init_idx, N, t_total, noise, rms, alpha_2,
                  beta, filename):
 
-        self.model = model
-        self.run_on_cell = run_on_cell
-        self.n_processes = n_processes
-        self.pool_size = pool_size
-        self.initial_state = initial_state
-        self.cenH_sizes = [6,8]
-        self.cenH_init_idx = cenH_init_idx
-        self.N = N
         self.t_total = t_total
-        self.noise = noise
         self.rms = rms
-        self.alpha_2 = alpha_2
-        self.beta = beta
+        self.cenH_sizes = [6,8]
         self.filename = filename
+
+        self.params = {'model': model, 'run_on_cell': run_on_cell,
+                       'n_processes': n_processes, 'pool_size': pool_size,
+                       'multiprocessing_param': 'seed', 'N': N, 'l0': 1,
+                       'noise': noise, 'dt': 0.02, 't_total': self.t_total,
+                       'interaction_size': 50, 'rms': self.rms, 'alpha_1': 0.07,
+                       'alpha_2': alpha_2, 'beta': beta, 'alpha_1_const': 1,
+                       'set_seed': 0, 'min_seed': 0, 'animate': 0,
+                       'allow_state_change': 1, 'initial_state': initial_state,
+                       'cell_division': 0, 'cenH_size': 0,
+                       'cenH_init_idx': cenH_init_idx, 'write_cenH_data': 1,
+                       'ATF1_idx': None}
 
         # Slope fraction(s) from the data
         # (cenH = 6) / (cenH = 8)
@@ -59,17 +61,24 @@ class Optimizer:
 
     # The function to be minimized
     def f_minimize(self, alpha_1):
+        # Get alpha_1 param and update
         alpha_1 = alpha_1[0]
+        self.params['alpha_1'] = alpha_1
+
         tau_estimates = []
         tau_estimates_errors = []
 
         for cenH_size in self.cenH_sizes:
+            # Update cenH param
+            self.params['cenH_size'] = cenH_size
+
             # Run the simulations
-            silent_times_list = main.main(
-                model=self.model, run_on_cell=self.run_on_cell,
-                n_processes=self.n_processes, pool_size=self.pool_size,
-                t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
-                cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
+            # silent_times_list = main.main(
+            #     model=self.model, run_on_cell=self.run_on_cell,
+            #     n_processes=self.n_processes, pool_size=self.pool_size,
+            #     t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
+            #     cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
+            silent_times_list = main.main(**self.params)
 
             (tau_estimate,
              tau_estimate_error) = self.get_maxL_param(silent_times_list)
@@ -177,18 +186,19 @@ if __name__ == '__main__':
     project_dir, _, output_dir = get_directories(run_on_cell)
     make_output_directories(output_dir)
 
+    # Check if input RMS values are valid
+    if not misc_functions.rms_vals_within_bounds(rms_values):
+        print('One or more RMS values outside of bounds. '
+              'Enter valid values.')
+        sys.exit()
+
     # Iterate
     for rms in rms_values:
-        # Check if input RMS values are valid
-        if not misc_functions.rms_vals_within_bounds(rms_values):
-            print('One or more RMS values outside of bounds. '
-                  'Enter valid values.')
-            sys.exit()
-
         # Make the .txt file for data
         filename = make_filename(
             output_dir, model, rms, n_processes, initial_state, cenH_init_idx,
             N, t_total, noise, alpha_2, beta)
+
         initialize_file(filename)
 
         opt_obj = Optimizer(
