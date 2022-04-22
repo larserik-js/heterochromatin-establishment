@@ -9,8 +9,10 @@ def get_directories(run_on_cell=False):
     # The directories are located on different locations
     # on local and Cell computers
     if run_on_cell:
-        input_dir = project_dir + '../../../nbicmplx/cell/zfj803/input/'
-        output_dir = project_dir + '../../../nbicmplx/cell/zfj803/output/'
+        # Absolute paths are used for Cell computers
+        # because there is a 24h time limit on accessing the project dir.
+        input_dir = '/nbi/nbicmplx/cell/zfj803/input/'
+        output_dir = '/nbi/nbicmplx/cell/zfj803/output/'
     else:
         input_dir = project_dir + 'input/'
         output_dir = project_dir + 'output/'
