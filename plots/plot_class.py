@@ -579,32 +579,39 @@ class Plots:
 
     # Optimization
     def optimization(self):
-        # Finds all .txt files with different pressure values
+        # Finds all .txt files with different rms values
         filenames = glob(
-            self.plot_data_dir + 'optimization/rms=*'
+            self.plot_data_dir + f'optimization/{self.model}_rms=*'
             + f'n_processes={self.n_processes}_init_state={self.initial_state}_'
             + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_'
             + f't_total={self.t_total}_noise={self.noise:.4f}_'
             + f'alpha_2={self.alpha_2:.5f}_beta={self.beta:.5f}.txt')
 
-        # Sort filenames by pressure values
+        # Sort filenames by rms values
         filenames = sorted(filenames)
 
         # This number might differ, depending on available files
         n_files = len(filenames)
 
-        pressure_vals = np.empty(n_files)
+        rms_vals = np.empty(n_files)
         f_min_vals = np.empty(n_files)
 
         fig, ax = plt.subplots(figsize=(8, 6))
 
         for k in range(n_files):
             with open(filenames[k], 'rb') as f:
-                data = np.loadtxt(f, delimiter=',', skiprows=1, usecols=[0, -1])
-                pressure_vals[k] = data[0, 0]
-                f_min_vals[k] = data[:, 1].min()
+                data = np.loadtxt(f, delimiter=',', skiprows=1,
+                                  usecols=[0, 2, -1])
+                are_finite = np.isfinite(data[:,1])
+                rms_vals[k] = data[0, 0]
+                finite_min_vals = data[:, -1][are_finite]
 
-        ax.scatter(pressure_vals, f_min_vals)
+                f_min_vals[k] = finite_min_vals[
+                                int(len(finite_min_vals)/2):].mean()
+
+        ax.scatter(rms_vals, f_min_vals)
+        ax.set_xlabel('RMS', size=12)
+        ax.set_ylabel('')
         plt.show()
 
     # Optimization result object

@@ -73,11 +73,6 @@ class Optimizer:
             self.params['cenH_size'] = cenH_size
 
             # Run the simulations
-            # silent_times_list = main.main(
-            #     model=self.model, run_on_cell=self.run_on_cell,
-            #     n_processes=self.n_processes, pool_size=self.pool_size,
-            #     t_total=self.t_total, rms=self.rms, alpha_1=alpha_1,
-            #     cenH_size=cenH_size, set_seed=False, write_cenH_data=True)
             silent_times_list = main.main(**self.params)
 
             (tau_estimate,
