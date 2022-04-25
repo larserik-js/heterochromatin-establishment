@@ -1,4 +1,5 @@
 from timeit import default_timer as DT
+import os
 
 import numpy as np
 from numba import njit
@@ -6,11 +7,11 @@ import matplotlib.pyplot as plt
 
 
 r = np.random
+SEED = 0
 
 N_STATES = 3
 N_MONOMERS = 60
-t_total = 40000
-#alpha = 0.58
+t_total = 10000
 alpha=0.59
 
 beta = 1 / 3
@@ -18,7 +19,7 @@ F = alpha/(1-alpha)
 SCATTER_S = 0.1
 
 state_names = {0: 'M', 1: 'U', 2: 'A'}
-
+    
 
 def f(N_STATES, N_MONOMERS, t_total, alpha, beta):
     t_initial = DT()
@@ -27,7 +28,7 @@ def f(N_STATES, N_MONOMERS, t_total, alpha, beta):
     states = np.zeros(N_MONOMERS, dtype=int)
     states[20:40] = 1
     states[40:] = 2
-    print(states)
+
     ts = np.arange(t_total)
     statistics = np.empty((3, t_total))
 
@@ -40,6 +41,9 @@ def f(N_STATES, N_MONOMERS, t_total, alpha, beta):
 
 @njit
 def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
+    # Set Numba seed
+    np.random.seed(SEED)
+
     for t in range(t_total):
         if t % (t_total / 10) == 0:
             print(t)
@@ -96,20 +100,29 @@ def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
     return statistics
 
 
-def run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
+def main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
+        # Set Numpy seed
+        np.random.seed(SEED)
+
         ts, statistics = f(N_STATES, N_MONOMERS, t_total, alpha, beta)
 
-        fig,ax = plt.subplots(figsize=(8,6))
+        fig,ax = plt.subplots(figsize=(4.79, 3.0))
 
-        ax.plot(ts, statistics[0], lw=SCATTER_S, label=state_names[0])
+        ax.plot(ts, statistics[0], lw=SCATTER_S, label=state_names[0], c='r')
         # ax.plot(ts, statistics[1], lw=SCATTER_S, label=state_names[1])
-        # ax.plot(ts, statistics[2], lw=SCATTER_S, label=state_names[2])
+        ax.plot(ts, statistics[2], lw=SCATTER_S, label=state_names[2], c='b')
 
-        ax.set_title(f'F = {F:.3f}')
-        ax.set_xlabel(r'$t$', size=14)
-        ax.set_ylabel(r'$N$', size=14)
+        #ax.set_title(f'F = {F:.3f}')
+        ax.set_xlabel(r'$t$', size=12)
+        ax.set_ylabel('$N$', size=12)
         ax.legend(loc='best')
+        fig.tight_layout()
+
+        # Save figure
+        figname = '../output/dodd_results.pdf'
+        plt.savefig(figname)
+
         plt.show()
 
-
-run(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S)
+if __name__ == '__main__':
+    main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S)
