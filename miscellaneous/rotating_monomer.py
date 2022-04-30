@@ -172,7 +172,7 @@ def main():
     # Add text
     ax.text(0.2,0.7,0.7, r'$l_0$')
     ax.text(1.5,0.7,1.6, r'$l_0$')
-    ax.text(0.92,1,1.07, r'$\frac{d \theta}{dt} \cdot \Delta t$', color='brown')
+    ax.text(0.92,1,1.07, r'$\frac{dU}{d \theta} \cdot \Delta t$', color='brown')
 
     # Set dimensions
     x_dimension, y_dimension, z_dimension = system.get_dimensions()
@@ -183,6 +183,8 @@ def main():
     ax.set_xticks([])
     ax.set_yticks([])
     ax.set_zticks([])
+
+    fig.tight_layout()
 
     plt.show()
 
