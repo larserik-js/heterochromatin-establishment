@@ -106,7 +106,7 @@ def main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
 
         ts, statistics = f(N_STATES, N_MONOMERS, t_total, alpha, beta)
 
-        fig,ax = plt.subplots(figsize=(4.79, 3.0))
+        fig,ax = plt.subplots(figsize=(4.792, 3.0))
 
         ax.plot(ts, statistics[0], lw=SCATTER_S, label=state_names[0], c='r')
         # ax.plot(ts, statistics[1], lw=SCATTER_S, label=state_names[1])
