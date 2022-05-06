@@ -28,13 +28,18 @@ class FitPowerLaw:
                 - self.pressure)
 
     def plot(self, scale, exponent, shift):
+        fig, ax = plt.subplots(figsize=(4.792, 3))
         xs = np.linspace(self.rms[0], self.rms[-1], 1000)
         ys = get_pressure.sigmoid(xs, shift) * scale * xs ** exponent
-        plt.plot(xs, ys, label='fit')
-        plt.plot(self.rms, self.pressure, label='data')
+
+        plt.plot(xs, ys, label='Fit function')
+        plt.plot(self.rms, self.pressure, label='Experimental data')
+
         plt.legend(loc='best')
-        plt.xlabel('rms')
-        plt.ylabel('pressure')
+        plt.xlabel('RMS')
+        plt.ylabel(r'$c_{pressure}$')
+
+        fig.tight_layout()
         plt.show()
 
     def run(self):

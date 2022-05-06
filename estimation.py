@@ -176,8 +176,8 @@ def solve_empirical(tau_estimate, N, t_max):
 
 
 def plot_taus():
-    n_plots = 4
-    fig, ax = plt.subplots(n_plots,1, figsize=(8,18))
+    n_plots = 3
+    fig, ax = plt.subplots(n_plots,1, figsize=(4.792,6))
     n_samples_min = 5
     n_samples_max = 100
     Ns = np.arange(n_samples_min,n_samples_max, 1)
@@ -210,27 +210,44 @@ def plot_taus():
 
                 taus_estimates[ni] += tau_estimate
 
+            # Get averages
             taus_empirical[ni] /= runs
             taus_estimates[ni] /= runs
             errors_raw[ni] = np.sqrt(errors_raw[ni] / runs)
             errors_corrected[ni] = np.sqrt(errors_corrected[ni] / runs)
 
         ax[i].plot(Ns, taus_estimates, label='Raw estimate')
-        ax[i].plot(Ns, errors_raw, label='Raw Error')
-        ax[i].plot(Ns, errors_corrected, label='Corrected Error')
-        ax[i].plot(Ns, taus_empirical, ls='--', label='Empirical estimator')
-        ax[i].plot(Ns, tau_true + Ns * 0, label=r'$\tau_{true}$')
+        ax[i].plot(Ns, errors_raw, ls='--', label='Raw error')
+        ax[i].plot(Ns, errors_corrected, ls='--', label='Corrected error')
+        ax[i].plot(Ns, taus_empirical, label='Corrected estimate')
+        ax[i].plot(Ns, tau_true + Ns * 0, c='k', lw=0.5, label=r'$\tau_{true}$')
         err_on_tau_mean = (taus_estimates.std(ddof=1)
                            / np.sqrt(len(taus_estimates)))
 
         txt = (f'Mean estimate = {taus_estimates.mean():.3f} '
                + f'+/- {err_on_tau_mean:.3f}')
 
-        ax[i].text(n_samples_max/5, t_max+1, txt, c='r')
+        #ax[i].text(n_samples_max/5, t_max+1, txt, c='r')
         ax[i].set(ylim=(0,t_max+3))
-        ax[i].set_ylabel(r'$\tau$', size=14)
-        ax[i].legend(loc='upper right')
-    ax[n_plots-1].set_xlabel(r'$N$', size=14)
+        ax[i].set_ylabel(r'$\hat\tau$')
+        ax[i].legend(ncol=3, loc='upper right', prop={'size': 8})
+
+        # Format
+        ax[i].set_yticks(list(np.arange(0, 13, 2)))
+        ax[i].set_yticklabels(list(np.arange(0, 13, 2)))
+
+        if i != (n_plots-1):
+            ax[i].set_xticklabels([])
+
+
+    ax[n_plots-1].set_xlabel(r'$N_{sim}$')
+
+
+
+    fig.tight_layout()
+    filename = ('../../Documents/masters_thesis/ThesisArticleFigures/'
+                + 'bias/bias.pdf')
+    #fig.savefig(filename)
     plt.show()
 
 
@@ -238,10 +255,12 @@ if __name__ == '__main__':
     #expectations_vs_analytic(n_samples_max=10, n_runs=1000, tau_true=2,
     #                         t_max=10)
 
-    estimator_obj = Estimator(tau_true=1, t_max=4, n_samples=10000, n_runs=100)
-    #tau_estimates, _ = estimator_obj.estimate_stats()
-    (_, tau_estimate,
-     tau_estimate_std, _) = estimator_obj.estimate(print_stats=True)
+    # estimator_obj = Estimator(tau_true=1, t_max=4, n_samples=10000, n_runs=100)
+    #
+    # #tau_estimates, _ = estimator_obj.estimate_stats()
+    #
+    # (_, tau_estimate,
+    #  tau_estimate_std, _) = estimator_obj.estimate(print_stats=True)
 
     plot_taus()
 

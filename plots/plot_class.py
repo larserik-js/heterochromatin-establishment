@@ -186,18 +186,20 @@ class Plots:
         mean = data_array.mean()
         std = data_array.std(ddof=1)
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(4.792, 3))
 
         ax.text(
             400000, 200,
             f'Mean: {mean:.0f} +/- {std/np.sqrt(len(data_array)):.0f}', c='r')
 
-        ax.set_xlabel('First time of perpendicular end-to-end vector')
+        ax.set_xlabel('First time of ' + r'$90^{\circ}$' + ' rotated polymer')
         ax.set_ylabel('Frequency')
-        ax.set_title(r'$N$' + f' = {self.N}, ' + r'$t_{total}$'
-                     + f' = {self.t_total}, noise = {self.noise:.2f}'
-                     + r'$l_0$')
+        # ax.set_title(r'$N$' + f' = {self.N}, ' + r'$t_{total}$'
+        #              + f' = {self.t_total}, noise = {self.noise:.2f}'
+        #              + r'$l_0$')
         ax.hist(data_array, bins=40)
+
+        fig.tight_layout()
         plt.show()
 
         return data_array
@@ -559,7 +561,7 @@ class Plots:
 
         print(df)
         # Plot
-        INTERNAL_STATS_INTERVAL = 200
+        INTERNAL_STATS_INTERVAL = 1
 
         labels = [patches.Patch(color=self.state_colors[i],
                                 label=self.state_names[i])
