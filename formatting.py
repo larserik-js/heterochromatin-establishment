@@ -43,7 +43,7 @@ def create_param_string(model, rms, initial_state, cenH_size, cenH_init_idx,
                      + f'beta={beta:.5f}')
 
     if not exclude_seed:
-        param_string += f'_seed = {seed}'
+        param_string += f'_seed={seed}'
 
     return param_string
 
