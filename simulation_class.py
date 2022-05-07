@@ -71,7 +71,7 @@ class Simulation:
 
         # Include cell divisions
         self.cell_division = cell_division
-        self.CELL_DIVISION_INTERVAL = 2000000
+        self.CELL_DIVISION_INTERVAL = int(self.t_total / 10)
 
         # Include cenH region
         self.cenH_size = cenH_size
@@ -282,6 +282,7 @@ class Simulation:
 
             with open(open_filename, 'rb') as f:
                 xs, ys, zs, _ = pickle.load(f)
+                X = torch.tensor([xs, ys, zs], dtype=torch.double).t()
 
         # With external pressure
         # Free polymer position after 1e6 time-steps
@@ -802,8 +803,12 @@ class Simulation:
         if self.cell_division:
             if self.t % self.CELL_DIVISION_INTERVAL == 0 and self.t != 0:
                 # Initialize system in space
+                print('here')
+                print(self.X)
                 self.X = self.initialize_system(
-                    init_system_type='quasi-random-free')
+                    init_system_type='quasi-random-pressure')
+
+                print('here')
                 self.X_tilde = self.get_X_tilde()
                 # Change (on average) half the states to U
                 self.states_after_cell_division()
