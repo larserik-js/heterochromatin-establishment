@@ -94,8 +94,7 @@ class System:
 
 def main():
     # Set up figure
-    #fig = plt.figure(figsize=(4.792, 3.0))
-    fig = plt.figure(figsize=(10, 10))
+    fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
 
     # Initialize instance
@@ -119,27 +118,16 @@ def main():
     ax.plot(main_xs, main_ys, main_zs, c='k', alpha=1)
     # Chain from first ghost monomer
     ax.plot(monomers[:2,0], monomers[:2,1], monomers[:2,2],
-            c='k', alpha=0.5)
+            c='k', alpha=1)
     # Chain to last ghost monomer
     ax.plot(monomers[-2:,0], monomers[-2:,1], monomers[-2:,2],
-            c='k', alpha=0.5)
+            c='k', alpha=1)
 
     # Chain between end neighbor monomers
     ax.plot(neighbor_xs, neighbor_ys, neighbor_zs,
             c='k', ls='--', alpha=0.5)
 
     point_between_neighbors = system.get_point_between_neighbors()
-
-    # Vectors
-    rot_vector, rot_vector_ppdc = system.get_vectors()
-
-    # ax.quiver(point_between_neighbors[0], point_between_neighbors[1],
-    #           point_between_neighbors[2], rot_vector[0], rot_vector[1],
-    #           rot_vector[2])
-    #
-    # ax.quiver(point_between_neighbors[0], point_between_neighbors[1],
-    #           point_between_neighbors[2], rot_vector_ppdc[0], rot_vector_ppdc[1],
-    #           rot_vector_ppdc[2])
 
     # Create rotation circle
     circle = system.get_circle()
