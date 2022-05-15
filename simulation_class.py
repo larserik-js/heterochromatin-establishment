@@ -96,7 +96,7 @@ class Simulation:
         self.X = self.initialize_system('quasi-random-pressure')
 
         # Half the chain length
-        r_system = self.l0 * self.N / 2
+        self.r_system = self.l0 * self.N / 2
 
         # Index types to determine which monomers to update
         self.index_types = ['even', 'odd', 'endpoints']
@@ -243,22 +243,6 @@ class Simulation:
         self.successful_recruited_conversions = torch.zeros(size=(4,self.N))
         self.successful_noisy_conversions = torch.zeros(size=(4,))
 
-        ## Plot parameters
-        self.plot_title = create_plot_title(
-            self.model, self.rms, self.cenH_size, self.cenH_init_idx,
-            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1,
-            self.alpha_2, self.beta,self.seed)
-
-        # Monomer scatter marker size
-        self.MONOMER_SIZE = 5
-
-        # Colors of scatter plot markers
-        self.state_colors = ['r', 'y', 'b']
-        self.state_names = ['S', 'U', 'A']
-        # Plot dimensions
-        self.plot_dim = (-0.5*r_system, 0.5*r_system)
-        self.r_system = r_system
-
         # File
         self.params_filename = create_param_string(
             self.model, self.rms, self.initial_state, self.cenH_size,
@@ -266,9 +250,14 @@ class Simulation:
             self.t_total, self.noise, self.alpha_1, self.alpha_2, self.beta,
             self.seed)
 
-        # Create figure
+        # Figure
         self.fig = plt.figure(figsize=(10,10))
         self.ax = self.fig.add_subplot(111, projection='3d')
+
+        self.plot_title = create_plot_title(
+            self.model, self.rms, self.cenH_size, self.cenH_init_idx,
+            self.ATF1_idx, self.N, self.t_total, self.noise, self.alpha_1,
+            self.alpha_2, self.beta,self.seed)
 
     def initialize_system(self, init_system_type):
         # Quasi-random position based on position
@@ -529,7 +518,6 @@ class Simulation:
     def pressure_potential(self):
         # Enacted by the surroundings of the polymer
         norms = torch.linalg.norm(self.X - self.init_center_of_mass, dim=1)
-        #U_pressure = torch.sum(1/(torch.abs(norms-2*self.r_system) + 1e-10) )
 
         # Hooke potential
         U_pressure = self.pressure_size * torch.sum(norms**2)
@@ -803,12 +791,9 @@ class Simulation:
         if self.cell_division:
             if self.t % self.CELL_DIVISION_INTERVAL == 0 and self.t != 0:
                 # Initialize system in space
-                print('here')
-                print(self.X)
                 self.X = self.initialize_system(
                     init_system_type='quasi-random-pressure')
 
-                print('here')
                 self.X_tilde = self.get_X_tilde()
                 # Change (on average) half the states to U
                 self.states_after_cell_division()
@@ -936,6 +921,19 @@ class Simulation:
             if self.allow_state_change:
                 self.change_states()
 
+            # Write hysteresis files
+            # if self.t == (self.t_total - 1):
+            #     output_file = ('/home/lars/Documents/masters_thesis/'
+            #                    + 'ThesisPaperFigures/hysteresis/input/'
+            #                    + f'init_state={self.initial_state}/'
+            #                    + f'alpha_1={self.alpha_1:.5f}.txt')
+            #
+            #     data_file = open(output_file, 'a')
+            #
+            #     line_str = f'{self.state_statistics[0][-1]}\n'
+            #     data_file.write(line_str)
+            #     data_file.close()
+
     # Clears the figure object and plots the current polymer
     def plot(self):
         # Clear the figure
@@ -952,7 +950,14 @@ class Simulation:
         self.ax.text(r + com[0], -r + com[1], 1.8*r + com[2], text_str)
 
         # Plot chain
-        self.ax.plot(X, Y, Z, lw=0.7, ls='solid', c='k')
+        self.ax.plot(X, Y, Z, alpha=0.5, lw=2, ls='solid', c='brown')
+
+        # Monomer scatter marker size
+        MONOMER_SIZE = 1000
+
+        # Colors of scatter plot markers
+        state_colors = ['r', 'y', 'b']
+        state_names = ['S', 'U', 'A']
 
         # Plot each state type separately
         for i in range(len(self.states_booleans)):
@@ -961,13 +966,14 @@ class Simulation:
             z_plot = Z[self.states_booleans[i]]
 
             self.ax.scatter(x_plot, y_plot, z_plot,
-                            s=self.MONOMER_SIZE, c=self.state_colors[i],
-                            label=self.state_names[i])
+                            s=MONOMER_SIZE, c=state_colors[i],
+                            label=state_names[i])
 
         # Set plot dimensions
-        self.ax.set(xlim=(com[0] + self.plot_dim[0], com[0] + self.plot_dim[1]),
-               ylim=(com[1] + self.plot_dim[0], com[1] + self.plot_dim[1]),
-               zlim=(com[2] + self.plot_dim[0], com[2] + self.plot_dim[1]))
+        plot_dim = (-0.2*self.r_system, 0.2*self.r_system)
+        self.ax.set(xlim=(com[0] + plot_dim[0], com[0] + plot_dim[1]),
+               ylim=(com[1] + plot_dim[0], com[1] + plot_dim[1]),
+               zlim=(com[2] + plot_dim[0], com[2] + plot_dim[1]))
 
         # Set title, labels and legend
         self.ax.set_title(self.plot_title, size=7)
@@ -975,3 +981,8 @@ class Simulation:
         self.ax.set_ylabel('y', size=14)
         self.ax.set_zlabel('z', size=14)
         self.ax.legend(loc='upper left')
+
+        # Remove gridlines
+        self.ax.grid(False)
+
+        self.fig.tight_layout()
