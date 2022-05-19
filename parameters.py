@@ -168,7 +168,7 @@ def _get_parser_args():
     parser.add_argument(
         '--cenH_init_idx',
         type=int,
-        default=16,
+        default=15,
         help='The index of the first monomer of the cenH region.')
 
     parser.add_argument(
