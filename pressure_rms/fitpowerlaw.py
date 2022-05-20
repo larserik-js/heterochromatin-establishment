@@ -32,7 +32,7 @@ class FitPowerLaw:
         xs = np.linspace(self.rms[0], self.rms[-1], 1000)
         ys = get_pressure.sigmoid(xs, shift) * scale * xs ** exponent
 
-        plt.plot(xs, ys, label='Fit function')
+        plt.plot(xs, ys, label=r'$f_{\mathrm{fit}}$')
         plt.plot(self.rms, self.pressure, label='Experimental data')
 
         plt.legend(loc='best')

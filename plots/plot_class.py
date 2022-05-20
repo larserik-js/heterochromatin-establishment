@@ -166,7 +166,7 @@ class Plots:
             fig, ax = plt.subplots(figsize=(8,6))
 
             ax.scatter(taus, correlations)
-            ax.set(ylim=(-0.05, 1.05))
+            #ax.set(ylim=(-0.05, 1.05))
 
             ax.set_title('Dynamics time, ' + f'rms = {self.rms:.3f}', size=16)
             ax.set_xlabel(r'$\tau$', size=14)
@@ -289,24 +289,24 @@ class Plots:
         com = np.array([x_plot.sum(), y_plot.sum(), z_plot.sum()]) / len(x_plot)
 
         # Create figure
-        fig = plt.figure()
+        fig = plt.figure(figsize=(20,20))
         ax = fig.add_subplot(111, projection='3d')
 
         # Plot the different states
         for i in range(len(self.state_colors)):
             ax.scatter(x_plot[states == i], y_plot[states == i],
-                       z_plot[states == i], s=5, c=self.state_colors[i])
+                       z_plot[states == i], s=200, c=self.state_colors[i])
 
         # Plot chain line
         all_condition = torch.ones_like(torch.from_numpy(states),
                                         dtype=torch.bool)
 
         ax.plot(x_plot[all_condition], y_plot[all_condition],
-                z_plot[all_condition], marker='o', ls='solid', markersize=1,
-                c='k', lw=0.7)
+                z_plot[all_condition], ls='solid', c='brown', lw=2, alpha=0.5)
 
         for i in range(len(self.state_colors)):
-            ax.scatter([],[],c=self.state_colors[i],label=self.state_names[i])
+            ax.scatter([],[],c=self.state_colors[i],
+                       label=self.state_names[i])
 
         # Set plot dimensions
         ax.set(xlim=(com[0] + self.plot_dim[0], com[0] + self.plot_dim[1]),
@@ -315,6 +315,9 @@ class Plots:
 
         self.format_plot(ax, xlabel=r'$x$', ylabel=r'$y$', zlabel=r'$z$',
                          legend_loc='upper left')
+
+        # Hide grid lines
+        ax.grid(False)
         plt.show()
 
     def fraction_ON_cells(self):
@@ -322,11 +325,12 @@ class Plots:
         fig, ax = plt.subplots(figsize=(8, 6))
         txt_string = ''
 
-        # If not set to 1 during reading of files, nothign is plotted
+        # If not set to 1 during reading of files, nothing is plotted
         file_found = 0
 
         for cenH_size in self.cenH_sizes:
-            param_string = (f'pressure={self.rms:.2f}_'
+            param_string = (f'{self.model}_'
+                            + f'rms={self.rms:.3f}_'
                             + f'init_state={self.initial_state}_'
                             + f'cenH={cenH_size}_'
                             + f'cenH_init_idx={self.cenH_init_idx}_N={self.N}_'
@@ -541,6 +545,7 @@ class Plots:
         for i in range(n_files):
             with open(files[i], 'rb') as f:
                 states_time_space = pickle.load(f)[0]
+                print(states_time_space)
             with open(conversion_files[i], 'rb') as f_c:
                 recruited_conversions, noisy_conversions = pickle.load(f_c)
 
@@ -568,7 +573,8 @@ class Plots:
                   for i in range(len(self.state_colors))]
 
         cmap = colors.ListedColormap(self.state_colors)
-        ax.imshow(states_time_space[::INTERNAL_STATS_INTERVAL].T, cmap=cmap)
+        ax.imshow(states_time_space[:5000:INTERNAL_STATS_INTERVAL].T,
+                  cmap=cmap, aspect='auto')
         self.format_plot(ax, xlabel=f'Time-steps / {INTERNAL_STATS_INTERVAL}',
                          ylabel='Monomer no.')
 
@@ -577,6 +583,7 @@ class Plots:
         plt.legend(handles=labels, bbox_to_anchor=(0.05, 2.3), loc=2,
                    borderaxespad=0.)
 
+        fig.tight_layout()
         plt.show()
 
     # Optimization

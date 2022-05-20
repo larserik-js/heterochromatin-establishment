@@ -163,8 +163,8 @@ def expectations_vs_analytic(n_samples_max, n_runs, tau_true, t_max):
     plt.plot(Ns, analytic_mean, label='Analytic')
     plt.xlabel(r'$N$')
     plt.ylabel('Mean values')
-    plt.title(r'$t_{max}$' + f' = {t_max}, ' + r'$\tau_{true}$'
-              + f' = {tau_true}')
+    #plt.title(r'$t_{max}$' + f' = {t_max}, ' + r'$\tau_{\mathrm{true}}$'
+    #          + f' = {tau_true}')
     plt.legend(loc='best')
     plt.show()
 
@@ -220,7 +220,8 @@ def plot_taus():
         ax[i].plot(Ns, errors_raw, ls='--', label='Raw error')
         ax[i].plot(Ns, errors_corrected, ls='--', label='Corrected error')
         ax[i].plot(Ns, taus_empirical, label='Corrected estimate')
-        ax[i].plot(Ns, tau_true + Ns * 0, c='k', lw=0.5, label=r'$\tau_{true}$')
+        ax[i].plot(Ns, tau_true + Ns * 0, c='k', lw=0.5,
+                   label=r'$\tau_{\mathrm{true}}$')
         err_on_tau_mean = (taus_estimates.std(ddof=1)
                            / np.sqrt(len(taus_estimates)))
 
@@ -240,14 +241,14 @@ def plot_taus():
             ax[i].set_xticklabels([])
 
 
-    ax[n_plots-1].set_xlabel(r'$N_{sim}$')
+    ax[n_plots-1].set_xlabel(r'$N_{\mathrm{sim}}$')
 
 
 
     fig.tight_layout()
-    filename = ('../../Documents/masters_thesis/ThesisArticleFigures/'
+    filename = ('../../Documents/masters_thesis/ThesisPaperFigures/'
                 + 'bias/bias.pdf')
-    #fig.savefig(filename)
+    fig.savefig(filename)
     plt.show()
 
 
