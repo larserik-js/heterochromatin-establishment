@@ -231,7 +231,7 @@ def gather_statistics_(sim_obj):
         #update_Rs(sim_obj)
 
         # Count number of monomers in each state
-        #update_states(sim_obj)
+        update_states(sim_obj)
         update_states_time_space(sim_obj)
 
         # Update time correlation of polymer

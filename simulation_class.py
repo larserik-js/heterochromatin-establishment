@@ -396,7 +396,8 @@ class Simulation:
             if two_interaction_mask[i,j] and two_interaction_mask[j,i]:
                 continue
 
-            # Two-interaction state monomers can only interact with max. 2 other monomers
+            # Two-interaction state monomers can only interact with
+            # max. 2 other monomers
             if (n_interactions[i] >= N_ALLOWED_INTERACTIONS
                     or n_interactions[j] >= N_ALLOWED_INTERACTIONS):
                 continue

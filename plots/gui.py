@@ -26,8 +26,8 @@ class App(tk.Tk):
         self.input_param_vals = {}
         self.plot_func_name = ''
 
-        self.prefill_params = ('CMOL', 1, 2, 8, 16, None, 40, 10000, 0.5, 'A',
-                               0.02, 0.07, 0.1, 0.004, 0, 0)
+        self.prefill_params = ('CMOL', 1, 2, 8, 15, None, 40, 1000, 0.5,
+                               'A', 0.02, 0.07, 0.1, 0.004, 0, 0)
 
         # set up variable
         self.option_var = tk.StringVar(self)
@@ -48,7 +48,7 @@ class App(tk.Tk):
         option_label = ttk.Label(self,  text='Select plot type:',
                                  font = headline_font)
         option_label.grid(column=0, row=0, sticky=tk.W, **paddings)
-        option_menu = ttk.OptionMenu(self, self.option_var, self.plot_type[0],
+        option_menu = ttk.OptionMenu(self, self.option_var, self.plot_type[5],
                                      *self.plot_type, command=None)
         option_menu.grid(column=1, row=0, sticky=tk.W, **paddings)
 

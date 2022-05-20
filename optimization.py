@@ -131,12 +131,12 @@ class Optimizer:
 
 model = 'CMOL'
 rms_values = [2]
-n_processes = 25
-pool_size = 25
+n_processes = 100
+pool_size = 100
 initial_state = 'A'
-cenH_init_idx = 16
+cenH_init_idx = 15
 N = 40
-t_total = 20000
+t_total = 50000
 noise = 0.5
 alpha_2 = 0.1
 beta = 0.004
