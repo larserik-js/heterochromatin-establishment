@@ -16,7 +16,7 @@ alpha=0.59
 
 beta = 1 / 3
 F = alpha/(1-alpha)
-SCATTER_S = 0.1
+LW = 0.15
 
 state_names = {0: 'M', 1: 'U', 2: 'A'}
     
@@ -100,7 +100,7 @@ def numba_f(states, N_MONOMERS, t_total, alpha, beta, statistics):
     return statistics
 
 
-def main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
+def main(N_STATES, N_MONOMERS, t_total, alpha, beta, LW):
         # Set Numpy seed
         np.random.seed(SEED)
 
@@ -108,21 +108,24 @@ def main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S):
 
         fig,ax = plt.subplots(figsize=(4.792, 3.0))
 
-        ax.plot(ts, statistics[0], lw=SCATTER_S, label=state_names[0], c='r')
-        # ax.plot(ts, statistics[1], lw=SCATTER_S, label=state_names[1])
-        ax.plot(ts, statistics[2], lw=SCATTER_S, label=state_names[2], c='b')
+        ax.plot(ts, statistics[0], lw=LW, label=state_names[0], c='r')
+        # ax.plot(ts, statistics[1], lw=LW, label=state_names[1])
+        ax.plot(ts, statistics[2], lw=LW, label=state_names[2], c='b')
 
         #ax.set_title(f'F = {F:.3f}')
-        ax.set_xlabel(r'$t$', size=12)
-        ax.set_ylabel('$N$', size=12)
-        ax.legend(loc='best')
+        ax.set_xlabel(r'$t$')
+        ax.set_ylabel('$N$')
+        ax.ticklabel_format(axis='x', style='sci', scilimits=(0,0))
+        ax.legend(loc=(0.82,0.26))
         fig.tight_layout()
 
         # Save figure
-        figname = '../output/dodd_results.pdf'
+        figname = ('../../../Documents/masters_thesis/ThesisPaperFigures/'
+                   + 'dodd_results.pdf')
+
         plt.savefig(figname)
 
         plt.show()
 
 if __name__ == '__main__':
-    main(N_STATES, N_MONOMERS, t_total, alpha, beta, SCATTER_S)
+    main(N_STATES, N_MONOMERS, t_total, alpha, beta, LW)
