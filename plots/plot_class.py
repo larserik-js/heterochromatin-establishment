@@ -540,7 +540,7 @@ class Plots:
             print('No files to plot.')
             return
 
-        fig,ax = plt.subplots(figsize=(12,6))
+        fig,ax = plt.subplots(figsize=(10,3))
 
         for i in range(n_files):
             with open(files[i], 'rb') as f:

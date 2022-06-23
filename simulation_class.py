@@ -954,7 +954,7 @@ class Simulation:
         self.ax.plot(X, Y, Z, alpha=0.5, lw=2, ls='solid', c='brown')
 
         # Monomer scatter marker size
-        MONOMER_SIZE = 1000
+        MONOMER_SIZE = 300
 
         # Colors of scatter plot markers
         state_colors = ['r', 'y', 'b']
@@ -971,19 +971,25 @@ class Simulation:
                             label=state_names[i])
 
         # Set plot dimensions
-        plot_dim = (-0.2*self.r_system, 0.2*self.r_system)
+        plot_dim = (-0.3*self.r_system, 0.3*self.r_system)
         self.ax.set(xlim=(com[0] + plot_dim[0], com[0] + plot_dim[1]),
                ylim=(com[1] + plot_dim[0], com[1] + plot_dim[1]),
                zlim=(com[2] + plot_dim[0], com[2] + plot_dim[1]))
 
         # Set title, labels and legend
-        self.ax.set_title(self.plot_title, size=7)
-        self.ax.set_xlabel('x', size=14)
-        self.ax.set_ylabel('y', size=14)
-        self.ax.set_zlabel('z', size=14)
+        #self.ax.set_title(self.plot_title, size=7)
+        #self.ax.set_xlabel('x', size=14)
+        #self.ax.set_ylabel('y', size=14)
+        #self.ax.set_zlabel('z', size=14)
+        self.ax.set_xticks([])
+        self.ax.set_yticks([])
+        self.ax.set_zticks([])
+        self.ax.set_xticklabels([])
+        self.ax.set_yticklabels([])
+        self.ax.set_zticklabels([])
         self.ax.legend(loc='upper left')
 
         # Remove gridlines
         self.ax.grid(False)
 
-        self.fig.tight_layout()
+        #self.fig.tight_layout()

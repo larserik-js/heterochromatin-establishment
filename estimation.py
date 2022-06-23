@@ -246,9 +246,9 @@ def plot_taus():
 
 
     fig.tight_layout()
-    filename = ('../../Documents/masters_thesis/ThesisPaperFigures/'
+    filename = ('../../Documents/masters_thesis/ThesisFigures/'
                 + 'bias/bias.pdf')
-    fig.savefig(filename)
+    #fig.savefig(filename)
     plt.show()
 
 
